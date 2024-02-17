@@ -14,7 +14,7 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "codify-plugin-lib": "../codify-plugin-lib",
-    "codify-schemas": "../../codify/codify-schemas"
+    "codify-schemas": "../codify-schemas"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",

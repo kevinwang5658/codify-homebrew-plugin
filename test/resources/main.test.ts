@@ -4,18 +4,19 @@ import { expect } from 'chai';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
 import { execSync } from 'child_process';
-
+import * as path from 'path';
 
 describe('Homebrew main resource integration tests', () => {
   before(() => {
     chai.use(chaiAsPromised)
 
-    //verifyHomebrewNotInstalled()
+    verifyHomebrewNotInstalled()
   })
 
   it('Creates', async () => {
+    console.log(path.join(__dirname, './src/index.ts'));
     const process = child_process.fork(
-      './src/index.ts',
+      path.join(__dirname, '../../src/index.ts'),
       [],
       {
         execArgv: ['-r', 'ts-node/register'],
@@ -45,7 +46,6 @@ describe('Homebrew main resource integration tests', () => {
 })
 
 function verifyHomebrewNotInstalled() {
-  const homebrewResponse = execSync('which brew');
-  expect(homebrewResponse.toString().trim()).to.eq('brew not found')
+  expect(() => execSync('which brew')).to.throw();
 }
 
