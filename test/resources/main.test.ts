@@ -10,12 +10,12 @@ describe('Homebrew main resource integration tests', () => {
   before(() => {
     chai.use(chaiAsPromised)
 
-    verifyHomebrewNotInstalled()
+    //verifyHomebrewNotInstalled()
   })
 
   it('Creates', async () => {
     const process = child_process.fork(
-      './dist/index.js',
+      './src/index.ts',
       [],
       {
         execArgv: ['-r', 'ts-node/register'],

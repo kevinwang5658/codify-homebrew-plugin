@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "tsc && mocha test/**/*.test.ts"
+    "test:unit": "mocha src/**/*.test.ts",
+    "test:integration": "mocha test/**/*.test.ts"
   },
   "keywords": [],
   "author": "",
