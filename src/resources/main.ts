@@ -1,9 +1,8 @@
-import { ChangeSet, ParameterChange, Resource } from 'codify-plugin-lib';
+import { ChangeSet, codifySpawn, ParameterChange, Resource } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation } from 'codify-schemas';
+import { execSync } from 'child_process';
 
 export interface HomebrewConfig extends ResourceConfig {
-  type: string,
-  name?: string,
 }
 
 export class HomebrewMainResource extends Resource<HomebrewConfig> {
@@ -17,6 +16,14 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   }
 
   async getCurrentConfig(): Promise<HomebrewConfig | null> {
+    const homebrewInfo = await codifySpawn('brew', ['config']);
+    console.log(homebrewInfo);
+    if (!homebrewInfo.stderr) {
+      return {
+        type: this.getTypeId()
+      }
+    }
+
     return null
   }
 
@@ -25,7 +32,12 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   }
 
   async applyCreate(changeSet: ChangeSet): Promise<void> {
-    return Promise.resolve(undefined);
+    if (!(await this.isXcodeSelectInstalled())) {
+      console.log('Installing xcode select')
+      await codifySpawn('xcode-select --install', [])
+    }
+
+    await codifySpawn('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', [])
   }
 
   async applyDestroy(changeSet: ChangeSet): Promise<void> {
@@ -40,4 +52,9 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     return Promise.resolve(undefined);
   }
 
+  private async isXcodeSelectInstalled(): Promise<boolean> {
+    // 2 if not installed 0 if installed
+    const xcodeSelectCheck = await codifySpawn('xcode-select', ['-p', '1>/dev/null;echo', '$?'])
+    return xcodeSelectCheck.stdout ? parseInt(xcodeSelectCheck.stdout) === 0 : false;
+  }
 }

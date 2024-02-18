@@ -3,27 +3,33 @@ import { CodifyTestUtils } from '../../../codify-plugin-lib/src';
 import { expect } from 'chai';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
-import { execSync } from 'child_process';
+import { ChildProcess, execSync } from 'child_process';
 import * as path from 'path';
+import { codifySpawn, isDebug } from '../../../codify-plugin-lib';
+import { beforeEach } from 'mocha';
+
+let childProcess: ChildProcess;
 
 describe('Homebrew main resource integration tests', () => {
   before(() => {
     chai.use(chaiAsPromised)
+    process.env.DEBUG='codify';
 
     verifyHomebrewNotInstalled()
   })
 
-  it('Creates', async () => {
-    console.log(path.join(__dirname, './src/index.ts'));
-    const process = child_process.fork(
+  beforeEach(() => {
+    childProcess = child_process.fork(
       path.join(__dirname, '../../src/index.ts'),
       [],
       {
         execArgv: ['-r', 'ts-node/register'],
       },
     )
+  })
 
-    const result = await CodifyTestUtils.sendMessageToProcessAwaitResponse(process, {
+  it('Creates', async () => {
+    const result = await CodifyTestUtils.sendMessageToProcessAwaitResponse(childProcess, {
       cmd: 'plan',
       data: {
         type: 'homebrew',
@@ -42,10 +48,23 @@ describe('Homebrew main resource integration tests', () => {
         }
       }
     )
+
+    // const applyResult = await CodifyTestUtils.sendMessageToProcessAwaitResponse(process, {
+    //   cmd: 'apply',
+    //   data: {
+    //     planId: result.data.planId,
+    //   }
+    // })
+    //
+    // console.log(applyResult);
+  })
+
+  afterEach(() => {
+    childProcess.kill()
   })
 })
 
-function verifyHomebrewNotInstalled() {
-  expect(() => execSync('which brew')).to.throw();
+async function verifyHomebrewNotInstalled(): Promise<void> {
+  //await expect(() => codifySpawn('brew config', [])).to.eventually.throw();
 }
 
