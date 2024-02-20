@@ -1,0 +1,25 @@
+# Requires a tart vm with xcode-select and node 18.15.0 installed
+# Run this with cirrus run --dirty. This will mount the current volume with read write
+
+task:
+  name: run-integration-test
+  macos_instance:
+    image: sonoma-vm
+#  uninstall_brew_script:
+#    - NONINTERACTIVE=1 PATH=/opt/homebrew:$PATH arch -arm64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+#    - sudo rm -rf /opt/homebrew
+#  install_npm_script:
+#    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
+#    - cat ./scripts/nvm-init.sh > ~/.zshrc
+#    - source ~/.zshrc
+#    - nvm install 18
+  test_script:
+#    - source ~/.nvm/nvm.sh
+#    - npm install
+#    - npm run test:integration
+#    - source ~/.zshrc
+#    - rm -rf node_modules
+#    - rm -rf package-lock.json
+#    - npm install
+#    - npm run test:integration
+    - sleep 2000
