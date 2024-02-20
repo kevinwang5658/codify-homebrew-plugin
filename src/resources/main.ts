@@ -1,6 +1,5 @@
 import { ChangeSet, codifySpawn, ParameterChange, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation } from 'codify-schemas';
-import { execSync } from 'child_process';
 
 export interface HomebrewConfig extends ResourceConfig {
 }
@@ -16,7 +15,7 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   }
 
   async getCurrentConfig(): Promise<HomebrewConfig | null> {
-    const homebrewInfo = await codifySpawn('brew config', []);
+    const homebrewInfo = await codifySpawn('brew config');
     if (homebrewInfo.status === SpawnStatus.SUCCESS) {
       return {
         type: this.getTypeId()
@@ -33,12 +32,18 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   async applyCreate(changeSet: ChangeSet): Promise<void> {
     if (!(await this.isXcodeSelectInstalled())) {
       console.log('Installing xcode select')
-      await codifySpawn('xcode-select --install', [])
+      await codifySpawn('xcode-select --install')
     }
 
-    await codifySpawn('NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', [])
-    execSync('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zprofile'); // TODO: may need to support non zsh shells here
-    execSync('eval "$(/opt/homebrew/bin/brew shellenv)"')
+    await codifySpawn('NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
+    await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zprofile'); // TODO: may need to support non zsh shells here
+
+    process.env['HOMEBREW_PREFIX'] = '/opt/homebrew';
+    process.env['HOMEBREW_CELLAR'] = '/opt/homebrew/Cellar';
+    process.env['HOMEBREW_REPOSITORY'] = '/opt/homebrew';
+    process.env['PATH'] = `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env['PATH'] ?? ''}`
+    process.env['MANPATH'] = `/opt/homebrew/share/man${process.env['MANPATH'] ?? ''}:`
+    process.env['INFOPATH'] = `/opt/homebrew/share/info:${process.env['INFOPATH'] ?? ''}`
   }
 
   async applyDestroy(changeSet: ChangeSet): Promise<void> {
