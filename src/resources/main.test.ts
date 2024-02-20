@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ResourceOperation } from '../../../../codify/codify-schemas/src';
+import { ResourceOperation } from 'codify-schemas';
 import { spy } from 'sinon';
 import { HomebrewMainResource } from './main';
 
