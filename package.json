@@ -4,7 +4,10 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "start:dev:ssh": "./scripts/run-test.sh",
+    "start:dev": "tsc && cirrus run --dirty run_dev",
     "test:unit": "mocha src/**/*.test.ts",
+    "test:integration:dev": "cirrus run --dirty integration_test_dev",
     "test:integration": "mocha test/**/*.test.ts"
   },
   "keywords": [],
@@ -13,7 +16,7 @@
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
-    "codify-plugin-lib": "1.0.12",
+    "codify-plugin-lib": "1.0.19",
     "codify-schemas": "1.0.7"
   },
   "devDependencies": {

@@ -1,11 +1,3 @@
-tart run --no-graphics --dir=project:~/projects/codify2 sonoma-base &
-sshpass -p admin ssh admin@192.168.64.3 << 'ENDSSH'
-
-cd /Volumes/My\ Shared\ Files/
-cd project/homebrew-plugin/
-
-npm run test:integration
-
+sshpass -p admin ssh admin@$(tart ip $(tart list -q | head -1)) << 'ENDSSH'
+  cd /Volumes/My\ Shared\ Files/working-dir/
 ENDSSH
-
-tart stop sonoma-base

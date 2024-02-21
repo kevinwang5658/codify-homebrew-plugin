@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codify.com/homebrew-main.json",
+  "title": "Homebrew plugin main resource",
+  "type": "object",
+  "properties": {
+    "formulae": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "casks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "$ref": {
+      "const": "https://www.codify.com/resource-schema.json#properties"
+    }
+  },
+  "additionalProperties": false
+}

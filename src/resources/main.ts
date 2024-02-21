@@ -1,35 +1,60 @@
-import { ChangeSet, codifySpawn, ParameterChange, Resource, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig, ResourceOperation } from 'codify-schemas';
+import { codifySpawn, ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { ResourceConfig, ResourceOperation, ResourceSchema } from 'codify-schemas';
+import Ajv2020, { ValidateFunction } from 'ajv/dist/2020';
+import mainResourceSchema from './main-schema.json'
 
 export interface HomebrewConfig extends ResourceConfig {
+  formulae?: string[],
+  casks?: string[],
 }
 
 export class HomebrewMainResource extends Resource<HomebrewConfig> {
+  private ajv = new Ajv2020({
+    strict: true,
+  })
+  private readonly configValidator: ValidateFunction;
+
+  constructor() {
+    super();
+    this.ajv.addSchema(ResourceSchema);
+    this.configValidator = this.ajv.compile(mainResourceSchema);
+  }
 
   getTypeId(): string {
     return 'homebrew';
   }
 
-  calculateOperation(change: ParameterChange): ResourceOperation.MODIFY | ResourceOperation.RECREATE {
-    return ResourceOperation.RECREATE
+  async validate(config: unknown): Promise<boolean> {
+    return this.configValidator(config);
   }
 
-  async getCurrentConfig(): Promise<HomebrewConfig | null> {
+  async getCurrentConfig(desiredConfig: HomebrewConfig): Promise<HomebrewConfig | null> {
     const homebrewInfo = await codifySpawn('brew config');
-    if (homebrewInfo.status === SpawnStatus.SUCCESS) {
-      return {
-        type: this.getTypeId()
+    if (homebrewInfo.status === SpawnStatus.ERROR) {
+      return null;
+    }
+
+    let result: HomebrewConfig = { type: this.getTypeId() };
+
+    if (desiredConfig.formulae) {
+      const formulaeQuery = await codifySpawn('brew list --formula -1')
+      console.log(formulaeQuery)
+
+      if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
+        result.formulae = formulaeQuery.data
+          .split('\n')
+          .filter((x) => desiredConfig.formulae!.find((y) => x === y))
       }
     }
 
-    return null
+    return result;
   }
 
-  async validate(config: HomebrewConfig): Promise<boolean> {
-    return Promise.resolve(false);
+  calculateOperation(change: ParameterChange): ResourceOperation.MODIFY | ResourceOperation.RECREATE {
+    return ResourceOperation.MODIFY
   }
 
-  async applyCreate(changeSet: ChangeSet): Promise<void> {
+  async applyCreate(plan: Plan<HomebrewConfig>): Promise<void> {
     if (!(await this.isXcodeSelectInstalled())) {
       console.log('Installing xcode select')
       await codifySpawn('xcode-select --install')
@@ -44,17 +69,23 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     process.env['PATH'] = `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env['PATH'] ?? ''}`
     process.env['MANPATH'] = `/opt/homebrew/share/man${process.env['MANPATH'] ?? ''}:`
     process.env['INFOPATH'] = `/opt/homebrew/share/info:${process.env['INFOPATH'] ?? ''}`
+
+    if (plan.resourceConfig.formulae) {
+      for (const formula of plan.resourceConfig.formulae) {
+        await this.createFormula(formula);
+      }
+    }
   }
 
-  async applyDestroy(changeSet: ChangeSet): Promise<void> {
+  async applyDestroy(plan: Plan<HomebrewConfig>): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async applyModify(changeSet: ChangeSet): Promise<void> {
+  async applyModify(plan: Plan<HomebrewConfig>): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async applyRecreate(changeSet: ChangeSet): Promise<void> {
+  async applyRecreate(plan: Plan<HomebrewConfig>): Promise<void> {
     return Promise.resolve(undefined);
   }
 
@@ -63,4 +94,15 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     const xcodeSelectCheck = await codifySpawn('xcode-select', ['-p', '1>/dev/null;echo', '$?'])
     return xcodeSelectCheck.data ? parseInt(xcodeSelectCheck.data) === 0 : false;
   }
+
+  private async createFormula(name: string): Promise<void> {
+    const result = await codifySpawn(`brew install ${name}`)
+
+    if (result.status === SpawnStatus.SUCCESS) {
+      console.log(`Installed formula ${name}`);
+    } else {
+      throw new Error(`Failed to install formula: ${name}. ${result.data}`)
+    }
+  }
+
 }

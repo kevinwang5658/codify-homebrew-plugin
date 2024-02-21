@@ -13,7 +13,9 @@ let childProcess: ChildProcess;
 describe('Homebrew main resource integration tests', () => {
   before(() => {
     chai.use(chaiAsPromised)
-    process.env.DEBUG='codify';
+
+    // Use to print logs to help with debugging
+    //process.env.DEBUG='codify';
 
     verifyHomebrewNotInstalled()
   })
@@ -56,6 +58,10 @@ describe('Homebrew main resource integration tests', () => {
       cmd: 'plan',
       data: {
         type: 'homebrew',
+        formulae: [
+          'glib',
+          'gettext'
+        ]
       },
     })
     expect(result).to.deep.eq(
@@ -63,10 +69,8 @@ describe('Homebrew main resource integration tests', () => {
         cmd: 'plan_Response',
         status: 'success',
         data: {
-          planId: result.data.planId,
-          operation: 'create',
-          resourceType: 'homebrew',
-          parameters: []
+          ...result.data,
+          operation: ResourceOperation.CREATE,
         }
       }
     )
@@ -78,6 +82,7 @@ describe('Homebrew main resource integration tests', () => {
         planId: result.data.planId,
       }
     })
+    console.log(JSON.stringify(applyResult, null, 2));
     expect(applyResult).to.deep.eq(
       {
         cmd: 'apply_Response',
@@ -91,17 +96,21 @@ describe('Homebrew main resource integration tests', () => {
       cmd: 'plan',
       data: {
         type: 'homebrew',
+        formulae: [
+          'glib',
+          'gettext'
+        ]
       },
     })
+
+    console.log(JSON.stringify(resultAfter, null, 2));
     expect(resultAfter).to.deep.eq(
       {
         cmd: 'plan_Response',
         status: 'success',
         data: {
-          planId: resultAfter.data.planId,
+          ...resultAfter.data,
           operation: ResourceOperation.NOOP,
-          resourceType: 'homebrew',
-          parameters: []
         }
       }
     )
