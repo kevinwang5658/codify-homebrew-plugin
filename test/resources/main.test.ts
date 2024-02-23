@@ -1,5 +1,5 @@
 import * as child_process from 'child_process';
-import { CodifyTestUtils } from 'codify-plugin-lib';
+import { codifySpawn, CodifyTestUtils, SpawnStatus } from 'codify-plugin-lib';
 import { expect } from 'chai';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
@@ -15,12 +15,10 @@ describe('Homebrew main resource integration tests', () => {
     chai.use(chaiAsPromised)
 
     // Use to print logs to help with debugging
-    //process.env.DEBUG='codify';
+    process.env.DEBUG='codify';
 
     verifyHomebrewNotInstalled()
-  })
 
-  beforeEach(() => {
     childProcess = child_process.fork(
       path.join(__dirname, '../../src/index.ts'),
       [],
@@ -82,7 +80,6 @@ describe('Homebrew main resource integration tests', () => {
         planId: result.data.planId,
       }
     })
-    console.log(JSON.stringify(applyResult, null, 2));
     expect(applyResult).to.deep.eq(
       {
         cmd: 'apply_Response',
@@ -102,8 +99,6 @@ describe('Homebrew main resource integration tests', () => {
         ]
       },
     })
-
-    console.log(JSON.stringify(resultAfter, null, 2));
     expect(resultAfter).to.deep.eq(
       {
         cmd: 'plan_Response',
@@ -114,15 +109,80 @@ describe('Homebrew main resource integration tests', () => {
         }
       }
     )
-
   })
 
-  afterEach(() => {
+  it ('can install additional casks and formulas', async () => {
+    const result = await CodifyTestUtils.sendMessageToProcessAwaitResponse(childProcess, {
+      cmd: 'plan',
+      data: {
+        type: 'homebrew',
+        formulae: [
+          'glib',
+          'gettext',
+          'jenv',
+        ],
+        casks: [
+          'warp'
+        ]
+      },
+    })
+    expect(result).to.deep.eq(
+      {
+        cmd: 'plan_Response',
+        status: 'success',
+        data: {
+          ...result.data,
+          operation: ResourceOperation.MODIFY,
+        }
+      }
+    )
+
+    const applyResult = await CodifyTestUtils.sendMessageToProcessAwaitResponse(childProcess, {
+      cmd: 'apply',
+      data: {
+        planId: result.data.planId,
+      }
+    })
+    expect(applyResult).to.deep.eq(
+      {
+        cmd: 'apply_Response',
+        status: 'success',
+        data: null
+      }
+    )
+
+    const resultAfter = await CodifyTestUtils.sendMessageToProcessAwaitResponse(childProcess, {
+      cmd: 'plan',
+      data: {
+        type: 'homebrew',
+        formulae: [
+          'glib',
+          'gettext',
+          'jenv',
+        ],
+        casks: [
+          'warp'
+        ]
+      },
+    })
+    expect(resultAfter).to.deep.eq(
+      {
+        cmd: 'plan_Response',
+        status: 'success',
+        data: {
+          ...resultAfter.data,
+          operation: ResourceOperation.NOOP,
+        }
+      }
+    )
+  })
+
+  after(() => {
     childProcess.kill()
   })
 })
 
 async function verifyHomebrewNotInstalled(): Promise<void> {
-  //await expect(() => codifySpawn('brew config', [])).to.eventually.throw();
+  await expect(() => codifySpawn('brew config', [])).to.eq(SpawnStatus.ERROR)
 }
 
