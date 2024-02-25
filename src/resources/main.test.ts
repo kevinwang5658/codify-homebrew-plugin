@@ -38,13 +38,7 @@ describe('Homebrew main resource', () => {
     const resource = new HomebrewMainResource();
 
     const applyResult = await resource.applyDestroy({} as any)
-    expect(applyResult).to.deep.eq(
-      {
-        cmd: 'apply_Response',
-        status: 'success',
-        data: null
-      }
-    )
+    expect(applyResult).to.eq(undefined)
   })
 
   it ('installs homebrew to a custom dir', async () => {

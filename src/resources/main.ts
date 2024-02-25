@@ -87,7 +87,8 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
     // Set env variables in the current process for downstream commands to work properly
     // The child processes spawned by node can't set environment variables on the parent
-    const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv')
+    // This command only works when called from bash or sh
+    const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv', [], { shell: 'sh' })
     this.setEnvVarFromBrewResponse(brewEnvVars.data)
 
     // TODO: Add a check here to see if homebrew is writable
@@ -96,9 +97,9 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
   async applyDestroy(plan: Plan<HomebrewConfig>): Promise<void> {
     const homebrewInfo = await codifySpawn('brew config');
-    const currentDirectory = this.getCurrentLocation(homebrewInfo.data)
+    const homebrewDirectory = this.getCurrentLocation(homebrewInfo.data)
 
-    if (currentDirectory === '/opt/homebrew') {
+    if (homebrewDirectory === '/opt/homebrew') {
       await codifySpawn(
         'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
         [],
@@ -107,7 +108,13 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     }
 
     // Need to solve a permissions issue here
-    await fs.rm(currentDirectory, { recursive: true, force: true });
+    await fs.rm(homebrewDirectory, { recursive: true, force: true });
+
+    // Delete eval from .zshenv
+    const zshEnvLocation = `${process.env.HOME}/.zshenv`
+    const zshEnvFile = await fs.readFile(zshEnvLocation)
+    const editedZshEnvFile = zshEnvFile.toString().replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
+    await fs.writeFile(zshEnvLocation, editedZshEnvFile)
   }
 
   async applyModify(plan: Plan<HomebrewConfig>): Promise<void> {
@@ -149,7 +156,8 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     // The child processes spawned by node can't set environment variables on the parent
     await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshenv`);
 
-    const brewEnvVars = await codifySpawn(`${absoluteDir}/bin/brew shellenv`, [], { cwd: absoluteDir })
+    // This command only works when called from bash or sh
+    const brewEnvVars = await codifySpawn(`${absoluteDir}/bin/brew shellenv`, [], { cwd: absoluteDir, shell: 'sh' })
     this.setEnvVarFromBrewResponse(brewEnvVars.data)
   }
 
@@ -177,6 +185,6 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
       throw new Error(`Homebrew prefix not found in config \n${homebrewInfo}`)
     }
 
-    return homebrewPrefix.split('=')[1]
+    return homebrewPrefix.split(':')[1].trim()
   }
 }
