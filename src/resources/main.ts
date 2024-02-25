@@ -1,13 +1,18 @@
+import Ajv2020, { ValidateFunction } from 'ajv/dist/2020';
 import { codifySpawn, ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation, ResourceSchema } from 'codify-schemas';
-import Ajv2020, { ValidateFunction } from 'ajv/dist/2020';
-import mainResourceSchema from './main-schema.json'
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { untildify } from '../utils/untildify';
+import { CasksParameter } from './casks-parameter'
 import { FormulaeParameter } from './formulae-parameter';
-import { CasksParameter } from './casks-parameter';
+import mainResourceSchema from './main-schema.json'
 
 export interface HomebrewConfig extends ResourceConfig {
   formulae?: string[],
   casks?: string[],
+  directory?: string,
 }
 
 export class HomebrewMainResource extends Resource<HomebrewConfig> {
@@ -30,20 +35,41 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   }
 
   async validate(config: unknown): Promise<boolean> {
-    return this.configValidator(config);
+    const isValid = this.configValidator(config);
+    if (!isValid) {
+      return false;
+    }
+
+    const homebrewConfig = config as HomebrewConfig;
+
+    if (homebrewConfig.directory) {
+      const dir = homebrewConfig.directory
+      const isDirectory = await this.dirExists(dir)
+        ? (await fs.lstat(dir)).isDirectory()
+        : true
+
+      return path.isAbsolute(homebrewConfig.directory) && isDirectory
+    }
+
+    return true
   }
 
   async getCurrentConfig(desiredConfig: HomebrewConfig): Promise<HomebrewConfig | null> {
-    const homebrewInfo = await codifySpawn('brew config');
+    const homebrewInfo = await codifySpawn('brew config', [], { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
     }
 
-    return { type: this.getTypeId() };
+    const currentConfig: HomebrewConfig = { type: this.getTypeId() }
+    if (desiredConfig.directory) {
+      currentConfig.directory = this.getCurrentLocation(homebrewInfo.data)
+    }
+
+    return currentConfig
   }
 
   calculateOperation(change: ParameterChange): ResourceOperation.MODIFY | ResourceOperation.RECREATE {
-    return ResourceOperation.MODIFY
+    return ResourceOperation.RECREATE
   }
 
   async applyCreate(plan: Plan<HomebrewConfig>): Promise<void> {
@@ -52,32 +78,105 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
       await codifySpawn('xcode-select --install')
     }
 
+    if (plan.resourceConfig.directory) {
+      return this.installBrewInCustomDir(plan.resourceConfig.directory)
+    }
+
     await codifySpawn('NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
-    await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zprofile'); // TODO: may need to support non zsh shells here
+    await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshenv'); // TODO: may need to support non zsh shells here
 
     // Set env variables in the current process for downstream commands to work properly
     // The child processes spawned by node can't set environment variables on the parent
-    process.env['HOMEBREW_PREFIX'] = '/opt/homebrew';
-    process.env['HOMEBREW_CELLAR'] = '/opt/homebrew/Cellar';
-    process.env['HOMEBREW_REPOSITORY'] = '/opt/homebrew';
-    process.env['PATH'] = `/opt/homebrew/bin:/opt/homebrew/sbin:${process.env['PATH'] ?? ''}`
-    process.env['MANPATH'] = `/opt/homebrew/share/man${process.env['MANPATH'] ?? ''}:`
-    process.env['INFOPATH'] = `/opt/homebrew/share/info:${process.env['INFOPATH'] ?? ''}`
+    const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv')
+    this.setEnvVarFromBrewResponse(brewEnvVars.data)
+
+    // TODO: Add a check here to see if homebrew is writable
+    //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
   }
 
   async applyDestroy(plan: Plan<HomebrewConfig>): Promise<void> {
-    return Promise.resolve(undefined);
+    const homebrewInfo = await codifySpawn('brew config');
+    const currentDirectory = this.getCurrentLocation(homebrewInfo.data)
+
+    if (currentDirectory === '/opt/homebrew') {
+      await codifySpawn(
+        'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
+        [],
+        { throws: false }
+      )
+    }
+
+    // Need to solve a permissions issue here
+    await fs.rm(currentDirectory, { recursive: true, force: true });
   }
 
-  async applyModify(plan: Plan<HomebrewConfig>): Promise<void> {}
+  async applyModify(plan: Plan<HomebrewConfig>): Promise<void> {
+  }
 
   async applyRecreate(plan: Plan<HomebrewConfig>): Promise<void> {
-    return Promise.resolve(undefined);
   }
 
   private async isXcodeSelectInstalled(): Promise<boolean> {
     // 2 if not installed 0 if installed
     const xcodeSelectCheck = await codifySpawn('xcode-select -p 1>/dev/null;echo $?') // TODO: Fix this because it's buggy
     return xcodeSelectCheck.data ? parseInt(xcodeSelectCheck.data) === 0 : false;
+  }
+
+  private async dirExists(dir: string): Promise<boolean> {
+    try {
+      await fs.access(dir)
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async installBrewInCustomDir(dir: string): Promise<void> {
+    const absoluteDir = path.resolve(untildify(dir))
+
+    try {
+      await fs.access(absoluteDir)
+    } catch {
+      await codifySpawn(`mkdir ${absoluteDir}`)
+    }
+
+    // Un-tar brew in a custom dir: https://github.com/Homebrew/brew/blob/664d0c67d5947605c914c4c56ebcfaa80cb6eca0/docs/Installation.md#untar-anywhere
+    // the local where brew is first activated is where it will be installed
+    await codifySpawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', [], { cwd: absoluteDir })
+    await codifySpawn('./brew config', [], { cwd: path.join(absoluteDir, '/bin') })
+
+    // Set env variables in the current process for downstream commands to work properly
+    // The child processes spawned by node can't set environment variables on the parent
+    await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshenv`);
+
+    const brewEnvVars = await codifySpawn(`${absoluteDir}/bin/brew shellenv`, [], { cwd: absoluteDir })
+    this.setEnvVarFromBrewResponse(brewEnvVars.data)
+  }
+
+  // Ex:
+  // export HOMEBREW_PREFIX="/Users/Personal/homebrew";
+  // export HOMEBREW_CELLAR="/Users/Personal/homebrew/Cellar";
+  // export HOMEBREW_REPOSITORY="/Users/Personal/homebrew";
+  // ...
+  private setEnvVarFromBrewResponse(response: string): void {
+    response.split('\n')
+      .map((x) => x.split(' ')[1])
+      .forEach((x) => {
+        const [key, value] = x.split('=')
+        process.env[key] = value.replace(';', '').replace('"', '')
+      })
+  }
+
+  // Ex:
+  // HOMEBREW_VERSION: 4.2.9-114-ge9cb65b
+  // ORIGIN: https://github.com/Homebrew/brew
+  private getCurrentLocation(homebrewInfo: string) {
+    const homebrewPrefix = homebrewInfo.split('\n')
+      .find((x) => x.includes('HOMEBREW_PREFIX'))
+    if (!homebrewPrefix) {
+      throw new Error(`Homebrew prefix not found in config \n${homebrewInfo}`)
+    }
+
+    return homebrewPrefix.split('=')[1]
   }
 }
