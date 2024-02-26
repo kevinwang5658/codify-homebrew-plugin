@@ -4,7 +4,7 @@ import { ResourceConfig, ResourceOperation, ResourceSchema } from 'codify-schema
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { untildify } from '../utils/untildify';
+import { untildify } from '../../utils/untildify';
 import { CasksParameter } from './casks-parameter'
 import { FormulaeParameter } from './formulae-parameter';
 import mainResourceSchema from './main-schema.json'
