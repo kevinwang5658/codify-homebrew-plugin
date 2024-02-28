@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "module": "commonjs",
+    "module": "esnext",
+    "moduleResolution": "Node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "alwaysStrict": true,

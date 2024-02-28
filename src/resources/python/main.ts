@@ -10,8 +10,8 @@ export interface PyenvConfig extends ResourceConfig {
 
 export class PyenvResource extends Resource<PyenvConfig> {
 
-  constructor(props) {
-    super(props);
+  constructor() {
+    super();
 
     this.registerStatefulParameter(new PyenvGlobalParameter())
   }
