@@ -1,6 +1,6 @@
 import { Plugin, runPlugin } from 'codify-plugin-lib';
-import { HomebrewMainResource } from './resources/homebrew/main';
-import { PyenvResource } from './resources/python/main';
+import { HomebrewMainResource } from './resources/homebrew/main.js';
+import { PyenvResource } from './resources/python/main.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();

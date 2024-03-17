@@ -1,11 +1,10 @@
-import { expect } from 'chai';
 import { ParameterOperation, ResourceOperation } from 'codify-schemas';
-import { HomebrewMainResource } from './main';
+import { HomebrewMainResource } from './main.js';
 import { ChangeSet, Plan } from 'codify-plugin-lib';
-import { before } from 'mocha';
+import { describe, it, beforeAll, expect } from 'vitest'
 
 describe('Homebrew main resource', () => {
-  before(() => {
+  beforeAll(() => {
     // Use to print logs to help with debugging
     process.env.DEBUG='codify';
   })

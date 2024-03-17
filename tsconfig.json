@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "Node",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "alwaysStrict": true,
@@ -19,7 +19,6 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
     "src/**/*.test.ts"
   ]
 }

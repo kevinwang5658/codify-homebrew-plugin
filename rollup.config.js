@@ -12,11 +12,10 @@ export default {
     format: 'cjs'
   },
   plugins: [
-    typescript(),
     json(),
-    commonjs(),
     nodeResolve(),
-    terser()
-  ],
-  external: Object.keys(pkg.dependencies)
+    typescript(),
+    commonjs(),
+    //terser()
+  ]
 }

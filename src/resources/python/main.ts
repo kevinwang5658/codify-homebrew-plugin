@@ -1,7 +1,7 @@
 import { ParameterChange, Plan, Resource, SpawnStatus, codifySpawn } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation } from 'codify-schemas';
 
-import { PyenvGlobalParameter } from './global-parameter';
+import { PyenvGlobalParameter } from './global-parameter.js';
 
 export interface PyenvConfig extends ResourceConfig {
   pythonVersions?: string[],

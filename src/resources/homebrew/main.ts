@@ -1,13 +1,14 @@
-import Ajv2020, { ValidateFunction } from 'ajv/dist/2020';
+import { ValidateFunction } from 'ajv';
 import { codifySpawn, ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation, ResourceSchema } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { untildify } from '../../utils/untildify';
-import { CasksParameter } from './casks-parameter'
-import { FormulaeParameter } from './formulae-parameter';
+import { untildify } from '../../utils/untildify.js';
+import { CasksParameter } from './casks-parameter.js'
+import { FormulaeParameter } from './formulae-parameter.js';
 import mainResourceSchema from './main-schema.json'
+import Ajv2020 from 'ajv/dist/2020.js';
 
 export interface HomebrewConfig extends ResourceConfig {
   formulae?: string[],
@@ -16,7 +17,7 @@ export interface HomebrewConfig extends ResourceConfig {
 }
 
 export class HomebrewMainResource extends Resource<HomebrewConfig> {
-  private ajv = new Ajv2020({
+  private ajv = new Ajv2020.default({
     strict: true,
   })
   private readonly configValidator: ValidateFunction;

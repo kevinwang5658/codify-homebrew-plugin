@@ -1,5 +1,5 @@
-import { StatefulParameter } from 'codify-plugin-lib/dist/entities/stateful-parameter';
-import { PyenvConfig } from './main';
+import { StatefulParameter } from 'codify-plugin-lib';
+import { PyenvConfig } from './main.js';
 import { codifySpawn, ParameterChange, Plan } from 'codify-plugin-lib';
 
 export class PythonVersionsParameter extends StatefulParameter<PyenvConfig, 'pythonVersions'> {

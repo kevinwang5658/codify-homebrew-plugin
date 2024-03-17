@@ -1,19 +1,15 @@
 import * as child_process from 'child_process';
 import { codifySpawn, CodifyTestUtils, SpawnStatus } from 'codify-plugin-lib';
-import { expect } from 'chai';
-import chai = require('chai');
-import chaiAsPromised = require('chai-as-promised');
 import { ChildProcess } from 'child_process';
 import * as path from 'path';
-import { beforeEach } from 'mocha';
 import { ResourceOperation } from 'codify-schemas';
+import { describe, it, beforeAll, expect, afterAll } from 'vitest'
+
 
 let childProcess: ChildProcess;
 
 describe('Homebrew main resource integration tests', () => {
-  before(() => {
-    chai.use(chaiAsPromised)
-
+  beforeAll(() => {
     // Use to print logs to help with debugging
     process.env.DEBUG='codify';
 
@@ -177,7 +173,7 @@ describe('Homebrew main resource integration tests', () => {
     )
   })
 
-  after(() => {
+  afterAll(() => {
     childProcess.kill()
   })
 })
