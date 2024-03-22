@@ -1,4 +1,4 @@
-import { ParameterChange, Plan, Resource, SpawnStatus, codifySpawn } from 'codify-plugin-lib';
+import { codifySpawn, ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation } from 'codify-schemas';
 
 import { PyenvGlobalParameter } from './global-parameter.js';
@@ -20,8 +20,8 @@ export class PyenvResource extends Resource<PyenvConfig> {
     return 'pyenv';
   }
 
-  async validate(config: unknown): Promise<boolean> {
-    return true;
+  async validate(config: unknown): Promise<string[] | undefined> {
+    return [];
   }
 
   async getCurrentConfig(desiredConfig: PyenvConfig): Promise<PyenvConfig | null> {

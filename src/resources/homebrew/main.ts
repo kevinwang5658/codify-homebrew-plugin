@@ -35,10 +35,12 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     return 'homebrew';
   }
 
-  async validate(config: unknown): Promise<boolean> {
+  async validate(config: unknown): Promise<string[] | undefined> {
     const isValid = this.configValidator(config);
     if (!isValid) {
-      return false;
+      return this.configValidator.errors
+        ?.map((e) => e.message)
+        .filter(Boolean) as string[];
     }
 
     const homebrewConfig = config as HomebrewConfig;
@@ -49,10 +51,12 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
         ? (await fs.lstat(dir)).isDirectory()
         : true
 
-      return path.isAbsolute(homebrewConfig.directory) && isDirectory
+      if (!path.isAbsolute(homebrewConfig.directory) || !isDirectory) {
+        return [`HomebrewConfig directory ${dir} does not exist`]
+      }
     }
 
-    return true
+    return undefined
   }
 
   async getCurrentConfig(desiredConfig: HomebrewConfig): Promise<HomebrewConfig | null> {
