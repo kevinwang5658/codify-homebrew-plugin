@@ -1,6 +1,5 @@
-import { StatefulParameter } from 'codify-plugin-lib';
-import { PyenvConfig, PyenvResource } from './main.js';
-import { codifySpawn, ParameterChange, Plan } from 'codify-plugin-lib';
+import { codifySpawn, ParameterChange, Plan, StatefulParameter } from 'codify-plugin-lib';
+import { PyenvConfig } from './main.js';
 
 export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, 'global'>{
 

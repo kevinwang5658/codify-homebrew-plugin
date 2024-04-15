@@ -1,10 +1,9 @@
 import * as child_process from 'child_process';
-import { codifySpawn, CodifyTestUtils, SpawnStatus } from 'codify-plugin-lib';
 import { ChildProcess } from 'child_process';
+import { codifySpawn, CodifyTestUtils, SpawnStatus } from 'codify-plugin-lib';
 import * as path from 'path';
 import { ResourceOperation } from 'codify-schemas';
-import { describe, it, beforeAll, expect, afterAll } from 'vitest'
-
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 let childProcess: ChildProcess;
 
@@ -19,7 +18,7 @@ describe('Homebrew main resource integration tests', () => {
       path.join(__dirname, '../../src/index.ts'),
       [],
       {
-        execArgv: ['-r', 'ts-node/register'],
+        execArgv: ['--import', 'tsx/esm'],
       },
     )
   })
@@ -46,7 +45,7 @@ describe('Homebrew main resource integration tests', () => {
     )
   })
 
-  it('Creates brew', async () => {
+  it('Creates brew', { timeout: 300000 }, async () => {
     // Plans correctly and detects that brew is not installed
     const result = await CodifyTestUtils.sendMessageToProcessAwaitResponse(childProcess, {
       cmd: 'plan',
@@ -58,6 +57,8 @@ describe('Homebrew main resource integration tests', () => {
         ]
       },
     })
+    console.log(result);
+
     expect(result).to.deep.eq(
       {
         cmd: 'plan_Response',
@@ -76,6 +77,8 @@ describe('Homebrew main resource integration tests', () => {
         planId: result.data.planId,
       }
     })
+
+    console.log(applyResult);
     expect(applyResult).to.deep.eq(
       {
         cmd: 'apply_Response',
@@ -107,7 +110,7 @@ describe('Homebrew main resource integration tests', () => {
     )
   })
 
-  it ('can install additional casks and formulas', async () => {
+  it ('can install additional casks and formulas', { timeout: 300000 }, async () => {
     const result = await CodifyTestUtils.sendMessageToProcessAwaitResponse(childProcess, {
       cmd: 'plan',
       data: {
@@ -179,6 +182,5 @@ describe('Homebrew main resource integration tests', () => {
 })
 
 async function verifyHomebrewNotInstalled(): Promise<void> {
-  await expect(() => codifySpawn('brew config', [])).to.eq(SpawnStatus.ERROR)
+  await expect((await codifySpawn('brew config', [], { throws: false })).status).to.eq(SpawnStatus.ERROR)
 }
-

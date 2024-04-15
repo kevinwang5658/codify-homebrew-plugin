@@ -8,7 +8,7 @@
     "start:dev": "tsc && cirrus run --dirty run_dev",
     "test:unit": "mocha src/**/*.test.ts",
     "test:integration:dev": "cirrus run --dirty integration_test_dev",
-    "test:integration": "mocha test/**/*.test.ts"
+    "test:integration": "vitest test/**/*.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -41,7 +41,8 @@
     "tslib": "^2.6.2",
     "tsc-watch": "^6.0.4",
     "typescript": "^5",
-    "eslint-config-prettier": "^9.0.0"
+    "eslint-config-prettier": "^9.0.0",
+    "tsx": "^4.7.2"
   },
   "engines": {
     "node": ">=18.0.0"

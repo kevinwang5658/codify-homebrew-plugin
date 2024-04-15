@@ -3,13 +3,12 @@
 
 run_dev_task:
   macos_instance:
-    image: sonoma-vm
+    image: ghcr.io/kevinwang5658/sonoma-codify:v0.0.2
   run_script:
     - sleep 2000
 
 integration_test_dev_task:
   macos_instance:
-    image: sonoma-vm
+    image: ghcr.io/kevinwang5658/sonoma-codify:v0.0.2
   test_script:
-    - source ~/.nvm/nvm.sh
     - npm run test:integration
