@@ -106,14 +106,13 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
     if (homebrewDirectory === '/opt/homebrew') {
       await codifySpawn(
-        'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
+        'NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
         [],
         { throws: false }
       )
     }
 
-    // Need to solve a permissions issue here
-    await fs.rm(homebrewDirectory, { recursive: true, force: true });
+    await codifySpawn(`sudo rm -rf ${homebrewDirectory}`, []);
 
     // Delete eval from .zshenv
     const zshEnvLocation = `${process.env.HOME}/.zshenv`
@@ -131,7 +130,7 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   private async isXcodeSelectInstalled(): Promise<boolean> {
     // 2 if not installed 0 if installed
     const xcodeSelectCheck = await codifySpawn('xcode-select -p 1>/dev/null;echo $?') // TODO: Fix this because it's buggy
-    return xcodeSelectCheck.data ? parseInt(xcodeSelectCheck.data) === 0 : false;
+    return xcodeSelectCheck.data ? Number.parseInt(xcodeSelectCheck.data) === 0 : false;
   }
 
   private async dirExists(dir: string): Promise<boolean> {
