@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "vitest",
+      "name": "Vitest configuration",
+      "file": "test/homebrew/custom-install.test.ts",
+    },
+    {
+      "name": "Homebrew main resource",
+      "type": "vitest",
+      "file": "src/resources/homebrew/main.test.ts",
+      "vitestOptions": ["--run", "--disable-console-intercept"]
+    },
+    {
+      "name": "Homebrew main resource.test",
+      "type": "vitest",
+      "workingDir": "$PROJECT_DIR$",
+      "file": "$PROJECT_DIR$/src/resources/homebrew/main.test.ts",
+      "testNames": ["Homebrew main resource", "test"],
+      "vitestOptions": ["--run",  "--disable-console-intercept"]
+    }
+    
+  ]
+}

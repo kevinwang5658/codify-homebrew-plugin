@@ -1,5 +1,6 @@
 import { ValidateFunction } from 'ajv';
-import { codifySpawn, ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import Ajv2020 from 'ajv/dist/2020.js';
+import { ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation, ResourceSchema } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
@@ -8,18 +9,19 @@ import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
 import mainResourceSchema from './main-schema.json'
-import Ajv2020 from 'ajv/dist/2020.js';
+import { codifySpawn } from '../../utils/codify-spawn.js';
 
 export interface HomebrewConfig extends ResourceConfig {
-  formulae?: string[],
   casks?: string[],
   directory?: string,
+  formulae?: string[],
 }
 
 export class HomebrewMainResource extends Resource<HomebrewConfig> {
   private ajv = new Ajv2020.default({
     strict: true,
   })
+
   private readonly configValidator: ValidateFunction;
 
   constructor() {
@@ -67,7 +69,12 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
     const currentConfig: HomebrewConfig = { type: this.getTypeId() }
     if (desiredConfig.directory) {
-      currentConfig.directory = this.getCurrentLocation(homebrewInfo.data)
+      const desiredLocation = untildify(desiredConfig.directory);
+      const currentInstallLocation = this.getCurrentLocation(homebrewInfo.data);
+
+      currentConfig.directory = (currentInstallLocation && path.resolve(currentInstallLocation) === path.resolve(desiredLocation))
+        ? desiredConfig.directory
+        : currentInstallLocation;
     }
 
     return currentConfig
@@ -170,13 +177,22 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   // export HOMEBREW_CELLAR="/Users/Personal/homebrew/Cellar";
   // export HOMEBREW_REPOSITORY="/Users/Personal/homebrew";
   // ...
-  private setEnvVarFromBrewResponse(response: string): void {
-    response.split('\n')
-      .map((x) => x.split(' ')[1])
-      .forEach((x) => {
-        const [key, value] = x.split('=')
-        process.env[key] = value.replace(';', '').replace('"', '')
-      })
+  private async setEnvVarFromBrewResponse(response: string): Promise<void> {
+    const separatedLines = response.split('\n')
+          .filter(Boolean)
+          .map((x) => x.split(' ')[1])
+//    for (const line of separatedLines) {
+//      await codifySpawn(line);
+//    }
+
+
+//
+    for (const x of separatedLines) {
+      const [key, value] = x.split('=')
+      const cleanedValue = value.replace(';', '');
+      const resolvedValue = await codifySpawn(`echo ${cleanedValue}`);
+      process.env[key] = resolvedValue.data.replace('\n', '');
+    }
   }
 
   // Ex:

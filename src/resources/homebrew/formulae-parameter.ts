@@ -1,6 +1,6 @@
-import { StatefulParameter } from 'codify-plugin-lib';
+import { ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 import { HomebrewConfig } from './main.js';
-import { codifySpawn, ParameterChange, Plan, SpawnStatus } from 'codify-plugin-lib';
+import { codifySpawn } from '../../utils/codify-spawn.js';
 
 export class FormulaeParameter extends StatefulParameter<HomebrewConfig, 'formulae'> {
   get name(): "formulae" {
@@ -54,8 +54,11 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, 'formul
     }
   }
 
+  // TODO: This doesn't work when brew is installed to a custom location
   private async installFormula(formula: string): Promise<void> {
     const result = await codifySpawn(`brew install --formula ${formula}`)
+    console.log(process.env);
+    // const result = await execa('brew', ['install', '--formula', formula], { verbose: true });
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Installed formula: ${formula}`);
