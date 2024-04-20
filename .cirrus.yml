@@ -12,3 +12,11 @@ integration_test_dev_task:
     image: ghcr.io/kevinwang5658/sonoma-codify:v0.0.2
   test_script:
     - npm run test:integration
+
+integration_individual_test_task:
+  macos_instance:
+    image: ghcr.io/kevinwang5658/sonoma-codify:v0.0.2
+  test_script:
+    - echo $FILE_NAME
+    - ls -a
+    - npm run test -- $FILE_NAME
