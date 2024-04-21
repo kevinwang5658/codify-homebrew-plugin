@@ -1,7 +1,12 @@
-import { codifySpawn, ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceOperation } from 'codify-schemas';
+import { homedir } from 'node:os';
+import path from 'node:path';
 
+import { codifySpawn } from '../../../utils/codify-spawn.js';
+import { FileUtils } from '../../../utils/file-utils.js';
 import { PyenvGlobalParameter } from './global-parameter.js';
+import { PythonVersionsParameter } from './python-versions-parameter.js';
 
 export interface PyenvConfig extends ResourceConfig {
   pythonVersions?: string[],
@@ -13,7 +18,8 @@ export class PyenvResource extends Resource<PyenvConfig> {
   constructor() {
     super();
 
-    this.registerStatefulParameter(new PyenvGlobalParameter())
+    this.registerStatefulParameter(new PythonVersionsParameter());
+    this.registerStatefulParameter(new PyenvGlobalParameter());
   }
 
   getTypeId(): string {
@@ -43,13 +49,20 @@ export class PyenvResource extends Resource<PyenvConfig> {
 
     // Add startup script
     // TODO: Need to support bash in addition to zsh here
-    await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> ~/.zshrc')
-    await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> ~/.zshrc')
-    await codifySpawn('echo \'eval "$(pyenv init -)"\' >> ~/.zshrc')
+    await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshrc')
+
+    await this.setEnvVars();
   }
 
   async applyDestroy(plan: Plan<PyenvConfig>): Promise<void> {
-    await codifySpawn('rm -rf $(pyenv root)')
+    await codifySpawn('sudo rm -rf $(pyenv root)');
+    await codifySpawn('sudo rm -rf $HOME/.pyenv');
+
+    await FileUtils.removeFromFile('export PYENV_ROOT="$HOME/.pyenv"', path.join(homedir(), '.zshrc'))
+    await FileUtils.removeFromFile('[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"', path.join(homedir(), '.zshrc'))
+    await FileUtils.removeFromFile('eval "$(pyenv init -)"', path.join(homedir(), '.zshrc'))
   }
 
   async applyModify(plan: Plan<PyenvConfig>): Promise<void> {
@@ -58,4 +71,14 @@ export class PyenvResource extends Resource<PyenvConfig> {
   async applyRecreate(plan: Plan<PyenvConfig>): Promise<void> {
   }
 
+  private async setEnvVars(): Promise<void> {
+    const pyenvRootResponse= await codifySpawn('echo \"$HOME/.pyenv\"');
+    const pyenvRoot = pyenvRootResponse.data.trim();
+
+    const newPathResponse = await codifySpawn(`echo "${pyenvRoot}/bin:$PATH"`);
+    const newPath = newPathResponse.data.trim();
+
+    process.env['PYENV_ROOT'] = pyenvRoot;
+    process.env['PATH'] = newPath;
+  }
 }

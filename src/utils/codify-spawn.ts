@@ -32,6 +32,8 @@ export async function codifySpawn(
   args?: string[],
   opts?: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'> & { throws?: boolean },
 ): Promise<SpawnResult> {
+  const throws = opts?.throws ?? true;
+
   try {
     // TODO: Need to benchmark the effects of using sh vs zsh for shell.
     //  Seems like zsh shells run slower
@@ -41,18 +43,17 @@ export async function codifySpawn(
       opts,
     );
     
-    if (result.status !== SpawnStatus.SUCCESS && opts?.throws === true) {
+    if (result.status !== SpawnStatus.SUCCESS && throws) {
       throw new Error(result.data);
     }
 
     return result;
   } catch (error) {
-    const shouldThrow = opts?.throws ?? true;
-    if (isDebug() || shouldThrow) {
+    if (isDebug() || throws) {
       console.error(`CodifySpawn Error for command ${cmd} ${args}`, error);
     }
 
-    if (shouldThrow) {
+    if (throws) {
       throw error;
     }
 

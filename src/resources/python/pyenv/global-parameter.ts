@@ -1,4 +1,4 @@
-import { codifySpawn, ParameterChange, Plan, StatefulParameter } from 'codify-plugin-lib';
+import { codifySpawn, ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 import { PyenvConfig } from './main.js';
 
 export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, 'global'>{
@@ -8,8 +8,13 @@ export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, 'global
   }
 
   async getCurrent(desiredValue: PyenvConfig['global']): Promise<PyenvConfig['global']> {
-    const globalVersion = await codifySpawn('pyenv global')
-    return globalVersion.data
+    const { status, data } = await codifySpawn('pyenv global')
+
+    if (status === SpawnStatus.ERROR) {
+      return undefined;
+    }
+
+    return data;
   }
 
   async applyAdd(parameterChange: ParameterChange, plan: Plan<PyenvConfig>): Promise<void> {

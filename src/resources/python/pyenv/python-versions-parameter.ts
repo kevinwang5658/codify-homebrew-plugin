@@ -1,4 +1,6 @@
-import { codifySpawn, ParameterChange, Plan, StatefulParameter } from 'codify-plugin-lib';
+import { ParameterChange, Plan, StatefulParameter } from 'codify-plugin-lib';
+
+import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
 import { PyenvConfig } from './main.js';
 
 export class PythonVersionsParameter extends StatefulParameter<PyenvConfig, 'pythonVersions'> {
@@ -8,8 +10,20 @@ export class PythonVersionsParameter extends StatefulParameter<PyenvConfig, 'pyt
   }
 
   async getCurrent(desiredValue: PyenvConfig['pythonVersions']): Promise<PyenvConfig['pythonVersions']> {
-    const installedVersions = await codifySpawn('pyenv version-name')
-    return installedVersions.data.split('\n');
+    const { status, data } = await codifySpawn('pyenv versions --bare')
+
+    if (status === SpawnStatus.ERROR) {
+      return undefined;
+    }
+
+    const installedVersions = data.split('\n');
+
+    if (!desiredValue) {
+      return installedVersions;
+    }
+
+    return desiredValue
+      .filter((dv) => installedVersions.some((iv) => iv.includes(dv)));
   }
 
   async applyAdd(parameterChange: ParameterChange, plan: Plan<PyenvConfig>): Promise<void> {
@@ -26,19 +40,19 @@ export class PythonVersionsParameter extends StatefulParameter<PyenvConfig, 'pyt
 
     const versionsToInstall = newVersions.filter((x) => !previousVersions.includes(x))
     for (const version of versionsToInstall) {
-      await codifySpawn(`pyenv install ${version}`)
+      await codifySpawn(`pyenv install ${version}`);
     }
 
     const versionsToUninstall = previousVersions.filter((x) => !newVersions.includes(x))
     for (const version of versionsToUninstall) {
-      await codifySpawn(`pyenv uninstall ${version}`)
+      await codifySpawn(`pyenv uninstall ${version}`);
     }
   }
 
   async applyRemove(parameterChange: ParameterChange, plan: Plan<PyenvConfig>): Promise<void> {
-    const versionsToUninstall = parameterChange.previousValue
+    const versionsToUninstall = parameterChange.previousValue;
     for (const version of versionsToUninstall) {
-      await codifySpawn(`pyenv uninstall ${version}`)
+      await codifySpawn(`pyenv uninstall ${version}`);
     }
   }
 }
