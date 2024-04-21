@@ -123,8 +123,8 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
     // Delete eval from .zshenv
     const zshEnvLocation = `${process.env.HOME}/.zshenv`
-    const zshEnvFile = await fs.readFile(zshEnvLocation)
-    const editedZshEnvFile = zshEnvFile.toString().replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
+    const zshEnvFile = await fs.readFile(zshEnvLocation, 'utf8')
+    const editedZshEnvFile = zshEnvFile.replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
     await fs.writeFile(zshEnvLocation, editedZshEnvFile)
   }
 

@@ -60,9 +60,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await codifySpawn('sudo rm -rf $(pyenv root)');
     await codifySpawn('sudo rm -rf $HOME/.pyenv');
 
-    await FileUtils.removeFromFile('export PYENV_ROOT="$HOME/.pyenv"', path.join(homedir(), '.zshrc'))
-    await FileUtils.removeFromFile('[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"', path.join(homedir(), '.zshrc'))
-    await FileUtils.removeFromFile('eval "$(pyenv init -)"', path.join(homedir(), '.zshrc'))
+    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), 'export PYENV_ROOT="$HOME/.pyenv"')
+    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
+    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), 'eval "$(pyenv init -)"')
   }
 
   async applyModify(plan: Plan<PyenvConfig>): Promise<void> {
