@@ -10,11 +10,13 @@ import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
 import mainResourceSchema from './main-schema.json'
 import { codifySpawn } from '../../utils/codify-spawn.js';
+import { TapsParameter } from './tap-parameter.js';
 
 export interface HomebrewConfig extends ResourceConfig {
   casks?: string[],
   directory?: string,
   formulae?: string[],
+  taps?: string[],
 }
 
 export class HomebrewMainResource extends Resource<HomebrewConfig> {
@@ -26,8 +28,9 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
   constructor() {
     super();
-    this.registerStatefulParameter(new FormulaeParameter())
-    this.registerStatefulParameter(new CasksParameter())
+    this.registerStatefulParameter(new TapsParameter());
+    this.registerStatefulParameter(new FormulaeParameter());
+    this.registerStatefulParameter(new CasksParameter());
 
     this.ajv.addSchema(ResourceSchema);
     this.configValidator = this.ajv.compile(mainResourceSchema);

@@ -4,7 +4,7 @@ trap 'kill $$; exit' INT
 
 if [ ! -z "$1" ]; then
   echo "Test Path Supplied: $1"
-  cirrus run --dirty integration_individual_test -e FILE_NAME="$1" # -o simple
+  cirrus run --dirty integration_individual_test -e FILE_NAME="$1" -o simple
   exit 0
 fi
 
