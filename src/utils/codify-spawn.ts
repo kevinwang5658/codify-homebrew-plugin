@@ -18,7 +18,6 @@ type CodifySpawnOptions = {
 /**
 *
 * @param cmd Command to run. Ex: `rm -rf`
-* @param args Optional additional arguments to append
 * @param opts Standard options for node spawn. Additional argument:
 * throws determines if a shell will throw a JS error. Defaults to true
 *
@@ -29,28 +28,31 @@ type CodifySpawnOptions = {
 */
 export async function codifySpawn(
   cmd: string,
-  args?: string[],
   opts?: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'> & { throws?: boolean },
 ): Promise<SpawnResult> {
   const throws = opts?.throws ?? true;
+
+  if (isDebug()) {
+    console.log(`Running command: ${cmd}`)
+  }
 
   try {
     // TODO: Need to benchmark the effects of using sh vs zsh for shell.
     //  Seems like zsh shells run slower
     const result = await internalSpawn(
       cmd,
-      args ?? [],
       opts,
     );
     
-    if (result.status !== SpawnStatus.SUCCESS && throws) {
+    if (result.status !== SpawnStatus.SUCCESS) {
       throw new Error(result.data);
     }
 
     return result;
   } catch (error) {
-    if (isDebug() || throws) {
-      console.error(`CodifySpawn Error for command ${cmd} ${args}`, error);
+
+    if (isDebug()) {
+      console.error(`CodifySpawn error for command ${cmd}`, error);
     }
 
     if (throws) {
@@ -59,19 +61,19 @@ export async function codifySpawn(
 
     return {
       status: SpawnStatus.ERROR,
-      data: error as string,
+      data: JSON.stringify(error) as string,
     }
   }
 }
 
-async function internalSpawn(command: string, args: string[], opts: any): Promise<{ status: SpawnStatus, data: string }>  {
+async function internalSpawn(cmd: string, opts: any): Promise<{ status: SpawnStatus, data: string }>  {
   return new Promise((resolve, reject) => {
     const output: string[] = []
-    
-    const _process = spawn(command, args, {
+
+    const _process = spawn(cmd, [], {
+      ...opts,
       stdio: ['inherit', 'pipe', 'pipe'],
       shell: 'zsh',
-      ...opts
     })
     
     const { stdout, stderr } = _process
@@ -93,6 +95,8 @@ async function internalSpawn(command: string, args: string[], opts: any): Promis
     stderr.on('data', (data) => {
       output.push(data.toString());
     })
+
+    _process.on('error', (data) => {})
 
     _process.on('close', (code) => {
       resolve({

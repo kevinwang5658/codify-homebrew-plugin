@@ -62,7 +62,7 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
   }
 
   async getCurrentConfig(desiredConfig: HomebrewConfig): Promise<HomebrewConfig | null> {
-    const homebrewInfo = await codifySpawn('brew config', [], { throws: false });
+    const homebrewInfo = await codifySpawn('brew config', { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
     }
@@ -100,7 +100,7 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     // Set env variables in the current process for downstream commands to work properly
     // The child processes spawned by node can't set environment variables on the parent
     // This command only works when called from bash or sh
-    const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv', [], { shell: 'sh' })
+    const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv', { shell: 'sh' })
     this.setEnvVarFromBrewResponse(brewEnvVars.data)
 
     // TODO: Add a check here to see if homebrew is writable
@@ -114,12 +114,11 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     if (homebrewDirectory === '/opt/homebrew') {
       await codifySpawn(
         'NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
-        [],
         { throws: false }
       )
     }
 
-    await codifySpawn(`sudo rm -rf ${homebrewDirectory}`, []);
+    await codifySpawn(`sudo rm -rf ${homebrewDirectory}`);
 
     // Delete eval from .zshenv
     const zshEnvLocation = `${process.env.HOME}/.zshenv`
@@ -160,15 +159,15 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
 
     // Un-tar brew in a custom dir: https://github.com/Homebrew/brew/blob/664d0c67d5947605c914c4c56ebcfaa80cb6eca0/docs/Installation.md#untar-anywhere
     // the local where brew is first activated is where it will be installed
-    await codifySpawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', [], { cwd: absoluteDir })
-    await codifySpawn('./brew config', [], { cwd: path.join(absoluteDir, '/bin') })
+    await codifySpawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', { cwd: absoluteDir })
+    await codifySpawn('./brew config', { cwd: path.join(absoluteDir, '/bin') })
 
     // Set env variables in the current process for downstream commands to work properly
     // The child processes spawned by node can't set environment variables on the parent
     await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshenv`);
 
     // This command only works when called from bash or sh
-    const brewEnvVars = await codifySpawn(`${absoluteDir}/bin/brew shellenv`, [], { cwd: absoluteDir, shell: 'sh' })
+    const brewEnvVars = await codifySpawn(`${absoluteDir}/bin/brew shellenv`, { cwd: absoluteDir, shell: 'sh' })
     this.setEnvVarFromBrewResponse(brewEnvVars.data)
   }
 

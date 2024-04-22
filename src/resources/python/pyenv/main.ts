@@ -31,7 +31,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
   }
 
   async getCurrentConfig(desiredConfig: PyenvConfig): Promise<PyenvConfig | null> {
-    const pyenvVersion = await codifySpawn('pyenv --version', [], { throws: false })
+    const pyenvVersion = await codifySpawn('pyenv --version', { throws: false })
     if (pyenvVersion.status === SpawnStatus.ERROR) {
       return null
     }
@@ -49,9 +49,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
 
     // Add startup script
     // TODO: Need to support bash in addition to zsh here
-    await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshrc')
-    await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshrc')
-    await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshenv')
+    await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshenv')
+    await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshenv')
 
     await this.setEnvVars();
   }
@@ -60,9 +60,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await codifySpawn('sudo rm -rf $(pyenv root)');
     await codifySpawn('sudo rm -rf $HOME/.pyenv');
 
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), 'export PYENV_ROOT="$HOME/.pyenv"')
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), 'eval "$(pyenv init -)"')
+    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'export PYENV_ROOT="$HOME/.pyenv"')
+    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
+    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'eval "$(pyenv init -)"')
   }
 
   async applyModify(plan: Plan<PyenvConfig>): Promise<void> {
