@@ -2,7 +2,7 @@ import { codifySpawn, SpawnStatus } from 'codify-plugin-lib';
 import { MessageStatus, ResourceOperation } from 'codify-schemas';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { TestResourceIPC } from '../../src/utils/test-utils';
-import { HomebrewConfig } from '../../src/resources/homebrew/main';
+import { HomebrewConfig } from '../../src/resources/homebrew/homebrew.js';
 
 let resource: TestResourceIPC<HomebrewConfig>;
 

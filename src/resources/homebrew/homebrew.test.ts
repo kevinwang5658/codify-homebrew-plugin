@@ -1,5 +1,5 @@
 import { ResourceOperation } from 'codify-schemas';
-import { HomebrewMainResource } from './main.js';
+import { HomebrewResource } from './homebrew';
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('Homebrew main resource', () => {
@@ -33,7 +33,7 @@ describe('Homebrew main resource', () => {
 //   })
 
   it ('removes homebrew', async () => {
-    const resource = new HomebrewMainResource();
+    const resource = new HomebrewResource();
 
     const applyResult = await resource.applyDestroy({} as any)
     expect(applyResult).to.eq(undefined)
@@ -60,7 +60,7 @@ describe('Homebrew main resource', () => {
 //   })
 
   it('test', { timeout: 300000 }, async () => {
-    const resource = new HomebrewMainResource();
+    const resource = new HomebrewResource();
 
     // Plans correctly and detects that brew is not installed
     const result = await resource.plan({

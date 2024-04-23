@@ -1,6 +1,5 @@
-import { StatefulParameter } from 'codify-plugin-lib';
-import { HomebrewConfig } from './main.js';
-import { codifySpawn, ParameterChange, Plan, SpawnStatus } from 'codify-plugin-lib';
+import { codifySpawn, ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { HomebrewConfig } from './homebrew.js';
 
 export class CasksParameter extends StatefulParameter<HomebrewConfig, 'casks'> {
   get name(): "casks" {

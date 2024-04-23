@@ -14,10 +14,10 @@ export class TestResourceIPC<R extends ResourceConfig> {
     )
   }
 
-  async plan(plan: R): Promise<{ status: MessageStatus, data: PlanResponseData }> {
+  async plan(config: R): Promise<{ status: MessageStatus, data: PlanResponseData }> {
     const result = await CodifyTestUtils.sendMessageToProcessAwaitResponse(this.childProcess, {
       cmd: 'plan',
-      data: plan,
+      data: config,
     });
 
     return {

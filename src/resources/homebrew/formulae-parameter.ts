@@ -1,5 +1,5 @@
 import { ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
-import { HomebrewConfig } from './main.js';
+import { HomebrewConfig } from './homebrew.js';
 import { codifySpawn } from '../../utils/codify-spawn.js';
 
 export class FormulaeParameter extends StatefulParameter<HomebrewConfig, 'formulae'> {

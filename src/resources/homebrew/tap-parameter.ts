@@ -1,5 +1,5 @@
 import { codifySpawn, ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
-import { HomebrewConfig } from './main.js';
+import { HomebrewConfig } from './homebrew.js';
 
 export class TapsParameter extends StatefulParameter<HomebrewConfig, 'taps'> {
   get name(): "taps" {

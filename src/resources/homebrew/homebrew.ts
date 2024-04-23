@@ -8,7 +8,7 @@ import path from 'node:path';
 import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
-import mainResourceSchema from './main-schema.json'
+import homebrewSchema from './homebrew-schema.json'
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { TapsParameter } from './tap-parameter.js';
 
@@ -19,7 +19,7 @@ export interface HomebrewConfig extends ResourceConfig {
   taps?: string[],
 }
 
-export class HomebrewMainResource extends Resource<HomebrewConfig> {
+export class HomebrewResource extends Resource<HomebrewConfig> {
   private ajv = new Ajv2020.default({
     strict: true,
   })
@@ -33,7 +33,7 @@ export class HomebrewMainResource extends Resource<HomebrewConfig> {
     this.registerStatefulParameter(new CasksParameter());
 
     this.ajv.addSchema(ResourceSchema);
-    this.configValidator = this.ajv.compile(mainResourceSchema);
+    this.configValidator = this.ajv.compile(homebrewSchema);
   }
 
   getTypeId(): string {
