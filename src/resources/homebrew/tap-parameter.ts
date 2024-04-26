@@ -1,50 +1,42 @@
-import { codifySpawn, ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { codifySpawn, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 import { HomebrewConfig } from './homebrew.js';
 
-export class TapsParameter extends StatefulParameter<HomebrewConfig, 'taps'> {
-  get name(): "taps" {
-    return 'taps';
+export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
+
+  constructor() {
+    super({
+      name: 'taps',
+    });
   }
 
-  async getCurrent(desiredValue?: string[]): Promise<HomebrewConfig['taps']> {
+  async refresh(previousValue: string[] | null): Promise<string[] | null> {
     const tapsQuery = await codifySpawn('brew tap')
 
     if (tapsQuery.status === SpawnStatus.SUCCESS && tapsQuery.data != null) {
       return tapsQuery.data
         .split('\n')
-        .filter((x) => desiredValue?.find((y) => x === y))
     } else {
-      return undefined;
+      return null;
     }
   }
 
-  async applyAdd(parameterChange: ParameterChange, plan: Plan<HomebrewConfig>): Promise<void> {
-    if (!plan.resourceConfig.taps) {
-      return;
-    }
-
-    await this.installTap(parameterChange.newValue);
+  async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+    await this.installTaps(valueToAdd);
   }
 
-  async applyModify(parameterChange: ParameterChange, plan: Plan<HomebrewConfig>): Promise<void> {
-    const { previousValue, newValue } = parameterChange;
-
+  async applyModify(newValue: string[], previousValue: string[], plan: Plan<HomebrewConfig>): Promise<void> {
     const tapsToInstall = newValue.filter((x: string) => !previousValue.includes(x))
     const tapsToUninstall = previousValue.filter((x: string) => !newValue.includes(x))
 
-    await this.installTap(tapsToInstall);
-    await this.uninstallTap(tapsToUninstall)
+    await this.installTaps(tapsToInstall);
+    await this.uninstallTaps(tapsToUninstall)
   }
 
-  async applyRemove(parameterChange: ParameterChange, plan: Plan<HomebrewConfig>): Promise<void> {
-    if (!parameterChange.newValue) {
-      return;
-    }
-
-    await this.uninstallTap(parameterChange.newValue);
+  async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+    await this.uninstallTaps(valueToRemove);
   }
 
-  private async installTap(taps: string[]): Promise<void> {
+  private async installTaps(taps: string[]): Promise<void> {
     if (!taps || taps.length === 0) {
       return;
     }
@@ -52,13 +44,13 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, 'taps'> {
     const result = await codifySpawn(`brew tap ${taps.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
-      console.log(`Installed tap: ${taps}`);
+      console.log(`Installed taps: ${taps}`);
     } else {
-      throw new Error(`Failed to install tap: ${taps}. ${JSON.stringify(result.data, null, 2)}`)
+      throw new Error(`Failed to install taps: ${taps}. ${JSON.stringify(result.data, null, 2)}`)
     }
   }
 
-  private async uninstallTap(taps: string[]): Promise<void> {
+  private async uninstallTaps(taps: string[]): Promise<void> {
     if (!taps || taps.length === 0) {
       return;
     }
@@ -66,9 +58,9 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, 'taps'> {
     const result = await codifySpawn(`brew untap ${taps.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
-      console.log(`Uninstalled cask: ${taps}`);
+      console.log(`Uninstalled taps: ${taps}`);
     } else {
-      throw new Error(`Failed to uninstall cask: ${taps}. ${JSON.stringify(result.data, null, 2)}`)
+      throw new Error(`Failed to uninstall taps: ${taps}. ${JSON.stringify(result.data, null, 2)}`)
     }
   }
 

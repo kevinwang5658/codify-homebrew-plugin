@@ -1,33 +1,33 @@
-import { codifySpawn, ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { codifySpawn, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 import { PyenvConfig } from './main.js';
 
-export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, 'global'>{
+export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, string>{
 
-  get name(): 'global' {
-    return 'global';
+  constructor() {
+    super({
+      name: 'global',
+    });
   }
 
-  async getCurrent(desiredValue: PyenvConfig['global']): Promise<PyenvConfig['global']> {
+  async refresh(previousValue: string | null): Promise<string | null> {
     const { status, data } = await codifySpawn('pyenv global')
 
     if (status === SpawnStatus.ERROR) {
-      return undefined;
+      return null;
     }
 
     return data;
   }
 
-  async applyAdd(parameterChange: ParameterChange, plan: Plan<PyenvConfig>): Promise<void> {
-    const desiredVersion = parameterChange.newValue;
-    await codifySpawn(`pyenv global ${desiredVersion}`)
+  async applyAdd(valueToAdd: string, plan: Plan<PyenvConfig>): Promise<void> {
+    await codifySpawn(`pyenv global ${valueToAdd}`)
   }
 
-  async applyModify(parameterChange: ParameterChange, plan: Plan<PyenvConfig>): Promise<void> {
-    const desiredVersion = parameterChange.newValue;
-    await codifySpawn(`pyenv global ${desiredVersion}`)
+  async applyModify(newValue: string, previousValue: string, plan: Plan<PyenvConfig>): Promise<void> {
+    await codifySpawn(`pyenv global ${newValue}`)
   }
 
-  async applyRemove(parameterChange: ParameterChange, plan: Plan<PyenvConfig>): Promise<void> {
+  async applyRemove(valueToRemove: string, plan: Plan<PyenvConfig>): Promise<void> {
     await codifySpawn('pyenv global system')
   }
 }

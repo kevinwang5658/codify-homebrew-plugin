@@ -1,80 +1,67 @@
-import { ParameterChange, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 import { HomebrewConfig } from './homebrew.js';
 import { codifySpawn } from '../../utils/codify-spawn.js';
 
-export class FormulaeParameter extends StatefulParameter<HomebrewConfig, 'formulae'> {
-  get name(): "formulae" {
-    return 'formulae';
+export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[]> {
+
+  constructor() {
+    super({
+      name: 'formulae',
+    });
   }
 
-  async getCurrent(desiredValue?: string[]): Promise<HomebrewConfig["formulae"]> {
+  async refresh(previousValue: string[] | null): Promise<string[] | null> {
     const formulaeQuery = await codifySpawn('brew list --formula -1')
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
       return formulaeQuery.data
         .split('\n')
-        .filter((x) => desiredValue?.find((y) => x === y))
     } else {
-      return undefined;
+      return null;
     }
   }
 
-  async applyAdd(parameterChange: ParameterChange, plan: Plan<HomebrewConfig>): Promise<void> {
-    if (!plan.resourceConfig.formulae) {
+  async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+    await this.installFormulae(valueToAdd);
+  }
+
+  async applyModify(newValue: string[], previousValue: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+    const formulaeToInstall = newValue.filter((x: string) => !previousValue.includes(x));
+    const formulaeToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
+
+    await this.uninstallFormulae(formulaeToUninstall);
+    await this.installFormulae(formulaeToInstall);
+  }
+
+  async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+    await this.uninstallFormulae(valueToRemove);
+  }
+
+  private async installFormulae(formulae: string[]): Promise<void> {
+    if (!formulae || formulae.length === 0) {
       return;
     }
 
-    for (const formula of plan.resourceConfig.formulae) {
-      await this.installFormula(formula)
+    const result = await codifySpawn(`brew install --formula ${formulae.join(' ')}`)
+
+    if (result.status === SpawnStatus.SUCCESS) {
+      console.log(`Installed formula: ${formulae.join(' ')}`);
+    } else {
+      throw new Error(`Failed to install formula: ${formulae}. ${JSON.stringify(result.data, null, 2)}`)
     }
   }
 
-  async applyModify(parameterChange: ParameterChange, plan: Plan<HomebrewConfig>): Promise<void> {
-    const { previousValue, newValue } = parameterChange;
-
-    const formulaeToInstall = newValue.filter((x: string) => !previousValue.includes(x))
-    const formulaeToUninstall = previousValue.filter((x: string) => !newValue.includes(x))
-
-    for (const formula of formulaeToInstall) {
-      await this.installFormula(formula)
-    }
-
-    for (const formula of formulaeToUninstall) {
-      await this.uninstallFormula(formula)
-    }
-  }
-
-  async applyRemove(parameterChange: ParameterChange, plan: Plan<HomebrewConfig>): Promise<void> {
-    if (!plan.resourceConfig.formulae) {
+  private async uninstallFormulae(formulae: string[]): Promise<void> {
+    if (!formulae || formulae.length === 0) {
       return;
     }
 
-    for (const formula of plan.resourceConfig.formulae) {
-      await this.uninstallFormula(formula)
-    }
-  }
-
-  // TODO: This doesn't work when brew is installed to a custom location
-  private async installFormula(formula: string): Promise<void> {
-    const result = await codifySpawn(`brew install --formula ${formula}`)
-    console.log(process.env);
-    // const result = await execa('brew', ['install', '--formula', formula], { verbose: true });
+    const result = await codifySpawn(`brew uninstall ${formulae.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
-      console.log(`Installed formula: ${formula}`);
+      console.log(`Uninstalled formulae: ${formulae.join(' ')}`);
     } else {
-      throw new Error(`Failed to install formula: ${formula}. ${JSON.stringify(result.data, null, 2)}`)
+      throw new Error(`Failed to uninstall formulae: ${formulae}. ${JSON.stringify(result.data, null, 2)}`)
     }
   }
-
-  private async uninstallFormula(formula: string): Promise<void> {
-    const result = await codifySpawn(`brew uninstall --formula ${formula}`)
-
-    if (result.status === SpawnStatus.SUCCESS) {
-      console.log(`Uninstalled formula: ${formula}`);
-    } else {
-      throw new Error(`Failed to uninstall formula: ${formula}. ${JSON.stringify(result.data, null, 2)}`)
-    }
-  }
-
 }

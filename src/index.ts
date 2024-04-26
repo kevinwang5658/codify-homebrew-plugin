@@ -7,13 +7,13 @@ function buildPlugin(): Plugin {
   const resourceMap = new Map();
 
   const homebrewResource = new HomebrewResource()
-  resourceMap.set(homebrewResource.getTypeId(), homebrewResource)
+  resourceMap.set(homebrewResource.typeId, homebrewResource)
 
   const pythonResource = new PyenvResource()
-  resourceMap.set(pythonResource.getTypeId(), pythonResource)
+  resourceMap.set(pythonResource.typeId, pythonResource)
 
   const gitLfsResource = new GitLfsResource()
-  resourceMap.set(gitLfsResource.getTypeId(), gitLfsResource)
+  resourceMap.set(gitLfsResource.typeId, gitLfsResource)
 
   return new Plugin(resourceMap);
 }

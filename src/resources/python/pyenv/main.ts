@@ -1,5 +1,5 @@
-import { ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig, ResourceOperation } from 'codify-schemas';
+import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { ResourceConfig } from 'codify-schemas';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
@@ -16,10 +16,13 @@ export interface PyenvConfig extends ResourceConfig {
 export class PyenvResource extends Resource<PyenvConfig> {
 
   constructor() {
-    super();
-
-    this.registerStatefulParameter(new PythonVersionsParameter());
-    this.registerStatefulParameter(new PyenvGlobalParameter());
+    super({
+      type: 'pyenv',
+      statefulParameters: [
+        new PythonVersionsParameter(),
+        new PyenvGlobalParameter(),
+      ]
+    });
   }
 
   getTypeId(): string {
@@ -30,19 +33,14 @@ export class PyenvResource extends Resource<PyenvConfig> {
     return [];
   }
 
-  async getCurrentConfig(desiredConfig: PyenvConfig): Promise<PyenvConfig | null> {
+  async refresh(keys: Set<keyof PyenvConfig>): Promise<Partial<PyenvConfig> | null> {
     const pyenvVersion = await codifySpawn('pyenv --version', { throws: false })
     if (pyenvVersion.status === SpawnStatus.ERROR) {
       return null
     }
 
-    return { type: this.getTypeId() }
+    return {};
   }
-
-  calculateOperation(change: ParameterChange): ResourceOperation.MODIFY | ResourceOperation.RECREATE {
-    return ResourceOperation.RECREATE
-  }
-
 
   async applyCreate(plan: Plan<PyenvConfig>): Promise<void> {
     await codifySpawn('curl https://pyenv.run | bash')
@@ -63,12 +61,6 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'export PYENV_ROOT="$HOME/.pyenv"')
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'eval "$(pyenv init -)"')
-  }
-
-  async applyModify(plan: Plan<PyenvConfig>): Promise<void> {
-  }
-
-  async applyRecreate(plan: Plan<PyenvConfig>): Promise<void> {
   }
 
   private async setEnvVars(): Promise<void> {
