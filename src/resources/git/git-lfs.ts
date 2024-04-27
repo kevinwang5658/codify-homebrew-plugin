@@ -11,6 +11,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   constructor() {
     super({
       type: 'git-lfs',
+      dependencies: ['homebrew'],
     });
   }
 
