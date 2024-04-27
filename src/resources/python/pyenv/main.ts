@@ -11,6 +11,7 @@ import { PythonVersionsParameter } from './python-versions-parameter.js';
 export interface PyenvConfig extends ResourceConfig {
   pythonVersions?: string[],
   global?: string,
+  // TODO: Add option here to use homebrew to install instead. Default to true. Maybe add option to set default values to resource config.
 }
 
 export class PyenvResource extends Resource<PyenvConfig> {
@@ -25,11 +26,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
     });
   }
 
-  getTypeId(): string {
-    return 'pyenv';
-  }
-
   async validate(config: unknown): Promise<ValidationResult> {
+    // TODO: Add validation logic
+
     return {
       isValid: true,
     }
@@ -52,6 +51,8 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshenv')
     await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshenv')
     await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshenv')
+
+    //TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
 
     await this.setEnvVars();
   }

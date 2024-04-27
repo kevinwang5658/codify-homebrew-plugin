@@ -15,8 +15,9 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
     });
   }
 
-  // TODO: Update this method to have a more sane return type. No user is going to know the string[] is for errors.
   async validate(config: unknown): Promise<ValidationResult> {
+    // TODO: Add validate method here
+
     return {
       isValid: true,
     }
