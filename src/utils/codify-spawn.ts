@@ -59,9 +59,16 @@ export async function codifySpawn(
       throw error;
     }
 
+    if (error instanceof Error) {
+      return {
+        status: SpawnStatus.ERROR,
+        data: error.message,
+      }
+    }
+
     return {
       status: SpawnStatus.ERROR,
-      data: JSON.stringify(error) as string,
+      data: error + '',
     }
   }
 }

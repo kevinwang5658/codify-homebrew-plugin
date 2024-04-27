@@ -8,12 +8,13 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     });
   }
 
-  async refresh(previousValue: string[] | null): Promise<string[] | null> {
+  async refresh(): Promise<string[] | null> {
     const formulaeQuery = await codifySpawn('brew list --casks -1')
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
       return formulaeQuery.data
         .split('\n')
+        .filter(Boolean)
     } else {
       return null;
     }
@@ -23,12 +24,15 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     await this.installCasks(valueToAdd);
   }
 
-  async applyModify(newValue: string[], previousValue: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  async applyModify(newValue: string[], previousValue: string[], allowDeletes: boolean, plan: Plan<HomebrewConfig>): Promise<void> {
     const casksToInstall = newValue.filter((x: string) => !previousValue.includes(x));
     const casksToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
 
-    await this.uninstallCasks(casksToUninstall);
     await this.installCasks(casksToInstall);
+
+    if (allowDeletes) {
+      await this.uninstallCasks(casksToUninstall);
+    }
   }
 
   async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {

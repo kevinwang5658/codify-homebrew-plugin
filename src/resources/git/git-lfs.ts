@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import { codifySpawn } from '../../utils/codify-spawn.js';
 
@@ -15,8 +15,10 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   }
 
   // TODO: Update this method to have a more sane return type. No user is going to know the string[] is for errors.
-  async validate(config: unknown): Promise<string[] | undefined> {
-    return undefined;
+  async validate(config: unknown): Promise<ValidationResult> {
+    return {
+      isValid: true,
+    }
   }
 
   async refresh(keys: Set<keyof GitLfsConfig>): Promise<Partial<GitLfsConfig> | null> {

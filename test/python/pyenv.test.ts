@@ -44,13 +44,13 @@ describe('Pyenv resource integration tests', () => {
   });
 
   it ('Can install additional python versions', { timeout: 500000 }, async () => {
-    const planResult = await resource.plan({
+    const plan = await resource.plan({
       type: 'pyenv',
       pythonVersions: ['3.11', '3.12'],
       global: '3.12',
     })
     
-    expect(planResult).toMatchObject({
+    expect(plan).toMatchObject({
       status: MessageStatus.SUCCESS,
       data: {
         operation: ResourceOperation.MODIFY,
@@ -58,7 +58,7 @@ describe('Pyenv resource integration tests', () => {
     });
 
     expect(await resource.apply({
-      planId: planResult.data.planId,
+      planId: plan.data.planId,
     })).toMatchObject({
       status: MessageStatus.SUCCESS,
       data: null

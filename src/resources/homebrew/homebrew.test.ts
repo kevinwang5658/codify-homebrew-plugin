@@ -71,7 +71,6 @@ describe('Homebrew main resource', () => {
       ]
     });
 
-    console.log(result);
     expect(result).toMatchObject({
       changeSet: {
         operation: ResourceOperation.CREATE

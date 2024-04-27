@@ -9,12 +9,13 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
     });
   }
 
-  async refresh(previousValue: string[] | null): Promise<string[] | null> {
+  async refresh(): Promise<string[] | null> {
     const tapsQuery = await codifySpawn('brew tap')
 
     if (tapsQuery.status === SpawnStatus.SUCCESS && tapsQuery.data != null) {
       return tapsQuery.data
         .split('\n')
+        .filter(Boolean)
     } else {
       return null;
     }
@@ -24,12 +25,15 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
     await this.installTaps(valueToAdd);
   }
 
-  async applyModify(newValue: string[], previousValue: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  async applyModify(newValue: string[], previousValue: string[], allowDeletes: boolean, plan: Plan<HomebrewConfig>): Promise<void> {
     const tapsToInstall = newValue.filter((x: string) => !previousValue.includes(x))
     const tapsToUninstall = previousValue.filter((x: string) => !newValue.includes(x))
 
     await this.installTaps(tapsToInstall);
-    await this.uninstallTaps(tapsToUninstall)
+
+    if (allowDeletes) {
+      await this.uninstallTaps(tapsToUninstall)
+    }
   }
 
   async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {

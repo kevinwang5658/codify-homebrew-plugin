@@ -18,6 +18,14 @@
       "file": "$PROJECT_DIR$/src/resources/homebrew/main.test.ts",
       "testNames": ["Homebrew main resource", "test"],
       "vitestOptions": ["--run",  "--disable-console-intercept"]
+    },
+    {
+      "name": "Pyenv resource integration tests.Installs pyenv and python",
+      "type": "vitest",
+      "workingDir": "$PROJECT_DIR$",
+      "file": "$PROJECT_DIR$/test/python/pyenv.test.ts",
+      "testNames": ["Pyenv resource integration tests", "Installs pyenv and python"],
+      "vitestOptions": ["--run", "--disable-console-intercept"]
     }
     
   ]

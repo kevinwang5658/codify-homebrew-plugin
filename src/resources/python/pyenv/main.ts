@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -29,8 +29,10 @@ export class PyenvResource extends Resource<PyenvConfig> {
     return 'pyenv';
   }
 
-  async validate(config: unknown): Promise<string[] | undefined> {
-    return [];
+  async validate(config: unknown): Promise<ValidationResult> {
+    return {
+      isValid: true,
+    }
   }
 
   async refresh(keys: Set<keyof PyenvConfig>): Promise<Partial<PyenvConfig> | null> {

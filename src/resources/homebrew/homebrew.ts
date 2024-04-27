@@ -1,6 +1,6 @@
 import { ValidateFunction } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig, ResourceSchema } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
@@ -33,19 +33,27 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
         new TapsParameter(),
         new FormulaeParameter(),
         new CasksParameter(),
-      ]
+      ],
+      parameterConfigurations: {
+        directory: {
+          isEqual: (a, b) => untildify(a) === untildify(b),
+        }
+      }
     });
 
     this.ajv.addSchema(ResourceSchema);
     this.configValidator = this.ajv.compile(homebrewSchema);
   }
 
-  async validate(config: unknown): Promise<string[] | undefined> {
+  async validate(config: unknown): Promise<ValidationResult> {
     const isValid = this.configValidator(config);
     if (!isValid) {
-      return this.configValidator.errors
-        ?.map((e) => e.message)
-        .filter(Boolean) as string[];
+      return {
+        isValid: false,
+        errors: this.configValidator.errors
+          ?.map((e) => e.message)
+          .filter(Boolean) as string[]
+      }
     }
 
     const homebrewConfig = config as HomebrewConfig;
@@ -57,11 +65,16 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
         : true
 
       if (!path.isAbsolute(homebrewConfig.directory) || !isDirectory) {
-        return [`HomebrewConfig directory ${dir} does not exist`]
+        return {
+          isValid: false,
+          errors: [`HomebrewConfig directory ${dir} does not exist`]
+        }
       }
     }
 
-    return undefined
+    return {
+      isValid: true
+    }
   }
 
   async refresh(keys: Set<keyof HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {

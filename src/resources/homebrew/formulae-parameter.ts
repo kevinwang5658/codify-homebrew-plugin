@@ -10,12 +10,13 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
     });
   }
 
-  async refresh(previousValue: string[] | null): Promise<string[] | null> {
+  async refresh(): Promise<string[] | null> {
     const formulaeQuery = await codifySpawn('brew list --formula -1')
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
       return formulaeQuery.data
         .split('\n')
+        .filter(Boolean);
     } else {
       return null;
     }
@@ -25,12 +26,15 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
     await this.installFormulae(valueToAdd);
   }
 
-  async applyModify(newValue: string[], previousValue: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  async applyModify(newValue: string[], previousValue: string[], allowDeletes: boolean, plan: Plan<HomebrewConfig>): Promise<void> {
     const formulaeToInstall = newValue.filter((x: string) => !previousValue.includes(x));
     const formulaeToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
 
-    await this.uninstallFormulae(formulaeToUninstall);
     await this.installFormulae(formulaeToInstall);
+
+    if (allowDeletes) {
+      await this.uninstallFormulae(formulaeToUninstall);
+    }
   }
 
   async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {
