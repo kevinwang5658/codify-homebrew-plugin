@@ -1,5 +1,5 @@
-import { ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig, ResourceOperation } from 'codify-schemas';
+import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
+import { ResourceConfig } from 'codify-schemas';
 import { codifySpawn } from '../../utils/codify-spawn.js';
 
 export interface GitLfsConfig extends ResourceConfig {
@@ -8,81 +8,76 @@ export interface GitLfsConfig extends ResourceConfig {
 
 export class GitLfsResource extends Resource<GitLfsConfig> {
 
-    getTypeId(): string {
-        return 'git-lfs';
+  constructor() {
+    super({
+      type: 'git-lfs',
+      dependencies: ['homebrew'],
+    });
+  }
+
+  async validate(config: unknown): Promise<ValidationResult> {
+    // TODO: Add validate method here
+
+    return {
+      isValid: true,
+    }
+  }
+
+  async refresh(keys: Set<keyof GitLfsConfig>): Promise<Partial<GitLfsConfig> | null> {
+    const result = await codifySpawn('git lfs', { throws: false });
+
+    if (result.status === SpawnStatus.ERROR) {
+      return null;
     }
 
-    // TODO: Update this method to have a more sane return type. No user is going to know the string[] is for errors.
-    async validate(config: unknown): Promise<string[] | undefined> {
-      return undefined;
+    if (!await this.checkIfGitLfsIsInstalled()) {
+      return null;
     }
 
-    // TODO: Fix this return type as well. Need to make sure to omit type, name and dependencies. No point of that here.
-    async getCurrentConfig(desiredConfig: GitLfsConfig): Promise<GitLfsConfig | null> {
-      const result = await codifySpawn('git lfs', { throws: false });
-      if (result.status === SpawnStatus.ERROR) {
-        return null;
-      }
+    return {}
+  }
 
-      if (!await this.checkIfGitLfsIsInstalled()) {
-        return null;
-      }
+  // FYI: This create might be called if git-lfs is installed but not initialized.
+  async applyCreate(plan: Plan<GitLfsConfig>): Promise<void> {
+    await this.assertBrewInstalled();
 
-      return {
-        type: 'git-lfs',
-      };
+    const gitLfsCheck = await codifySpawn('git lfs', { throws: false });
+    if (gitLfsCheck.status === SpawnStatus.ERROR) {
+      await codifySpawn('brew install git-lfs');
     }
 
-    // TODO: Maybe make this method optional and default to RECREATE
-    calculateOperation(change: ParameterChange): ResourceOperation.MODIFY | ResourceOperation.RECREATE {
-        return ResourceOperation.RECREATE;
-    }
+    await codifySpawn('git lfs install');
+  }
 
-    // FYI: This create might be called if git-lfs is installed but not initialized.
-    async applyCreate(plan: Plan<GitLfsConfig>): Promise<void> {
-      await this.assertBrewInstalled();
-      
-      const gitLfsCheck = await codifySpawn('git lfs', { throws: false });
-      if (gitLfsCheck.status === SpawnStatus.ERROR) {
-        await codifySpawn('brew install git-lfs');
-      }
+  async applyDestroy(plan: Plan<GitLfsConfig>): Promise<void> {
+    await this.assertBrewInstalled();
 
-      await codifySpawn('git lfs install');
-    }
+    await codifySpawn('git lfs uninstall');
+    await codifySpawn('brew uninstall git-lfs');
+  }
 
-    async applyModify(plan: Plan<GitLfsConfig>): Promise<void> {}
+  private async checkIfGitLfsIsInstalled(): Promise<boolean> {
+    const gitLfsStatus = await codifySpawn('git lfs env');
 
-    async applyRecreate(plan: Plan<GitLfsConfig>): Promise<void> {}
+    const lines = gitLfsStatus.data.split('\n');
+    const emptyLfsLines = lines.filter((l) => l.includes('git config'))
+      .map((l) => l.split('=')[1].trim())
+      .some((s) => s === '""');
 
-    async applyDestroy(plan: Plan<GitLfsConfig>): Promise<void> {
-      await this.assertBrewInstalled();
-      
-      await codifySpawn('git lfs uninstall');
-      await codifySpawn('brew uninstall git-lfs');
-    }
+    return !emptyLfsLines;
+  }
 
-    private async checkIfGitLfsIsInstalled(): Promise<boolean> {
-      const gitLfsStatus = await codifySpawn('git lfs env');
-
-      const lines = gitLfsStatus.data.split('\n');
-      const emptyLfsLines = lines.filter((l) => l.includes('git config'))
-        .map((l) => l.split('=')[1].trim())
-        .some((s) => s === '""');
-
-      return !emptyLfsLines;
-    }
-  
-    private async assertBrewInstalled(): Promise<void> {
-      const brewCheck = await codifySpawn('which brew', { throws: false });
-      if (brewCheck.status === SpawnStatus.ERROR) {
-        throw new Error(
-          `Homebrew is not installed. Cannot install git-lfs without Homebrew installed.
+  private async assertBrewInstalled(): Promise<void> {
+    const brewCheck = await codifySpawn('which brew', { throws: false });
+    if (brewCheck.status === SpawnStatus.ERROR) {
+      throw new Error(
+        `Homebrew is not installed. Cannot install git-lfs without Homebrew installed.
 
 Brew can be installed using Codify:
 {
-  "type": "homebrew",
+"type": "homebrew",
 }`
-        );
-      }
+      );
     }
+  }
 }

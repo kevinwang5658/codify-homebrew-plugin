@@ -1,7 +1,7 @@
 import { ValidateFunction } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { ParameterChange, Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig, ResourceOperation, ResourceSchema } from 'codify-schemas';
+import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
+import { ResourceConfig, ResourceSchema } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -27,25 +27,33 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   private readonly configValidator: ValidateFunction;
 
   constructor() {
-    super();
-    this.registerStatefulParameter(new TapsParameter());
-    this.registerStatefulParameter(new FormulaeParameter());
-    this.registerStatefulParameter(new CasksParameter());
+    super({
+      type: 'homebrew',
+      statefulParameters: [
+        new TapsParameter(),
+        new FormulaeParameter(),
+        new CasksParameter(),
+      ],
+      parameterConfigurations: {
+        directory: {
+          isEqual: (a, b) => untildify(a) === untildify(b),
+        }
+      }
+    });
 
     this.ajv.addSchema(ResourceSchema);
     this.configValidator = this.ajv.compile(homebrewSchema);
   }
 
-  getTypeId(): string {
-    return 'homebrew';
-  }
-
-  async validate(config: unknown): Promise<string[] | undefined> {
+  async validate(config: unknown): Promise<ValidationResult> {
     const isValid = this.configValidator(config);
     if (!isValid) {
-      return this.configValidator.errors
-        ?.map((e) => e.message)
-        .filter(Boolean) as string[];
+      return {
+        isValid: false,
+        errors: this.configValidator.errors
+          ?.map((e) => e.message)
+          .filter(Boolean) as string[]
+      }
     }
 
     const homebrewConfig = config as HomebrewConfig;
@@ -57,34 +65,30 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
         : true
 
       if (!path.isAbsolute(homebrewConfig.directory) || !isDirectory) {
-        return [`HomebrewConfig directory ${dir} does not exist`]
+        return {
+          isValid: false,
+          errors: [`HomebrewConfig directory ${dir} does not exist`]
+        }
       }
     }
 
-    return undefined
+    return {
+      isValid: true
+    }
   }
 
-  async getCurrentConfig(desiredConfig: HomebrewConfig): Promise<HomebrewConfig | null> {
+  async refresh(keys: Set<keyof HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
     const homebrewInfo = await codifySpawn('brew config', { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
     }
 
-    const currentConfig: HomebrewConfig = { type: this.getTypeId() }
-    if (desiredConfig.directory) {
-      const desiredLocation = untildify(desiredConfig.directory);
-      const currentInstallLocation = this.getCurrentLocation(homebrewInfo.data);
-
-      currentConfig.directory = (currentInstallLocation && path.resolve(currentInstallLocation) === path.resolve(desiredLocation))
-        ? desiredConfig.directory
-        : currentInstallLocation;
+    const result: Partial<HomebrewConfig> = {}
+    if (keys.has('directory')) {
+      result.directory = this.getCurrentLocation(homebrewInfo.data);
     }
 
-    return currentConfig
-  }
-
-  calculateOperation(change: ParameterChange): ResourceOperation.MODIFY | ResourceOperation.RECREATE {
-    return ResourceOperation.RECREATE
+    return result;
   }
 
   async applyCreate(plan: Plan<HomebrewConfig>): Promise<void> {
@@ -93,8 +97,8 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
       await codifySpawn('xcode-select --install')
     }
 
-    if (plan.resourceConfig.directory) {
-      return this.installBrewInCustomDir(plan.resourceConfig.directory)
+    if (plan.desiredConfig.directory) {
+      return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }
 
     await codifySpawn('NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
@@ -104,7 +108,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     // The child processes spawned by node can't set environment variables on the parent
     // This command only works when called from bash or sh
     const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv', { shell: 'sh' })
-    this.setEnvVarFromBrewResponse(brewEnvVars.data)
+    await this.setEnvVarFromBrewResponse(brewEnvVars.data)
 
     // TODO: Add a check here to see if homebrew is writable
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
@@ -128,12 +132,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     const zshEnvFile = await fs.readFile(zshEnvLocation, 'utf8')
     const editedZshEnvFile = zshEnvFile.replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
     await fs.writeFile(zshEnvLocation, editedZshEnvFile)
-  }
-
-  async applyModify(plan: Plan<HomebrewConfig>): Promise<void> {
-  }
-
-  async applyRecreate(plan: Plan<HomebrewConfig>): Promise<void> {
   }
 
   private async isXcodeSelectInstalled(): Promise<boolean> {

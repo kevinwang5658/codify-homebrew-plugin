@@ -6,7 +6,7 @@ import { HomebrewConfig } from '../../src/resources/homebrew/homebrew.js';
 
 let resource: TestResourceIPC<HomebrewConfig>;
 
-describe('Homebrew main resource integration tests', () => {
+describe('Homebrew custom install integration tests', () => {
   beforeEach(() => {
     // Use to print logs to help with debugging
     process.env.DEBUG='codify';
