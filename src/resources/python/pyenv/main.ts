@@ -46,15 +46,13 @@ export class PyenvResource extends Resource<PyenvConfig> {
   async applyCreate(plan: Plan<PyenvConfig>): Promise<void> {
     await codifySpawn('curl https://pyenv.run | bash')
 
-    // Add startup script
+    // Add to startup script
     // TODO: Need to support bash in addition to zsh here
     await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshenv')
     await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshenv')
     await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshenv')
 
     //TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
-
-    await this.setEnvVars();
   }
 
   async applyDestroy(plan: Plan<PyenvConfig>): Promise<void> {
@@ -64,16 +62,5 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'export PYENV_ROOT="$HOME/.pyenv"')
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'eval "$(pyenv init -)"')
-  }
-
-  private async setEnvVars(): Promise<void> {
-    const pyenvRootResponse= await codifySpawn('echo \"$HOME/.pyenv\"');
-    const pyenvRoot = pyenvRootResponse.data.trim();
-
-    const newPathResponse = await codifySpawn(`echo "${pyenvRoot}/bin:$PATH"`);
-    const newPath = newPathResponse.data.trim();
-
-    process.env['PYENV_ROOT'] = pyenvRoot;
-    process.env['PATH'] = newPath;
   }
 }

@@ -11,7 +11,8 @@
     "test:unit": "vitest src/**/*.test.ts",
     "test:integration:dev": "./scripts/test-harness.sh",
     "test:integration": "vitest test/**/*.test.ts",
-    "test": "vitest"
+    "test": "vitest",
+    "release": "rollup -c"
   },
   "keywords": [],
   "author": "",

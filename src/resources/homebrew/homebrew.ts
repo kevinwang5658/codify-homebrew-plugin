@@ -104,12 +104,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     await codifySpawn('NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
     await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshenv'); // TODO: may need to support non zsh shells here
 
-    // Set env variables in the current process for downstream commands to work properly
-    // The child processes spawned by node can't set environment variables on the parent
-    // This command only works when called from bash or sh
-    const brewEnvVars = await codifySpawn('/opt/homebrew/bin/brew shellenv', { shell: 'sh' })
-    await this.setEnvVarFromBrewResponse(brewEnvVars.data)
-
     // TODO: Add a check here to see if homebrew is writable
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
   }
@@ -159,40 +153,14 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     // Un-tar brew in a custom dir: https://github.com/Homebrew/brew/blob/664d0c67d5947605c914c4c56ebcfaa80cb6eca0/docs/Installation.md#untar-anywhere
-    // the local where brew is first activated is where it will be installed
+    // the location where brew is first activated is where it will be installed
     await codifySpawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', { cwd: absoluteDir })
+
+    // Activate brew to install it in the directory
     await codifySpawn('./brew config', { cwd: path.join(absoluteDir, '/bin') })
 
-    // Set env variables in the current process for downstream commands to work properly
-    // The child processes spawned by node can't set environment variables on the parent
+    // Update shell startup scripts
     await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshenv`);
-
-    // This command only works when called from bash or sh
-    const brewEnvVars = await codifySpawn(`${absoluteDir}/bin/brew shellenv`, { cwd: absoluteDir, shell: 'sh' })
-    this.setEnvVarFromBrewResponse(brewEnvVars.data)
-  }
-
-  // Ex:
-  // export HOMEBREW_PREFIX="/Users/Personal/homebrew";
-  // export HOMEBREW_CELLAR="/Users/Personal/homebrew/Cellar";
-  // export HOMEBREW_REPOSITORY="/Users/Personal/homebrew";
-  // ...
-  private async setEnvVarFromBrewResponse(response: string): Promise<void> {
-    const separatedLines = response.split('\n')
-          .filter(Boolean)
-          .map((x) => x.split(' ')[1])
-//    for (const line of separatedLines) {
-//      await codifySpawn(line);
-//    }
-
-
-//
-    for (const x of separatedLines) {
-      const [key, value] = x.split('=')
-      const cleanedValue = value.replace(';', '');
-      const resolvedValue = await codifySpawn(`echo ${cleanedValue}`);
-      process.env[key] = resolvedValue.data.replace('\n', '');
-    }
   }
 
   // Ex:
