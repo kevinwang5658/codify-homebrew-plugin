@@ -4,6 +4,7 @@ import { PyenvResource } from './resources/python/pyenv/main.js';
 import { GitLfsResource } from './resources/git/git-lfs.js';
 import { AwsCliResource } from './resources/aws-cli/aws-cli.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
+import { NvmResource } from './resources/node/nvm.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
@@ -22,6 +23,9 @@ function buildPlugin(): Plugin {
 
   const terraformResource = new TerraformResource()
   resourceMap.set(terraformResource.typeId, terraformResource)
+
+  const nvmResource = new NvmResource();
+  resourceMap.set(nvmResource.typeId, nvmResource);
 
   return new Plugin(resourceMap);
 }
