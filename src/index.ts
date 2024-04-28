@@ -3,6 +3,7 @@ import { HomebrewResource } from './resources/homebrew/homebrew.js';
 import { PyenvResource } from './resources/python/pyenv/main.js';
 import { GitLfsResource } from './resources/git/git-lfs.js';
 import { AwsCliResource } from './resources/aws-cli/aws-cli.js';
+import { TerraformResource } from './resources/terraform/terraform.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
@@ -18,6 +19,9 @@ function buildPlugin(): Plugin {
 
   const awsCliResource = new AwsCliResource()
   resourceMap.set(awsCliResource.typeId, awsCliResource)
+
+  const terraformResource = new TerraformResource()
+  resourceMap.set(terraformResource.typeId, terraformResource)
 
   return new Plugin(resourceMap);
 }
