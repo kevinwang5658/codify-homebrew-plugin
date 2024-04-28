@@ -1,9 +1,9 @@
 import { CodifyTestUtils } from 'codify-plugin-lib';
-import { ApplyRequestData, MessageStatus, PlanResponseData, ResourceConfig } from 'codify-schemas';
+import { ApplyRequestData, MessageStatus, PlanResponseData, StringIndexedObject } from 'codify-schemas';
 import { ChildProcess, fork } from 'node:child_process';
 import path from 'node:path';
 
-export class TestResourceIPC<R extends ResourceConfig> {
+export class TestResourceIPC<R extends StringIndexedObject> {
   childProcess: ChildProcess
 
   constructor() {
