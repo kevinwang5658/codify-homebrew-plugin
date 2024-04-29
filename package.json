@@ -4,15 +4,15 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "init": "./scripts/init.sh",
-    "start:vm": "./scripts/start-vm.sh",
-    "start:dev:ssh": "./scripts/run-test.sh",
+    "init": "bin/init.sh",
+    "start:vm": "bin/start-vm.sh",
+    "start:dev:ssh": "bin/run-test.sh",
     "start:dev": "tsc && cirrus run --dirty run_dev",
     "test:unit": "vitest src/**/*.test.ts",
-    "test:integration:dev": "./scripts/test-harness.sh",
+    "test:integration:dev": "bin/test-harness.sh",
     "test:integration": "vitest test/**/*.test.ts",
     "test": "vitest",
-    "release": "rollup -c"
+    "rollup": "rollup -c"
   },
   "keywords": [],
   "author": "",
