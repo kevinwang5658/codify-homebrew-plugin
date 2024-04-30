@@ -16,8 +16,14 @@
         "type": "string"
       }
     },
-    "$ref": {
-      "const": "https://www.codify.com/resource-schema.json#properties"
+    "taps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "directory": {
+      "type": "string"
     }
   },
   "additionalProperties": false

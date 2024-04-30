@@ -1,4 +1,5 @@
 import { spawn, SpawnOptions } from 'node:child_process';
+import chalk from 'chalk';
 
 export enum SpawnStatus {
   SUCCESS = 'success',
@@ -13,6 +14,8 @@ export interface SpawnResult {
 type CodifySpawnOptions = {
   cwd?: string;
   stdioString?: boolean;
+  throws?: boolean,
+  requiresRoot?: boolean
 } & SpawnOptions
 
 /**
@@ -28,7 +31,7 @@ type CodifySpawnOptions = {
 */
 export async function codifySpawn(
   cmd: string,
-  opts?: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'> & { throws?: boolean },
+  opts?: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'>,
 ): Promise<SpawnResult> {
   const throws = opts?.throws ?? true;
 
@@ -41,7 +44,7 @@ export async function codifySpawn(
     //  Seems like zsh shells run slower
     const result = await internalSpawn(
       cmd,
-      opts,
+      opts ?? {},
     );
     
     if (result.status !== SpawnStatus.SUCCESS) {
@@ -73,20 +76,37 @@ export async function codifySpawn(
   }
 }
 
-async function internalSpawn(cmd: string, opts: any): Promise<{ status: SpawnStatus, data: string }>  {
+async function internalSpawn(cmd: string, opts: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'>): Promise<{ status: SpawnStatus, data: string }>  {
   return new Promise((resolve, reject) => {
     const output: string[] = []
 
-    const _process = spawn(cmd, [], {
+    const _cmd = !opts.requiresRoot ? cmd : 'sudo ' + cmd;
+
+    if (opts.requiresRoot) {
+      console.log(chalk.blue(`Installation requires root access to run command: '${_cmd}'`));
+    }
+
+    // Source start up shells to emulate a users environment vs. a non-interactive non-login shell script
+    const _process = spawn(`source ~/.zshrc; ${_cmd}`, [], {
       ...opts,
       stdio: ['inherit', 'pipe', 'pipe'],
-      shell: 'zsh',
-    })
+      shell: 'zsh'
+    });
     
-    const { stdout, stderr } = _process
+    const { stdout, stderr, stdin } = _process
     stdout.setEncoding('utf8');
     stderr.setEncoding('utf8');
-    
+
+    stdout.on('data', (data) => {
+      output.push(data.toString());
+    })
+
+    stderr.on('data', (data) => {
+      output.push(data.toString());
+    })
+
+    _process.on('error', (data) => {})
+
     // please node that this is not a full replacement for 'inherit'
     // the child process can and will detect if stdout is a pty and change output based on it
     // the terminal context is lost & ansi information (coloring) etc will be lost
@@ -94,16 +114,6 @@ async function internalSpawn(cmd: string, opts: any): Promise<{ status: SpawnSta
       stdout.pipe(process.stdout)
       stderr.pipe(process.stderr)
     }
-    
-    stdout.on('data', (data) => {
-      output.push(data.toString());
-    })
-    
-    stderr.on('data', (data) => {
-      output.push(data.toString());
-    })
-
-    _process.on('error', (data) => {})
 
     _process.on('close', (code) => {
       resolve({

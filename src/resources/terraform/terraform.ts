@@ -93,8 +93,8 @@ ${JSON.stringify(releaseInfo, null, 2)}
       await Utils.createDirectoryIfNotExists(directory);
     }
 
-    await codifySpawn(`sudo mv ./terraform ${directory}`, { cwd: temporaryDir })
-    await codifySpawn(`sudo rm -rf ${temporaryDir}`)
+    await codifySpawn(`mv ./terraform ${directory}`, { cwd: temporaryDir, requiresRoot: true })
+    await codifySpawn(`rm -rf ${temporaryDir}`)
 
     if (!await Utils.isDirectoryOnPath(directory)) {
       await codifySpawn(`echo 'export PATH=$PATH:${directory}' >> $HOME/.zshenv`);
@@ -112,7 +112,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
       return;
     }
 
-    await codifySpawn(`sudo rm ${installLocationQuery.data}`);
+    await codifySpawn(`rm ${installLocationQuery.data}`, { requiresRoot: true });
   }
 
   async getLatestTerraformInfo(): Promise<HashicorpReleaseInfo> {
