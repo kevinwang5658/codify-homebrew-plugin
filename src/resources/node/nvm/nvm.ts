@@ -2,8 +2,13 @@ import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib
 import { ResourceConfig } from 'codify-schemas';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { codifySpawn } from '../../utils/codify-spawn.js';
-import { FileUtils } from '../../utils/file-utils.js';
+import { ValidateFunction } from 'ajv';
+import { codifySpawn } from '../../../utils/codify-spawn.js';
+import { FileUtils } from '../../../utils/file-utils.js';
+import { NvmNodeVersionsParameter } from './node-versions-parameter.js';
+import { NvmGlobalParameter } from './global-parameter.js';
+import Schema from './nvm-schema.json';
+import Ajv2020 from 'ajv/dist/2020.js';
 
 export interface NvmConfig extends ResourceConfig {
   nodeVersions?: string[],
@@ -12,19 +17,29 @@ export interface NvmConfig extends ResourceConfig {
 }
 
 export class NvmResource extends Resource<NvmConfig> {
+  private ajv = new Ajv2020.default({
+    strict: true,
+  })
+  private readonly validator: ValidateFunction;
 
   constructor() {
     super({
       type: 'nvm',
-      statefulParameters: []
+      statefulParameters: [
+        new NvmNodeVersionsParameter(),
+        new NvmGlobalParameter(),
+      ]
     });
+
+    this.validator = this.ajv.compile(Schema);
   }
 
   async validate(config: unknown): Promise<ValidationResult> {
-    // TODO: Add validation logic
+    const isValid = this.validator(config)
 
     return {
-      isValid: true,
+      isValid,
+      errors: this.validator.errors ?? undefined,
     }
   }
 
