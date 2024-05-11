@@ -12,7 +12,7 @@ export default {
   },
   plugins: [
     json(),
-    nodeResolve(),
+    nodeResolve({ exportConditions: ['node']}),
     typescript(),
     commonjs(),
     terser()
