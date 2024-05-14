@@ -1,10 +1,19 @@
-import { codifySpawn, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ArrayStatefulParameter, codifySpawn, Plan, SpawnStatus } from 'codify-plugin-lib';
 import { HomebrewConfig } from './homebrew.js';
 
-export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> {
+export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
   constructor() {
     super({
       name: 'casks',
+      isElementEqual: (desired, current) => {
+        // Handle the case where the name is fully qualified (tap + name)
+        if (desired.includes('/')) {
+          const formulaName = desired.split('/').slice(-1)[0];
+          return formulaName === current;
+        }
+
+        return desired === current;
+      },
     });
   }
 
@@ -38,6 +47,9 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {
     await this.uninstallCasks(valueToRemove);
   }
+
+  async applyAddItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
+  async applyRemoveItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
 
   private async installCasks(casks: string[]): Promise<void> {
     if (!casks || casks.length === 0) {

@@ -108,6 +108,41 @@ describe('Homebrew main resource integration tests', () => {
     });
   })
 
+  it ('Can handle fully qualified formula names (tap + formula)', { timeout: 300000 }, async () => {
+    const planResult = await resource.plan({
+      type: 'homebrew',
+      formulae: [
+        'cirruslabs/cli/cirrus',
+      ],
+    })
+
+    expect(planResult).toMatchObject({
+      status: MessageStatus.SUCCESS,
+      data: {
+        operation: ResourceOperation.MODIFY,
+      }
+    });
+
+    expect(await resource.apply({
+      planId: planResult.data.planId,
+    })).toMatchObject({
+      status: MessageStatus.SUCCESS,
+      data: null
+    })
+
+    expect(await resource.plan({
+      type: 'homebrew',
+      formulae: [
+        'cirruslabs/cli/cirrus',
+      ],
+    })).toMatchObject({
+      status: MessageStatus.SUCCESS,
+      data: {
+        operation: ResourceOperation.NOOP,
+      }
+    });
+  })
+
   it ('Can uninstall brew', { timeout: 30000 }, async () => {
     expect(await resource.apply({
       plan: {

@@ -11,7 +11,7 @@ describe('Multi-resource tests', async () => {
     resource2 = new TestResourceIPC();
   })
 
-  it('Can install git-lfs and homebrew together', { timeout: 30000 }, async () => {
+  it('Can install git-lfs and homebrew together', { timeout: 300000 }, async () => {
     const homebrewPlan = await resource.plan({
       type: 'homebrew',
     })

@@ -1,12 +1,20 @@
-import { Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ArrayStatefulParameter, Plan, SpawnStatus } from 'codify-plugin-lib';
 import { HomebrewConfig } from './homebrew.js';
 import { codifySpawn } from '../../utils/codify-spawn.js';
 
-export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[]> {
-
+export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
   constructor() {
     super({
       name: 'formulae',
+      isElementEqual: (desired, current) => {
+        // Handle the case where the name is fully qualified (tap + name)
+        if (desired.includes('/')) {
+          const formulaName = desired.split('/').slice(-1)[0];
+          return formulaName === current;
+        }
+
+        return desired === current;
+      },
     });
   }
 
@@ -54,6 +62,10 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
       throw new Error(`Failed to install formula: ${formulae}. ${JSON.stringify(result.data, null, 2)}`)
     }
   }
+
+  // These aren't being used since the apply* methods of the parent are being overridden
+  async applyAddItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
+  async applyRemoveItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
 
   private async uninstallFormulae(formulae: string[]): Promise<void> {
     if (!formulae || formulae.length === 0) {
