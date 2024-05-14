@@ -7,6 +7,9 @@ import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { PyenvGlobalParameter } from './global-parameter.js';
 import { PythonVersionsParameter } from './python-versions-parameter.js';
+import Ajv2020 from 'ajv/dist/2020.js';
+import Schema from './pyenv-schema.json';
+import { ValidateFunction } from 'ajv';
 
 export interface PyenvConfig extends ResourceConfig {
   pythonVersions?: string[],
@@ -15,6 +18,10 @@ export interface PyenvConfig extends ResourceConfig {
 }
 
 export class PyenvResource extends Resource<PyenvConfig> {
+  private ajv = new Ajv2020.default({
+    strict: true,
+  })
+  private readonly validator: ValidateFunction;
 
   constructor() {
     super({
@@ -24,13 +31,16 @@ export class PyenvResource extends Resource<PyenvConfig> {
         new PyenvGlobalParameter(),
       ]
     });
+
+    this.validator = this.ajv.compile(Schema)
   }
 
   async validate(config: unknown): Promise<ValidationResult> {
-    // TODO: Add validation logic
+    const isValid = this.validator(config)
 
     return {
-      isValid: true,
+      isValid,
+      errors: this.validator.errors ?? undefined,
     }
   }
 

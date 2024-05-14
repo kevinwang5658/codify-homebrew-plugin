@@ -1,6 +1,6 @@
 import { Plugin, runPlugin } from 'codify-plugin-lib';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
-import { PyenvResource } from './resources/python/pyenv/main.js';
+import { PyenvResource } from './resources/python/pyenv/pyenv.js';
 import { GitLfsResource } from './resources/git/git-lfs.js';
 import { AwsCliResource } from './resources/aws-cli/aws-cli.js';
 import { TerraformResource } from './resources/terraform/terraform.js';

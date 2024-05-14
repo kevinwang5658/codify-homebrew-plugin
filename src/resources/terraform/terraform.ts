@@ -6,6 +6,9 @@ import { codifySpawn } from '../../utils/codify-spawn.js';
 import { Utils } from '../../utils/index.js';
 import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
 import { untildify } from '../../utils/untildify.js';
+import Ajv2020 from 'ajv/dist/2020.js';
+import Schema from './terraform-schema.json';
+import { ValidateFunction } from 'ajv';
 
 const TERRAFORM_RELEASES_API_URL = 'https://api.releases.hashicorp.com/v1/releases/terraform';
 const TERRAFORM_RELEASE_INFO_API_URL = (version: string) => `https://api.releases.hashicorp.com/v1/releases/terraform/${version}`;
@@ -18,6 +21,11 @@ export interface TerraformConfig extends StringIndexedObject {
 }
 
 export class TerraformResource extends Resource<TerraformConfig> {
+  private ajv = new Ajv2020.default({
+    strict: true,
+  })
+  private readonly validator: ValidateFunction;
+
   constructor() {
     super({
       type: 'terraform',
@@ -27,13 +35,16 @@ export class TerraformResource extends Resource<TerraformConfig> {
         }
       }
     });
+
+    this.validator = this.ajv.compile(Schema)
   }
 
   async validate(config: unknown): Promise<ValidationResult> {
-    // TODO: Verify that directory is fully qualified
+    const isValid = this.validator(config)
 
     return {
-      isValid: true,
+      isValid,
+      errors: this.validator.errors ?? undefined,
     }
   }
 

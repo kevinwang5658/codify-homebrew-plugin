@@ -1,7 +1,7 @@
 import { ArrayStatefulParameter, Plan } from 'codify-plugin-lib';
 
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
-import { PyenvConfig } from './main.js';
+import { PyenvConfig } from './pyenv.js';
 
 export class PythonVersionsParameter extends ArrayStatefulParameter<PyenvConfig, string> {
 

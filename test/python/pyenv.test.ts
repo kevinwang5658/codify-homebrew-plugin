@@ -1,7 +1,7 @@
 import { MessageStatus, ResourceOperation } from 'codify-schemas';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { TestResourceIPC } from '../../src/utils/test-utils';
-import { PyenvConfig } from '../../src/resources/python/pyenv/main.js';
+import { PyenvConfig } from '../../src/resources/python/pyenv/pyenv.js';
 
 let resource: TestResourceIPC<PyenvConfig>;
 

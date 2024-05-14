@@ -1,25 +1,35 @@
 import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import { codifySpawn } from '../../utils/codify-spawn.js';
+import Ajv2020 from 'ajv/dist/2020.js';
+import Schema from './git-lfs-schema.json';
+import { ValidateFunction } from 'ajv';
 
 export interface GitLfsConfig extends ResourceConfig {
   // TODO: Add --system option for installing.
 }
 
 export class GitLfsResource extends Resource<GitLfsConfig> {
+  private ajv = new Ajv2020.default({
+    strict: true,
+  })
+  private readonly validator: ValidateFunction;
 
   constructor() {
     super({
       type: 'git-lfs',
       dependencies: ['homebrew'],
     });
+
+    this.validator = this.ajv.compile(Schema);
   }
 
   async validate(config: unknown): Promise<ValidationResult> {
-    // TODO: Add validate method here
+    const isValid = this.validator(config)
 
     return {
-      isValid: true,
+      isValid,
+      errors: this.validator.errors ?? undefined,
     }
   }
 

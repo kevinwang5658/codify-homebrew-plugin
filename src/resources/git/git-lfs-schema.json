@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codify.com/git-lfs.json",
+  "title": "Git-LFS resource",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

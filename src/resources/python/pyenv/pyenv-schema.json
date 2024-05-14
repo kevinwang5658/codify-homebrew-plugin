@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codify.com/pyenv.json",
+  "title": "Pyenv resource",
+  "type": "object",
+  "properties": {
+    "pythonVersions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "global": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
