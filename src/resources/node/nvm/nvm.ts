@@ -43,7 +43,7 @@ export class NvmResource extends Resource<NvmConfig> {
     }
   }
 
-  async refresh(keys: Set<keyof NvmConfig>): Promise<Partial<NvmConfig> | null> {
+  async refresh(keys: Map<keyof NvmConfig, any>): Promise<Partial<NvmConfig> | null> {
     const nvmQuery = await codifySpawn('command -v nvm', { throws: false })
     if (nvmQuery.status === SpawnStatus.ERROR) {
       return null

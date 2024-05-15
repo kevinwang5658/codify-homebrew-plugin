@@ -35,7 +35,7 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     }
   }
 
-  async refresh(keys: Set<string | number>): Promise<Partial<AwsCliConfig> | null> {
+  async refresh(): Promise<Partial<AwsCliConfig> | null> {
     const awsCliInfo = await codifySpawn('which aws', { throws: false });
     if (awsCliInfo.status === SpawnStatus.ERROR) {
       return null;

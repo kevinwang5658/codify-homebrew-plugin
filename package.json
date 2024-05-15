@@ -22,8 +22,8 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "semver": "^7.6.0",
-    "codify-plugin-lib": "1.0.46",
-    "codify-schemas": "1.0.32",
+    "codify-plugin-lib": "1.0.47",
+    "codify-schemas": "1.0.33",
     "chalk": "^5.3.0"
   },
   "devDependencies": {

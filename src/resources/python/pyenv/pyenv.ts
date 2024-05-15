@@ -44,7 +44,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
     }
   }
 
-  async refresh(keys: Set<keyof PyenvConfig>): Promise<Partial<PyenvConfig> | null> {
+  async refresh(): Promise<Partial<PyenvConfig> | null> {
     const pyenvVersion = await codifySpawn('pyenv --version', { throws: false })
     if (pyenvVersion.status === SpawnStatus.ERROR) {
       return null

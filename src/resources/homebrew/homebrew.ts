@@ -77,14 +77,14 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
   }
 
-  async refresh(keys: Set<keyof HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
+  async refresh(desired: Map<keyof HomebrewConfig, any>): Promise<Partial<HomebrewConfig> | null> {
     const homebrewInfo = await codifySpawn('brew config', { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
     }
 
     const result: Partial<HomebrewConfig> = {}
-    if (keys.has('directory')) {
+    if (desired.has('directory')) {
       result.directory = this.getCurrentLocation(homebrewInfo.data);
     }
 

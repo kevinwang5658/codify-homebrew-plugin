@@ -33,7 +33,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
     }
   }
 
-  async refresh(keys: Set<keyof GitLfsConfig>): Promise<Partial<GitLfsConfig> | null> {
+  async refresh(): Promise<Partial<GitLfsConfig> | null> {
     const result = await codifySpawn('git lfs', { throws: false });
 
     if (result.status === SpawnStatus.ERROR) {
