@@ -13,14 +13,28 @@ export class PythonVersionsParameter extends ArrayStatefulParameter<PyenvConfig,
     });
   }
 
-  async refresh(): Promise<string[] | null> {
-    const { status, data } = await codifySpawn('pyenv versions --bare')
+  async refresh(desired: string[]): Promise<string[] | null> {
+    // Use pyenv latest to match the desired values to existing installed versions. The
+    // reason behind this is that pyenv does special version processing during installs. For ex: specifying
+    // pyenv install 3 will install the latest version 3.12.2
+    const matchedVersions = desired
+      ? await Promise.all(desired.map(async (desiredVersion) => {
+        const { status, data } = await codifySpawn(`pyenv latest ${desiredVersion}`, { throws: false });
+        if (status === SpawnStatus.ERROR) {
+          return null;
+        }
 
-    if (status === SpawnStatus.ERROR) {
-      return null;
-    }
+        return desiredVersion;
+      }))
+      : [];
 
-    return data.split('\n').filter(Boolean);
+    // TODO: Add this when stateful parameters get implemented. Otherwise this is un-needed.
+    // const { status, data } = await codifySpawn('pyenv versions --bare')
+    // if (status === SpawnStatus.ERROR) {
+    //   return null;
+    // }
+
+    return matchedVersions.filter(Boolean) as string[];
   }
 
   async applyAddItem(version: string, plan: Plan<PyenvConfig>): Promise<void> {
