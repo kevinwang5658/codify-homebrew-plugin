@@ -85,7 +85,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
 
 Brew can be installed using Codify:
 {
-"type": "homebrew",
+  "type": "homebrew",
 }`
       );
     }

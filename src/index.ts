@@ -5,6 +5,7 @@ import { GitLfsResource } from './resources/git/git-lfs.js';
 import { AwsCliResource } from './resources/aws-cli/aws-cli.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
+import { PgcliResource } from './resources/pgcli/pgcli.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
@@ -26,6 +27,9 @@ function buildPlugin(): Plugin {
 
   const nvmResource = new NvmResource();
   resourceMap.set(nvmResource.typeId, nvmResource);
+
+  const pgcliResource = new PgcliResource();
+  resourceMap.set(pgcliResource.typeId, pgcliResource);
 
   return new Plugin(resourceMap);
 }
