@@ -41,7 +41,6 @@ export class PgcliResource extends Resource<PgcliConfig> {
     return {}
   }
 
-  // FYI: This create might be called if git-lfs is installed but not initialized.
   async applyCreate(plan: Plan<PgcliConfig>): Promise<void> {
     const isBrewInstalled = await this.isBrewInstalled();
     if (isBrewInstalled) {

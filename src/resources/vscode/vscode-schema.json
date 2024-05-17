@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codify.com/vscode.json",
+  "title": "Vscode resource",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "The installation of VSCode. This value defaults to the Applications folder",
+      "default": "/Applications"
+    }
+  },
+  "additionalProperties": false
+}

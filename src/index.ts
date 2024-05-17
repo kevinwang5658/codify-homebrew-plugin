@@ -6,6 +6,7 @@ import { AwsCliResource } from './resources/aws-cli/aws-cli.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
+import { VscodeResource } from './resources/vscode/vscode.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
@@ -30,6 +31,9 @@ function buildPlugin(): Plugin {
 
   const pgcliResource = new PgcliResource();
   resourceMap.set(pgcliResource.typeId, pgcliResource);
+
+  const vscodeResource = new VscodeResource();
+  resourceMap.set(vscodeResource.typeId, vscodeResource);
 
   return new Plugin(resourceMap);
 }
