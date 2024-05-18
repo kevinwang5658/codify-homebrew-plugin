@@ -59,16 +59,20 @@ export class VscodeResource extends Resource<VscodeConfig> {
   }
 
   async applyCreate(plan: Plan<VscodeConfig>): Promise<void> {
+    const directory = plan.desiredConfig.directory ?? DEFAULT_INSTALL_DIRECTORY;
+
     // Create a temporary tmp dir
     const temporaryDirQuery = await codifySpawn('mktemp -d');
     const temporaryDir = temporaryDirQuery.data.trim();
 
     // Download vscode
-    await codifySpawn(`curl -fsSL "${DOWNLOAD_LINK}" -o "${VSCODE_APPLICATION_NAME}"`, { cwd: temporaryDir });
+    await codifySpawn(`curl -fsSL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
+
+    // Unzip
+    await codifySpawn('unzip vscode.zip', { cwd: temporaryDir });
 
     // Move VSCode to the applications folder
-    await codifySpawn('ls', { cwd: temporaryDir });
-    await codifySpawn(`mv "${VSCODE_APPLICATION_NAME}" ${plan.desiredConfig.directory}`, { cwd: temporaryDir })
+    await codifySpawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir })
     await codifySpawn(`rm -rf ${temporaryDir}`)
   }
 
