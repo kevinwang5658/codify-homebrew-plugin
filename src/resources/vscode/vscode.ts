@@ -7,7 +7,6 @@ import { ValidateFunction } from 'ajv';
 import { TerraformConfig } from '../terraform/terraform.js';
 import path from 'node:path';
 
-const DEFAULT_INSTALL_DIRECTORY = '/Applications';
 const VSCODE_APPLICATION_NAME = 'Visual Studio Code.app';
 const DOWNLOAD_LINK = 'https://code.visualstudio.com/sha/download?build=stable&os=darwin-universal';
 
@@ -26,7 +25,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
       type: 'vscode',
       dependencies: ['homebrew'],
       parameterConfigurations: {
-        directory: {}
+        directory: { defaultValue: '/Applications' }
       }
     });
 
@@ -43,7 +42,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
   }
 
   async refresh(desired: Map<string, any>): Promise<Partial<VscodeConfig> | null> {
-    const directory = desired.get('directory') ?? DEFAULT_INSTALL_DIRECTORY
+    const directory = desired.get('directory')
 
     const isInstalled = await this.isVscodeInstalled(directory);
     if (!isInstalled) {
@@ -59,8 +58,6 @@ export class VscodeResource extends Resource<VscodeConfig> {
   }
 
   async applyCreate(plan: Plan<VscodeConfig>): Promise<void> {
-    const directory = plan.desiredConfig.directory ?? DEFAULT_INSTALL_DIRECTORY;
-
     // Create a temporary tmp dir
     const temporaryDirQuery = await codifySpawn('mktemp -d');
     const temporaryDir = temporaryDirQuery.data.trim();
@@ -72,13 +69,13 @@ export class VscodeResource extends Resource<VscodeConfig> {
     await codifySpawn('unzip vscode.zip', { cwd: temporaryDir });
 
     // Move VSCode to the applications folder
+    const directory = plan.desiredConfig.directory;
     await codifySpawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir })
     await codifySpawn(`rm -rf ${temporaryDir}`)
   }
 
   async applyDestroy(plan: Plan<VscodeConfig>): Promise<void> {
-    const directory = plan.currentConfig.directory ?? DEFAULT_INSTALL_DIRECTORY
-
+    const directory = plan.currentConfig.directory;
     const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
     await codifySpawn(`rm -r ${location}`);
   }
