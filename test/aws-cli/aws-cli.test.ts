@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { TestResourceIPC } from '../../src/utils/test-utils.js';
-import { AwsCliConfig } from '../../src/resources/aws-cli/aws-cli.js';
+import { AwsCliConfig } from '../../src/resources/aws-cli/cli/aws-cli.js';
 import { MessageStatus, ResourceOperation } from 'codify-schemas';
 import { HomebrewConfig } from '../../src/resources/homebrew/homebrew.js';
 

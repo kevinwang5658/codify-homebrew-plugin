@@ -2,11 +2,12 @@ import { Plugin, runPlugin } from 'codify-plugin-lib';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
 import { PyenvResource } from './resources/python/pyenv/pyenv.js';
 import { GitLfsResource } from './resources/git/git-lfs.js';
-import { AwsCliResource } from './resources/aws-cli/aws-cli.js';
+import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
+import { AwsConfigureResource } from './resources/aws-cli/configure/aws-configure.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
@@ -22,6 +23,9 @@ function buildPlugin(): Plugin {
 
   const awsCliResource = new AwsCliResource()
   resourceMap.set(awsCliResource.typeId, awsCliResource)
+
+  const awsConfigureResource = new AwsConfigureResource()
+  resourceMap.set(awsConfigureResource.typeId, awsConfigureResource)
 
   const terraformResource = new TerraformResource()
   resourceMap.set(terraformResource.typeId, terraformResource)

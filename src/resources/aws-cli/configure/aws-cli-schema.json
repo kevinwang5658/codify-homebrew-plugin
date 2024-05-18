@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codify.com/aws-cli.json",
+  "title": "Aws-CLI configure resource",
+  "type": "object",
+  "properties": {
+    "profile": {
+      "type": "string",
+      "description": "The aws profile that is being configured",
+      "default": "default"
+    },
+    "awsAccessKeyId": {
+      "type": "string",
+      "description": "The access key id from AWS"
+    },
+    "awsSecretAccessKey": {
+      "type": "string",
+      "description": "The access key secret from AWS"
+    },
+    "region": {
+      "type": "string",
+      "description": "The region from AWS"
+    },
+    "output": {
+      "type": "string",
+      "description": "The output format secret from AWS"
+    },
+    "metadataServiceTimeout": {
+      "type": "string",
+      "description": "The metadata service timeout"
+    },
+    "metadataServiceNumAttempts": {
+      "type": "string",
+      "description": "The metadata service num attempts"
+    }
+  },
+  "required": ["awsAccessKeyId", "awsSecretAccessKey"],
+  "additionalProperties": false
+}
