@@ -2,10 +2,12 @@ import { Plan, Resource, ValidationResult } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
 import Ajv2020 from 'ajv/dist/2020.js';
-import Schema from '../cli/aws-cli-schema.json';
+import Schema from './aws-configure-schema.json';
+import { CSVCredentialsParameter } from './csv-credentials-parameter.js';
 
 export interface AwsConfigureConfig extends StringIndexedObject {
   profile: string;
+  csvCredentials: string,
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
   region?: string;
@@ -20,6 +22,9 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     super({
       type: 'aws-configure',
       dependencies: ['aws-cli'],
+      transformParameters: {
+        csvCredentials: new CSVCredentialsParameter(),
+      },
       parameterConfigurations: {
         profile: { defaultValue: 'default' },
       }
@@ -29,9 +34,15 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
   async validate(parameters: unknown): Promise<ValidationResult> {
     const ajv = new Ajv2020.default({
       strict: true,
+      strictRequired: false,
     })
     const validator = ajv.compile(Schema);
     const isValid = validator(parameters)
+
+    const p = parameters as Partial<AwsConfigureConfig>;
+    if (p.csvCredentials && (p.awsAccessKeyId || p.awsSecretAccessKey)) {
+      throw new Error('Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey');
+    }
 
     return {
       isValid,

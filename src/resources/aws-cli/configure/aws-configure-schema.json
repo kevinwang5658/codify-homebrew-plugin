@@ -17,6 +17,10 @@
       "type": "string",
       "description": "The access key secret from AWS"
     },
+    "csvCredentials": {
+      "type": "string",
+      "description": "An AWS credentials file with access credentials"
+    },
     "region": {
       "type": "string",
       "description": "The region from AWS"
@@ -34,6 +38,9 @@
       "description": "The metadata service num attempts"
     }
   },
-  "required": ["awsAccessKeyId", "awsSecretAccessKey"],
+  "oneOf": [
+    { "required": ["awsAccessKeyId", "awsSecretAccessKey"]},
+    { "required": ["csvCredentials"] }
+  ],
   "additionalProperties": false
 }
