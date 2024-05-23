@@ -23,9 +23,10 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
       return null;
     }
 
-    if (!await this.checkIfGitLfsIsInstalled()) {
-      return null;
-    }
+    // TODO: Move this to a separate resource in the future to initialize git-lfs for a dir
+    // if (!await this.checkIfGitLfsIsInstalled()) {
+    //   return null;
+    // }
 
     return {}
   }
@@ -39,13 +40,13 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
       await codifySpawn('brew install git-lfs');
     }
 
-    await codifySpawn('git lfs install');
+    // await codifySpawn('git lfs install');
   }
 
   async applyDestroy(plan: Plan<GitLfsConfig>): Promise<void> {
     await this.assertBrewInstalled();
 
-    await codifySpawn('git lfs uninstall');
+    // await codifySpawn('git lfs uninstall');
     await codifySpawn('brew uninstall git-lfs');
   }
 

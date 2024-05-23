@@ -51,45 +51,45 @@ describe('Git lfs integration tests', async () => {
     });
   })
 
-  it('Can initialize git-lfs if it\'s been already installed', { timeout: 300000 }, async () => {
-    expect(await resource.plan({
-      type: 'git-lfs',
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.NOOP,
-      }
-    });
-
-    const uninstall = await codifySpawn('git lfs uninstall');
-    expect(uninstall.status).to.equal(MessageStatus.SUCCESS);
-
-    const plan = await resource.plan({
-      type: 'git-lfs',
-    })
-    
-    expect(plan).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.CREATE,
-      },
-    })
-
-    expect(await resource.apply({
-      planId: plan.data.planId,
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-    })
-
-    expect(await resource.plan({
-      type: 'git-lfs',
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.NOOP,
-      }
-    })
-  })
+  // it('Can initialize git-lfs if it\'s been already installed', { timeout: 300000 }, async () => {
+  //   expect(await resource.plan({
+  //     type: 'git-lfs',
+  //   })).toMatchObject({
+  //     status: MessageStatus.SUCCESS,
+  //     data: {
+  //       operation: ResourceOperation.NOOP,
+  //     }
+  //   });
+  //
+  //   const uninstall = await codifySpawn('git lfs uninstall');
+  //   expect(uninstall.status).to.equal(MessageStatus.SUCCESS);
+  //
+  //   const plan = await resource.plan({
+  //     type: 'git-lfs',
+  //   })
+  //
+  //   expect(plan).toMatchObject({
+  //     status: MessageStatus.SUCCESS,
+  //     data: {
+  //       operation: ResourceOperation.CREATE,
+  //     },
+  //   })
+  //
+  //   expect(await resource.apply({
+  //     planId: plan.data.planId,
+  //   })).toMatchObject({
+  //     status: MessageStatus.SUCCESS,
+  //   })
+  //
+  //   expect(await resource.plan({
+  //     type: 'git-lfs',
+  //   })).toMatchObject({
+  //     status: MessageStatus.SUCCESS,
+  //     data: {
+  //       operation: ResourceOperation.NOOP,
+  //     }
+  //   })
+  // })
 
   it('Can uninstall git-lfs', async () => {
     expect(await resource.apply({
