@@ -1,14 +1,12 @@
-import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
+import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { ValidateFunction } from 'ajv';
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { NvmNodeVersionsParameter } from './node-versions-parameter.js';
 import { NvmGlobalParameter } from './global-parameter.js';
 import Schema from './nvm-schema.json';
-import Ajv2020 from 'ajv/dist/2020.js';
 
 export interface NvmConfig extends ResourceConfig {
   nodeVersions?: string[],
@@ -17,30 +15,15 @@ export interface NvmConfig extends ResourceConfig {
 }
 
 export class NvmResource extends Resource<NvmConfig> {
-  private ajv = new Ajv2020.default({
-    strict: true,
-  })
-  private readonly validator: ValidateFunction;
-
   constructor() {
     super({
       type: 'nvm',
-      statefulParameters: [
-        new NvmNodeVersionsParameter(),
-        new NvmGlobalParameter(),
-      ]
+      schema: Schema,
+      parameterOptions: {
+        nodeVersions: { statefulParameter: new NvmNodeVersionsParameter(), order: 1 },
+        global: { statefulParameter: new NvmGlobalParameter(), order: 2 },
+      }
     });
-
-    this.validator = this.ajv.compile(Schema);
-  }
-
-  async validate(config: unknown): Promise<ValidationResult> {
-    const isValid = this.validator(config)
-
-    return {
-      isValid,
-      errors: this.validator.errors ?? undefined,
-    }
   }
 
   async refresh(keys: Map<keyof NvmConfig, any>): Promise<Partial<NvmConfig> | null> {

@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
+import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -7,9 +7,7 @@ import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { PyenvGlobalParameter } from './global-parameter.js';
 import { PythonVersionsParameter } from './python-versions-parameter.js';
-import Ajv2020 from 'ajv/dist/2020.js';
 import Schema from './pyenv-schema.json';
-import { ValidateFunction } from 'ajv';
 
 export interface PyenvConfig extends ResourceConfig {
   pythonVersions?: string[],
@@ -18,30 +16,15 @@ export interface PyenvConfig extends ResourceConfig {
 }
 
 export class PyenvResource extends Resource<PyenvConfig> {
-  private ajv = new Ajv2020.default({
-    strict: true,
-  })
-  private readonly validator: ValidateFunction;
-
   constructor() {
     super({
       type: 'pyenv',
-      statefulParameters: [
-        new PythonVersionsParameter(),
-        new PyenvGlobalParameter(),
-      ]
+      schema: Schema,
+      parameterOptions: {
+        pythonVersions: { statefulParameter: new PythonVersionsParameter(), order: 1 },
+        global: { statefulParameter: new PyenvGlobalParameter(), order: 2 },
+      }
     });
-
-    this.validator = this.ajv.compile(Schema)
-  }
-
-  async validate(config: unknown): Promise<ValidationResult> {
-    const isValid = this.validator(config)
-
-    return {
-      isValid,
-      errors: this.validator.errors ?? undefined,
-    }
   }
 
   async refresh(): Promise<Partial<PyenvConfig> | null> {

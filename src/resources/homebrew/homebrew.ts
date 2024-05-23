@@ -1,14 +1,12 @@
-import { ValidateFunction } from 'ajv';
-import Ajv2020 from 'ajv/dist/2020.js';
 import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
-import { ResourceConfig, ResourceSchema } from 'codify-schemas';
+import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
-import homebrewSchema from './homebrew-schema.json'
+import HomebrewSchema from './homebrew-schema.json'
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { TapsParameter } from './tap-parameter.js';
 
@@ -20,42 +18,20 @@ export interface HomebrewConfig extends ResourceConfig {
 }
 
 export class HomebrewResource extends Resource<HomebrewConfig> {
-  private ajv = new Ajv2020.default({
-    strict: true,
-  })
-
-  private readonly configValidator: ValidateFunction;
-
   constructor() {
     super({
       type: 'homebrew',
-      statefulParameters: [
-        new TapsParameter(),
-        new FormulaeParameter(),
-        new CasksParameter(),
-      ],
-      parameterConfigurations: {
-        directory: {
-          isEqual: (a, b) => untildify(a) === untildify(b),
-        }
+      schema: HomebrewSchema,
+      parameterOptions: {
+        directory: { isEqual: (a, b) => untildify(a) === untildify(b) },
+        taps: { statefulParameter: new TapsParameter(), order: 1 },
+        formulae: { statefulParameter: new FormulaeParameter(), order: 2 },
+        casks: { statefulParameter: new CasksParameter(), order: 3 },
       }
     });
-
-    this.ajv.addSchema(ResourceSchema);
-    this.configValidator = this.ajv.compile(homebrewSchema);
   }
 
   async validate(config: unknown): Promise<ValidationResult> {
-    const isValid = this.configValidator(config);
-    if (!isValid) {
-      return {
-        isValid: false,
-        errors: this.configValidator.errors
-          ?.map((e) => e.message)
-          .filter(Boolean) as string[]
-      }
-    }
-
     const homebrewConfig = config as HomebrewConfig;
 
     if (homebrewConfig.directory) {
