@@ -68,11 +68,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   }
 
   async applyCreate(plan: Plan<HomebrewConfig>): Promise<void> {
-    if (!(await this.isXcodeSelectInstalled())) {
-      console.log('Installing xcode select')
-      await codifySpawn('xcode-select --install')
-    }
-
     if (plan.desiredConfig.directory) {
       return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }
@@ -102,12 +97,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     const zshEnvFile = await fs.readFile(zshEnvLocation, 'utf8')
     const editedZshEnvFile = zshEnvFile.replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
     await fs.writeFile(zshEnvLocation, editedZshEnvFile)
-  }
-
-  private async isXcodeSelectInstalled(): Promise<boolean> {
-    // 2 if not installed 0 if installed
-    const xcodeSelectCheck = await codifySpawn('xcode-select -p 1>/dev/null;echo $?') // TODO: Fix this because it's buggy
-    return xcodeSelectCheck.data ? Number.parseInt(xcodeSelectCheck.data) === 0 : false;
   }
 
   private async dirExists(dir: string): Promise<boolean> {

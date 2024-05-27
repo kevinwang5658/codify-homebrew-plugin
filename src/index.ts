@@ -8,9 +8,13 @@ import { NvmResource } from './resources/node/nvm/nvm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
 import { AwsConfigureResource } from './resources/aws-cli/configure/aws-configure.js';
+import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 
 function buildPlugin(): Plugin {
   const resourceMap = new Map();
+
+  const xcodeToolsResource = new XcodeToolsResource();
+  resourceMap.set(xcodeToolsResource.typeId, xcodeToolsResource);
 
   const homebrewResource = new HomebrewResource()
   resourceMap.set(homebrewResource.typeId, homebrewResource)
