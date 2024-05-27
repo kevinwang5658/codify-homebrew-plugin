@@ -39,7 +39,7 @@ function buildPlugin(): Plugin {
   const vscodeResource = new VscodeResource();
   resourceMap.set(vscodeResource.typeId, vscodeResource);
 
-  return new Plugin(resourceMap);
+  return new Plugin('default', resourceMap);
 }
 
 runPlugin(buildPlugin())

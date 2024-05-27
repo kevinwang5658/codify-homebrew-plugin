@@ -22,9 +22,10 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "semver": "^7.6.0",
-    "codify-plugin-lib": "^1.0.55",
+    "codify-plugin-lib": "^1.0.56",
     "codify-schemas": "1.0.33",
-    "chalk": "^5.3.0"
+    "chalk": "^5.3.0",
+    "debug": "^4.3.4"
   },
   "devDependencies": {
     "rollup": "^4.12.0",
@@ -39,6 +40,7 @@
     "@types/semver": "^7.5.4",
     "@types/mock-fs": "^4.13.4",
     "@types/chalk": "^2.2.0",
+    "@types/debug": "4.1.12",
     "eslint": "^8.51.0",
     "eslint-config-oclif": "^5",
     "eslint-config-oclif-typescript": "^3",

@@ -11,7 +11,7 @@ export class CSVCredentialsParameter extends TransformParameter<AwsConfigureConf
     const csvPath = path.resolve(untildify(value));
 
     if (!fsSync.existsSync(csvPath)) {
-      throw new Error(`File ${csvPath} does not exists`);
+      throw new Error(`File ${csvPath} does not exist`);
     }
 
     const file = await fs.readFile(csvPath, 'utf8');
@@ -22,6 +22,10 @@ export class CSVCredentialsParameter extends TransformParameter<AwsConfigureConf
     }
 
     const [awsAccessKeyId, awsSecretAccessKey] = credentials.split(',');
+    if (!awsAccessKeyId || !awsSecretAccessKey) {
+      throw new Error(`File ${csvPath} is not properly formatted. It must be a csv in the format: awsAccessKeyId, awsSecretAccessKey`);
+    }
+
     return {
       awsAccessKeyId,
       awsSecretAccessKey,
