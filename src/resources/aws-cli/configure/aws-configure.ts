@@ -1,7 +1,10 @@
-import { Plan, Resource, ValidationResult } from 'codify-plugin-lib';
+import { ParameterChange, Plan, Resource, ValidationResult } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
 import { CSVCredentialsParameter } from './csv-credentials-parameter.js';
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 
 export interface AwsConfigureConfig extends StringIndexedObject {
   profile: string;
@@ -23,6 +26,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
       parameterOptions: {
         csvCredentials: { transformParameter: new CSVCredentialsParameter() },
         profile: { default: 'default' },
+        awsSecretAccessKey: { canModify: true },
+        awsAccessKeyId: { canModify: true },
       },
     });
   }
@@ -117,8 +122,57 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
       await this.setAwsConfigureValue('metadata_service_num_attempts', metadataServiceNumAttempts, profile);
     }
   }
-  applyDestroy(plan: Plan<AwsConfigureConfig>): Promise<void> {
-    throw new Error('Method not implemented.');
+
+  async applyModify(
+    pc: ParameterChange<AwsConfigureConfig>,
+    plan: Plan<AwsConfigureConfig>
+  ): Promise<void> {
+    if (pc.name === 'awsAccessKeyId') {
+      await this.setAwsConfigureValue('aws_access_key_id', pc.newValue, plan.desiredConfig.profile);
+    }
+
+    if (pc.name === 'awsSecretAccessKey') {
+      await this.setAwsConfigureValue('aws_secret_access_key', pc.newValue, plan.desiredConfig.profile);
+    }
+  }
+
+  async applyDestroy(plan: Plan<AwsConfigureConfig>): Promise<void> {
+    const regex = /^\[.*\]$/g;
+    const { profile } = plan.currentConfig;
+
+    const credentialsPath = path.resolve(os.homedir(), '.aws/credentials');
+    const credentialsFile = await fs.readFile(credentialsPath, 'utf8');
+    const lines = credentialsFile.split('\n');
+
+    const index = lines.findIndex((l) => l === `[${plan.currentConfig.profile}]`)
+    if (index === -1) {
+      console.log(`Unable to find profile ${profile} in .aws/credentials. Skipping...`)
+      return;
+    }
+
+    findAndDelete(lines, index + 1, 'aws_access_key_id');
+    findAndDelete(lines, index + 1, 'aws_secret_access_key');
+
+    await fs.writeFile(credentialsFile, lines.join('\n'));
+
+    function findAndDelete(file: string[], startIdx: number, key: string) {
+      let searchIdx = startIdx;
+
+      while(searchIdx < file.length) {
+        const line = file[searchIdx];
+        if (line.includes(key)) {
+          file.splice(searchIdx, 1);
+          return;
+        }
+
+        if (regex.test(line)) {
+          return;
+        }
+
+        searchIdx++;
+      }
+    }
+
   }
 
   private async getAwsConfigureValueOrNull(key: string, profile: string): Promise<string | undefined> {
