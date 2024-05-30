@@ -10,7 +10,10 @@ export class TestResourceIPC<R extends StringIndexedObject> {
     this.childProcess = fork(
       path.join(__dirname, '../../src/index.ts'),
       [],
-      { execArgv: ['--import', 'tsx/esm'], },
+      {
+        execArgv: ['--import', 'tsx/esm'],
+        env: { ...process.env, TESTING_ENV: '1' }
+      },
     )
   }
 

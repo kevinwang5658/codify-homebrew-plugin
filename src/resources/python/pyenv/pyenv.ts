@@ -49,8 +49,8 @@ export class PyenvResource extends Resource<PyenvConfig> {
   }
 
   async applyDestroy(plan: Plan<PyenvConfig>): Promise<void> {
-    await codifySpawn('sudo rm -rf $(pyenv root)');
-    await codifySpawn('sudo rm -rf $HOME/.pyenv');
+    await codifySpawn('rm -rf $(pyenv root)', { requiresRoot: true });
+    await codifySpawn('rm -rf $HOME/.pyenv', { requiresRoot: true });
 
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'export PYENV_ROOT="$HOME/.pyenv"')
     await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')

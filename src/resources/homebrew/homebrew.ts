@@ -1,6 +1,8 @@
 import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
+import * as fsSync from 'fs';
 import path from 'node:path';
 
 import { untildify } from '../../utils/untildify.js';
@@ -9,6 +11,9 @@ import { FormulaeParameter } from './formulae-parameter.js';
 import HomebrewSchema from './homebrew-schema.json'
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { TapsParameter } from './tap-parameter.js';
+
+const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
+const SUDO_ASKPASS_URL = 'https://codify-homebrew-plugin.s3.amazonaws.com/sudo_prompt.sh';
 
 export interface HomebrewConfig extends ResourceConfig {
   casks?: string[],
@@ -29,6 +34,10 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
         casks: { statefulParameter: new CasksParameter(), order: 3 },
       }
     });
+  }
+
+  async onInitialize(): Promise<void> {
+    await this.downloadSudoPopupIfNotExists();
   }
 
   async validate(config: unknown): Promise<ValidationResult> {
@@ -72,7 +81,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
       return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }
 
-    await codifySpawn('NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"')
+    await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
     await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshenv'); // TODO: may need to support non zsh shells here
 
     // TODO: Add a check here to see if homebrew is writable
@@ -85,7 +94,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
 
     if (homebrewDirectory === '/opt/homebrew') {
       await codifySpawn(
-        'NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
+        'SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
         { throws: false }
       )
     }
@@ -139,5 +148,17 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     return homebrewPrefix.split(':')[1].trim()
+  }
+
+  private async downloadSudoPopupIfNotExists(): Promise<void> {
+    const fullPath = untildify(SUDO_ASKPASS_PATH);
+    const exists = fsSync.existsSync(fullPath)
+    if (exists) {
+      return;
+    }
+
+    await mkdir(path.dirname(fullPath), { recursive: true });
+    await codifySpawn(`curl ${SUDO_ASKPASS_URL} -o ${SUDO_ASKPASS_PATH}`);
+    await codifySpawn(`chmod +x ${SUDO_ASKPASS_PATH}`);
   }
 }

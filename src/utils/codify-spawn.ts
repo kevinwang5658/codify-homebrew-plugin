@@ -76,9 +76,13 @@ export async function codifySpawn(
 
 async function internalSpawn(cmd: string, opts: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'>): Promise<{ status: SpawnStatus, data: string }>  {
   return new Promise((resolve, reject) => {
-    const output: string[] = []
+    const output: string[] = [];
 
-    const _cmd = !opts.requiresRoot ? cmd : 'sudo ' + cmd;
+    const _cmd = !opts.requiresRoot
+      ? cmd
+      : process.env.TESTING_ENV
+        ? `sudo ${cmd}`
+        : `osascript -e 'do shell script "${cmd.replaceAll(`"`, `\\"`)}" with administrator privileges'`
 
     if (opts.requiresRoot) {
       console.log(chalk.blue(`Installation requires root access to run command: '${_cmd}'`));

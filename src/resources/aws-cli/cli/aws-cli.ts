@@ -42,7 +42,7 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     } else if (!isArmArch || isRosettaInstalled) {
       console.log(`Resource: ${this.typeId}. Detected that mac is not ARM or Rosetta is installed. Installing AWS-CLI standalone version`)
       await codifySpawn('curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"');
-      await codifySpawn('sudo installer -pkg ./AWSCLIV2.pkg -target /')
+      await codifySpawn('installer -pkg ./AWSCLIV2.pkg -target /', { requiresRoot: true })
       await codifySpawn('rm -rf ./AWSCLIV2.pkg')
 
     } else {
@@ -73,10 +73,10 @@ softwareupdate --install-rosetta
       return;
     }
     
-    await codifySpawn(`sudo rm ${installLocation}`);
-    await codifySpawn(`sudo rm ${installLocation}_completer`);
-    await codifySpawn('sudo rm -rf /usr/local/aws-cli')
-    await codifySpawn('sudo rm -rf $HOME/.aws/')
+    await codifySpawn(`rm ${installLocation}`, { requiresRoot: true});
+    await codifySpawn(`rm ${installLocation}_completer`, { requiresRoot: true });
+    await codifySpawn('rm -rf /usr/local/aws-cli', { requiresRoot: true });
+    await codifySpawn('rm -rf $HOME/.aws/', { requiresRoot: true });
   }
   
   private async findInstallLocation(): Promise<string | null> {
