@@ -1,5 +1,12 @@
 import { spawn, SpawnOptions } from 'node:child_process';
-import chalk from 'chalk';
+import { IpcMessage, MessageCmd, SudoRequestResponseData, SudoRequestResponseDataSchema } from 'codify-schemas';
+import Ajv2020 from 'ajv/dist/2020.js';
+import { SudoError } from 'codify-plugin-lib';
+
+const ajv = new Ajv2020.default({
+  strict: true,
+});
+const validateSudoRequestResponse = ajv.compile(SudoRequestResponseDataSchema);
 
 export enum SpawnStatus {
   SUCCESS = 'success',
@@ -13,10 +20,9 @@ export interface SpawnResult {
 
 type CodifySpawnOptions = {
   cwd?: string;
-  stdioString?: boolean;
   throws?: boolean,
   requiresRoot?: boolean
-} & SpawnOptions
+} & Omit<SpawnOptions, 'stdio' | 'shell' | 'detached'>
 
 /**
 *
@@ -31,7 +37,7 @@ type CodifySpawnOptions = {
 */
 export async function codifySpawn(
   cmd: string,
-  opts?: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'>,
+  opts?: CodifySpawnOptions,
 ): Promise<SpawnResult> {
   const throws = opts?.throws ?? true;
 
@@ -40,10 +46,19 @@ export async function codifySpawn(
   try {
     // TODO: Need to benchmark the effects of using sh vs zsh for shell.
     //  Seems like zsh shells run slower
-    const result = await internalSpawn(
-      cmd,
-      opts ?? {},
-    );
+
+    let result: SpawnResult;
+    if (!opts?.requiresRoot) {
+      result = await internalSpawn(
+        cmd,
+        opts ?? {},
+      );
+    } else {
+      result = await externalSpawnWithSudo(
+        cmd,
+        opts,
+      )
+    }
     
     if (result.status !== SpawnStatus.SUCCESS) {
       throw new Error(result.data);
@@ -54,6 +69,11 @@ export async function codifySpawn(
 
     if (isDebug()) {
       console.error(`CodifySpawn error for command ${cmd}`, error);
+    }
+
+    // @ts-ignore
+    if (error.message?.startsWith('sudo:')) {
+      throw new SudoError(cmd);
     }
 
     if (throws) {
@@ -74,25 +94,19 @@ export async function codifySpawn(
   }
 }
 
-async function internalSpawn(cmd: string, opts: Omit<CodifySpawnOptions, 'stdio' | 'stdioString'>): Promise<{ status: SpawnStatus, data: string }>  {
+async function internalSpawn(
+  cmd: string,
+  opts: CodifySpawnOptions
+): Promise<{ status: SpawnStatus, data: string }>  {
   return new Promise((resolve, reject) => {
     const output: string[] = [];
 
-    const _cmd = !opts.requiresRoot
-      ? cmd
-      : process.env.TESTING_ENV
-        ? `sudo ${cmd}`
-        : `osascript -e 'do shell script "${cmd.replaceAll(`"`, `\\"`)}" with administrator privileges'`
-
-    if (opts.requiresRoot) {
-      console.log(chalk.blue(`Installation requires root access to run command: '${_cmd}'`));
-    }
-
     // Source start up shells to emulate a users environment vs. a non-interactive non-login shell script
-    const _process = spawn(`source ~/.zshrc; ${_cmd}`, [], {
+    // Ignore all stdin
+    const _process = spawn(`source ~/.zshrc; ${cmd}`, [], {
       ...opts,
-      stdio: ['inherit', 'pipe', 'pipe'],
-      shell: 'zsh'
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: 'zsh',
     });
     
     const { stdout, stderr, stdin } = _process
@@ -124,6 +138,34 @@ async function internalSpawn(cmd: string, opts: Omit<CodifySpawnOptions, 'stdio'
       })
     })
   })
+}
+
+async function externalSpawnWithSudo(
+  cmd: string,
+  opts: CodifySpawnOptions
+): Promise<{ status: SpawnStatus, data: string }> {
+  return await new Promise((resolve) => {
+    const listener = (data: IpcMessage)=> {
+      if (data.cmd === MessageCmd.SUDO_REQUEST + '_Response') {
+        process.removeListener('message', listener);
+
+        if (!validateSudoRequestResponse(data.data)) {
+          throw new Error(`Invalid response for sudo request: ${JSON.stringify(validateSudoRequestResponse.errors, null, 2)}`);
+        }
+
+        resolve(data.data as unknown as SudoRequestResponseData);
+      }
+    }
+    process.on('message', listener);
+
+    process.send!({
+      cmd: MessageCmd.SUDO_REQUEST,
+      data: {
+        command: cmd,
+        options: opts ?? {},
+      }
+    })
+  });
 }
 
 export function isDebug(): boolean {
