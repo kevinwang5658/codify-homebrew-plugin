@@ -7,7 +7,6 @@ export class PythonVersionsParameter extends ArrayStatefulParameter<PyenvConfig,
 
   constructor() {
     super({
-      name: 'pythonVersions',
       // The current version number must be at least as specific as the desired one. Ex: 3.12.9 = 3.12 but 3 != 3.12
       isElementEqual: (desired, current) => current.includes(desired),
     });

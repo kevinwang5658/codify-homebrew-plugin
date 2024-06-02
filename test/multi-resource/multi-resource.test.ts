@@ -1,58 +1,29 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TestResourceIPC } from '../../src/utils/test-utils.js';
-import { MessageStatus, ResourceOperation } from 'codify-schemas';
+import { afterEach, beforeEach, describe, it } from 'vitest';
+import { PluginTester } from 'codify-plugin-test';
+import * as path from 'node:path';
 
 describe('Multi-resource tests', async () => {
-  let resource: TestResourceIPC;
-  let resource2: TestResourceIPC;
+  let plugin: PluginTester;
 
   beforeEach(() => {
-    resource = new TestResourceIPC()
-    resource2 = new TestResourceIPC();
+    plugin = new PluginTester(path.resolve('./src/index.ts'));
   })
 
   it('Can install git-lfs and homebrew together', { timeout: 300000 }, async () => {
-    const homebrewPlan = await resource.plan({
-      type: 'homebrew',
-    })
-    const gitlfsPlan = await resource2.plan({
-      type: 'git-lfs',
-    })
+    await plugin.fullTest([
+      { type: 'homebrew' },
+      { type: 'git-lfs' }
+    ])
+  })
 
-    expect(homebrewPlan).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.CREATE,
-      }
-    })
-
-    expect(gitlfsPlan).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.CREATE,
-      }
-    })
-
-    expect(await resource.apply({ planId: homebrewPlan.data.planId })).toMatchObject({ status: MessageStatus.SUCCESS })
-    expect(await resource2.apply({ planId: gitlfsPlan.data.planId })).toMatchObject({ status: MessageStatus.SUCCESS })
-
-    expect(await resource.plan({ type: 'homebrew' })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.NOOP,
-      }
-    })
-
-    expect(await resource2.plan({ type: 'git-lfs' })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.NOOP,
-      }
-    })
+  it('Can uninstall git-lfs and homebrew together', { timeout: 300000 }, async () => {
+    await plugin.fullTest([
+      { type: 'git-lfs' },
+      { type: 'homebrew' },
+    ])
   })
 
   afterEach(() => {
-    resource.kill();
-    resource2.kill();
+    plugin.kill()
   })
 })

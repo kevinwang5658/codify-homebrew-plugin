@@ -1,34 +1,35 @@
 import { ParameterChange, Plan, Resource, ValidationResult } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import * as fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
 import { CSVCredentialsParameter } from './csv-credentials-parameter.js';
-import * as fs from 'node:fs/promises';
-import path from 'node:path';
-import os from 'node:os';
 
 export interface AwsConfigureConfig extends StringIndexedObject {
-  profile: string;
-  csvCredentials: string,
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
-  region?: string;
-  output?: string;
-  metadataServiceTimeout?: number;
+  csvCredentials: string,
   metadataServiceNumAttempts?: number;
+  metadataServiceTimeout?: number;
+  output?: string;
+  profile: string;
+  region?: string;
 }
 
 export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
 
   constructor() {
     super({
-      type: 'aws-configure',
       dependencies: ['aws-cli'],
       parameterOptions: {
+        awsAccessKeyId: { canModify: true },
+        awsSecretAccessKey: { canModify: true },
         csvCredentials: { transformParameter: new CSVCredentialsParameter() },
         profile: { default: 'default' },
-        awsSecretAccessKey: { canModify: true },
-        awsAccessKeyId: { canModify: true },
       },
+      type: 'aws-configure',
     });
   }
 
@@ -36,8 +37,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     const p = parameters as Partial<AwsConfigureConfig>;
     if (p.csvCredentials && (p.awsAccessKeyId || p.awsSecretAccessKey)) {
       return {
-        isValid: false,
         errors: ['Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey'],
+        isValid: false,
       };
     }
 
@@ -50,7 +51,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     const profile = keys.get('profile');
 
     // Make sure aws-cli is installed
-    const { status: awsStatus} = await codifySpawn('which aws', { throws: false });
+    const { status: awsStatus } = await codifySpawn('which aws', { throws: false });
     if (awsStatus === SpawnStatus.ERROR) {
       return null;
     }
@@ -65,9 +66,9 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     const awsSecretAccessKey = await this.getAwsConfigureValueOrNull('aws_secret_access_key', profile);
 
     const result: Partial<AwsConfigureConfig> = {
-      profile,
       awsAccessKeyId: awsAccessKeyId ?? undefined,
       awsSecretAccessKey: awsSecretAccessKey ?? undefined,
+      profile,
     };
 
     if (keys.has('region')) {
@@ -94,13 +95,13 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     await codifySpawn('which aws')
 
     const {
-      profile,
       awsAccessKeyId,
       awsSecretAccessKey,
-      region,
-      output,
+      metadataServiceNumAttempts,
       metadataServiceTimeout,
-      metadataServiceNumAttempts
+      output,
+      profile,
+      region
     } = plan.desiredConfig;
 
     await this.setAwsConfigureValue('aws_access_key_id', awsAccessKeyId, profile);
@@ -137,14 +138,14 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
   }
 
   async applyDestroy(plan: Plan<AwsConfigureConfig>): Promise<void> {
-    const regex = /^\[.*\]$/g;
+    const regex = /^\[.*]$/g;
     const { profile } = plan.currentConfig;
 
     const credentialsPath = path.resolve(os.homedir(), '.aws/credentials');
     const credentialsFile = await fs.readFile(credentialsPath, 'utf8');
     const lines = credentialsFile.split('\n');
 
-    const index = lines.findIndex((l) => l === `[${plan.currentConfig.profile}]`)
+    const index = lines.indexOf(`[${plan.currentConfig.profile}]`)
     if (index === -1) {
       console.log(`Unable to find profile ${profile} in .aws/credentials. Skipping...`)
       return;
@@ -176,7 +177,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
   }
 
   private async getAwsConfigureValueOrNull(key: string, profile: string): Promise<string | undefined> {
-    const { status, data } = await codifySpawn(`aws configure get ${key} --profile ${profile}`, { throws: false });
+    const { data, status } = await codifySpawn(`aws configure get ${key} --profile ${profile}`, { throws: false });
     if (status === SpawnStatus.ERROR) {
       return undefined;
     }
@@ -184,7 +185,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     return data.trim();
   }
 
-  private async setAwsConfigureValue(key: string, value: string | number, profile: string): Promise<void> {
+  private async setAwsConfigureValue(key: string, value: number | string, profile: string): Promise<void> {
     await codifySpawn(`aws configure set ${key} ${value} --profile ${profile}`);
   }
 }

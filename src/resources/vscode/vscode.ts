@@ -1,9 +1,10 @@
 import { Plan, Resource } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
-import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
-import Schema from './vscode-schema.json';
-import { TerraformConfig } from '../terraform/terraform.js';
 import path from 'node:path';
+
+import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
+import { TerraformConfig } from '../terraform/terraform.js';
+import Schema from './vscode-schema.json';
 
 const VSCODE_APPLICATION_NAME = 'Visual Studio Code.app';
 const DOWNLOAD_LINK = 'https://code.visualstudio.com/sha/download?build=stable&os=darwin-universal';
@@ -15,12 +16,12 @@ export interface VscodeConfig extends ResourceConfig {
 export class VscodeResource extends Resource<VscodeConfig> {
   constructor() {
     super({
-      type: 'vscode',
-      schema: Schema,
       dependencies: ['homebrew'],
       parameterOptions: {
         directory: { default: '/Applications' }
-      }
+      },
+      schema: Schema,
+      type: 'vscode'
     });
   }
 
@@ -52,13 +53,13 @@ export class VscodeResource extends Resource<VscodeConfig> {
     await codifySpawn('unzip vscode.zip', { cwd: temporaryDir });
 
     // Move VSCode to the applications folder
-    const directory = plan.desiredConfig.directory;
+    const { directory } = plan.desiredConfig;
     await codifySpawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir })
     await codifySpawn(`rm -rf ${temporaryDir}`)
   }
 
   async applyDestroy(plan: Plan<VscodeConfig>): Promise<void> {
-    const directory = plan.currentConfig.directory;
+    const { directory } = plan.currentConfig;
     const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
     await codifySpawn(`rm -r ${location}`);
   }

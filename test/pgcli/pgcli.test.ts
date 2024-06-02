@@ -1,85 +1,29 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TestResourceIPC } from '../../src/utils/test-utils.js';
-import { MessageStatus, ResourceOperation } from 'codify-schemas';
-import { PgcliConfig } from '../../src/resources/pgcli/pgcli.js';
+import { afterEach, beforeEach, describe, it } from 'vitest';
+import { PluginTester } from 'codify-plugin-test';
+import * as path from 'node:path';
 
 describe('Pgcli integration tests', async () => {
-
-  let resource: TestResourceIPC<PgcliConfig>;
+  let plugin: PluginTester;
 
   beforeEach(() => {
-    resource = new TestResourceIPC();
+    plugin = new PluginTester(path.resolve('./src/index.ts'));
   })
 
   it('Can install pgcli', { timeout: 300000 }, async () => {
-    const brewPlan = await resource.plan({
-      type: 'homebrew'
-    })
-
-    const plan = await resource.plan({
-      type: 'pgcli',
-    })
-
-    expect(brewPlan).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.CREATE,
-      }
-    });
-
-    expect(plan).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.CREATE,
-      }
-    });
-
-    expect(await resource.apply({
-      planId: brewPlan.data.planId,
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-    })
-
-
-    expect(await resource.apply({
-      planId: plan.data.planId,
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-    })
-
-    expect(await resource.plan({
-      type: 'pgcli',
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.NOOP,
-      }
-    });
+    await plugin.fullTest([
+      { type: 'homebrew' },
+      { type: 'pgcli' }
+    ])
   })
 
   it('Can uninstall pgcli', async () => {
-    expect(await resource.apply({
-      plan: {
-        resourceType: 'pgcli',
-        operation: ResourceOperation.DESTROY,
-        parameters: [],
-      }
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-    });
-
-    expect(await resource.plan({
-      type: 'pgcli'
-    })).toMatchObject({
-      status: MessageStatus.SUCCESS,
-      data: {
-        operation: ResourceOperation.CREATE,
-      }
-    });
+    await plugin.fullTest([
+      { type: 'pgcli' },
+      { type: 'homebrew' },
+    ])
   })
 
   afterEach(() => {
-    resource.kill();
+    plugin.kill();
   })
-
 })

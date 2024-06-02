@@ -1,24 +1,20 @@
 import { codifySpawn, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+
 import { HomebrewConfig } from './homebrew.js';
 
 export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
 
-  constructor() {
-    super({
-      name: 'taps',
-    });
-  }
-
-  async refresh(): Promise<string[] | null> {
+  async refresh(): Promise<null | string[]> {
     const tapsQuery = await codifySpawn('brew tap')
 
     if (tapsQuery.status === SpawnStatus.SUCCESS && tapsQuery.data != null) {
       return tapsQuery.data
         .split('\n')
         .filter(Boolean)
-    } else {
-      return null;
     }
+
+      return null;
+
   }
 
   async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {

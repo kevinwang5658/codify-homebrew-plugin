@@ -1,14 +1,14 @@
 import { ArrayStatefulParameter, codifySpawn, Plan, SpawnStatus } from 'codify-plugin-lib';
+
 import { HomebrewConfig } from './homebrew.js';
 
 export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
   constructor() {
     super({
-      name: 'casks',
-      isElementEqual: (desired, current) => {
+      isElementEqual(desired, current) {
         // Handle the case where the name is fully qualified (tap + name)
         if (desired.includes('/')) {
-          const formulaName = desired.split('/').slice(-1)[0];
+          const formulaName = desired.split('/').at(-1);
           return formulaName === current;
         }
 
@@ -17,16 +17,17 @@ export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, strin
     });
   }
 
-  async refresh(): Promise<string[] | null> {
+  async refresh(): Promise<null | string[]> {
     const formulaeQuery = await codifySpawn('brew list --casks -1')
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
       return formulaeQuery.data
         .split('\n')
         .filter(Boolean)
-    } else {
-      return null;
     }
+
+      return null;
+
   }
 
   async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {

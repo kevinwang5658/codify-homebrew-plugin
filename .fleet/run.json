@@ -34,7 +34,14 @@
       "file": "$PROJECT_DIR$/test/terraform/terraform.test.ts",
       "testNames": ["Terraform tests", "Can install the latest terraform in the default location"],
       "vitestOptions": ["--run", "--disable-console-intercept"]
+    },
+    {
+      "name": "XCode tools install tests.Can install xcode tools (1)",
+      "type": "vitest",
+      "workingDir": "$PROJECT_DIR$",
+      "file": "$PROJECT_DIR$/test/xcode-tools/xcode-tools.test.ts",
+      "testNames": ["XCode tools install tests", "Can install xcode tools"],
+      "vitestOptions": ["--run", "--reporter=basic", "--disable-console-intercept"]
     }
-    
   ]
 }

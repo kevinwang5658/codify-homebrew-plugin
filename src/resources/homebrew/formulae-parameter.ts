@@ -1,15 +1,15 @@
 import { ArrayStatefulParameter, Plan, SpawnStatus } from 'codify-plugin-lib';
-import { HomebrewConfig } from './homebrew.js';
+
 import { codifySpawn } from '../../utils/codify-spawn.js';
+import { HomebrewConfig } from './homebrew.js';
 
 export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
   constructor() {
     super({
-      name: 'formulae',
-      isElementEqual: (desired, current) => {
+      isElementEqual(desired, current) {
         // Handle the case where the name is fully qualified (tap + name)
         if (desired.includes('/')) {
-          const formulaName = desired.split('/').slice(-1)[0];
+          const formulaName = desired.split('/').at(-1);
           return formulaName === current;
         }
 
@@ -18,16 +18,17 @@ export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, st
     });
   }
 
-  async refresh(): Promise<string[] | null> {
+  async refresh(): Promise<null | string[]> {
     const formulaeQuery = await codifySpawn('brew list --formula -1')
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
       return formulaeQuery.data
         .split('\n')
         .filter(Boolean);
-    } else {
-      return null;
     }
+
+      return null;
+
   }
 
   async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {

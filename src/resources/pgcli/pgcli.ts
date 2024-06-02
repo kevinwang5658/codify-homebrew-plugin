@@ -1,5 +1,6 @@
 import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
+
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import Schema from './pgcli-schema.json';
 
@@ -8,9 +9,9 @@ export interface PgcliConfig extends ResourceConfig {}
 export class PgcliResource extends Resource<PgcliConfig> {
   constructor() {
     super({
-      type: 'pgcli',
-      schema: Schema,
       dependencies: ['homebrew'],
+      schema: Schema,
+      type: 'pgcli',
     });
   }
 
