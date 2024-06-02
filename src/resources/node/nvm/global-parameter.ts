@@ -1,4 +1,5 @@
 import { Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { NvmConfig } from './nvm.js';
 
@@ -6,14 +7,13 @@ export class NvmGlobalParameter extends StatefulParameter<NvmConfig, string>{
 
   constructor() {
     super({
-      name: 'global',
       // The current version number must be at least as specific as the desired one. Ex: 3.12.9 = 3.12 but 3 != 3.12
       isEqual: (desired: string, current: string) => current.includes(desired)
     });
   }
 
-  async refresh(): Promise<string | null> {
-    const { status, data } = await codifySpawn('nvm ls --no-colors', { throws: false })
+  async refresh(): Promise<null | string> {
+    const { data, status } = await codifySpawn('nvm ls --no-colors', { throws: false })
 
     if (status === SpawnStatus.ERROR) {
       return null;
@@ -48,7 +48,7 @@ export class NvmGlobalParameter extends StatefulParameter<NvmConfig, string>{
       stable -> 20.11 (-> v20.11.1 *) (default)
       unstable -> N/A (default)
    */
-  private findCurrentVersion(output: string): string | null {
+  private findCurrentVersion(output: string): null | string {
     const version =  output.split('\n')
       .find((l) => l.includes('default'))
 

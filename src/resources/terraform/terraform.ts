@@ -4,9 +4,9 @@ import semver from 'semver';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { Utils } from '../../utils/index.js';
-import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
 import { untildify } from '../../utils/untildify.js';
 import Schema from './terraform-schema.json';
+import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
 
 const TERRAFORM_RELEASES_API_URL = 'https://api.releases.hashicorp.com/v1/releases/terraform';
 const TERRAFORM_RELEASE_INFO_API_URL = (version: string) => `https://api.releases.hashicorp.com/v1/releases/terraform/${version}`;
@@ -22,13 +22,13 @@ export class TerraformResource extends Resource<TerraformConfig> {
 
   constructor() {
     super({
-      type: 'terraform',
-      schema: Schema,
       parameterOptions: {
         directory: {
           isEqual: (desired, current) => untildify(desired) === untildify(current),
         }
-      }
+      },
+      schema: Schema,
+      type: 'terraform'
     });
   }
 
@@ -43,7 +43,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
       const directory = terraformInfo.data.trim();
 
       // which command returns the directory with the binary included. For Ex: /usr/local/bin/terraform. Remove the terraform and return.
-      results.directory = directory.substring(0, directory.lastIndexOf('/'));
+      results.directory = directory.slice(0, Math.max(0, directory.lastIndexOf('/')));
     }
 
     if (desired.has('version')) {
@@ -82,11 +82,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
     await codifySpawn('unzip terraform.zip', { cwd: temporaryDir });
 
     // Ensure that /usr/local/bin exists. If not then create it
-    if (directory === '/usr/local/bin') {
-      await Utils.createBinDirectoryIfNotExists()
-    } else {
-      await Utils.createDirectoryIfNotExists(directory);
-    }
+    await (directory === '/usr/local/bin' ? Utils.createBinDirectoryIfNotExists() : Utils.createDirectoryIfNotExists(directory));
 
     await codifySpawn(`mv ./terraform ${directory}`, { cwd: temporaryDir, requiresRoot: true })
     await codifySpawn(`rm -rf ${temporaryDir}`)

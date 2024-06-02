@@ -1,15 +1,15 @@
 import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
+import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import { mkdir } from 'node:fs/promises';
-import * as fsSync from 'fs';
 import path from 'node:path';
 
+import { codifySpawn } from '../../utils/codify-spawn.js';
 import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
 import HomebrewSchema from './homebrew-schema.json'
-import { codifySpawn } from '../../utils/codify-spawn.js';
 import { TapsParameter } from './tap-parameter.js';
 
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
@@ -25,14 +25,14 @@ export interface HomebrewConfig extends ResourceConfig {
 export class HomebrewResource extends Resource<HomebrewConfig> {
   constructor() {
     super({
-      type: 'homebrew',
-      schema: HomebrewSchema,
       parameterOptions: {
+        casks: { order: 3, statefulParameter: new CasksParameter() },
         directory: { isEqual: (a, b) => untildify(a) === untildify(b) },
-        taps: { statefulParameter: new TapsParameter(), order: 1 },
-        formulae: { statefulParameter: new FormulaeParameter(), order: 2 },
-        casks: { statefulParameter: new CasksParameter(), order: 3 },
-      }
+        formulae: { order: 2, statefulParameter: new FormulaeParameter() },
+        taps: { order: 1, statefulParameter: new TapsParameter() },
+      },
+      schema: HomebrewSchema,
+      type: 'homebrew'
     });
   }
 
@@ -51,8 +51,8 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
 
       if (!path.isAbsolute(homebrewConfig.directory) || !isDirectory) {
         return {
-          isValid: false,
-          errors: [`HomebrewConfig directory ${dir} does not exist`]
+          errors: [`HomebrewConfig directory ${dir} does not exist`],
+          isValid: false
         }
       }
     }

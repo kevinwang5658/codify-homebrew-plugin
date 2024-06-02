@@ -6,24 +6,24 @@ import path from 'node:path';
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { PyenvGlobalParameter } from './global-parameter.js';
-import { PythonVersionsParameter } from './python-versions-parameter.js';
 import Schema from './pyenv-schema.json';
+import { PythonVersionsParameter } from './python-versions-parameter.js';
 
 export interface PyenvConfig extends ResourceConfig {
-  pythonVersions?: string[],
   global?: string,
+  pythonVersions?: string[],
   // TODO: Add option here to use homebrew to install instead. Default to true. Maybe add option to set default values to resource config.
 }
 
 export class PyenvResource extends Resource<PyenvConfig> {
   constructor() {
     super({
-      type: 'pyenv',
-      schema: Schema,
       parameterOptions: {
-        pythonVersions: { statefulParameter: new PythonVersionsParameter(), order: 1 },
-        global: { statefulParameter: new PyenvGlobalParameter(), order: 2 },
-      }
+        global: { order: 2, statefulParameter: new PyenvGlobalParameter() },
+        pythonVersions: { order: 1, statefulParameter: new PythonVersionsParameter() },
+      },
+      schema: Schema,
+      type: 'pyenv'
     });
   }
 
@@ -45,7 +45,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshenv')
     await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshenv')
 
-    //TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+    // TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
   }
 
   async applyDestroy(plan: Plan<PyenvConfig>): Promise<void> {

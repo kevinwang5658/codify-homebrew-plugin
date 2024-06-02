@@ -1,5 +1,6 @@
 import { Plan, Resource } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
 import { Utils } from '../../../utils/index.js';
 import Schema from './aws-cli-schema.json';
@@ -14,8 +15,8 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
 
   constructor() {
     super({
-      type: 'aws-cli',
       schema: Schema,
+      type: 'aws-cli',
     });
   }
 
@@ -73,13 +74,13 @@ softwareupdate --install-rosetta
       return;
     }
     
-    await codifySpawn(`rm ${installLocation}`, { requiresRoot: true});
+    await codifySpawn(`rm ${installLocation}`, { requiresRoot: true });
     await codifySpawn(`rm ${installLocation}_completer`, { requiresRoot: true });
     await codifySpawn('rm -rf /usr/local/aws-cli', { requiresRoot: true });
     await codifySpawn('rm -rf $HOME/.aws/', { requiresRoot: true });
   }
   
-  private async findInstallLocation(): Promise<string | null> {
+  private async findInstallLocation(): Promise<null | string> {
     const query = await codifySpawn('which aws', { throws: false });
     if (query.status === SpawnStatus.ERROR) {
       return null;

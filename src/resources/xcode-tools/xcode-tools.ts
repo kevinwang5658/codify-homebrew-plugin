@@ -1,7 +1,8 @@
-import { StringIndexedObject } from 'codify-schemas';
-import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
 import { Plan, Resource } from 'codify-plugin-lib';
+import { StringIndexedObject } from 'codify-schemas';
 import path from 'node:path';
+
+import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
 
 interface XCodeToolsConfig extends StringIndexedObject {}
 
@@ -13,8 +14,8 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     });
   }
 
-  async refresh(keys: Map<string | number, unknown>): Promise<Partial<XCodeToolsConfig> | null> {
-    const { status, data } = await codifySpawn('xcode-select -p', { throws: false })
+  async refresh(keys: Map<number | string, unknown>): Promise<Partial<XCodeToolsConfig> | null> {
+    const { data, status } = await codifySpawn('xcode-select -p', { throws: false })
 
     // The last check, ensures that a valid path is returned.
     if (status === SpawnStatus.ERROR || !data || path.basename(data) === data) {
@@ -36,11 +37,11 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     const { data } = await codifySpawn('softwareupdate -l');
 
     // This regex will only match the label because it doesn't match commas.
-    const labelRegex = /(Command Line Tools[^,]*[0-9]+\.[0-9]+)/g
+    const labelRegex = /(Command Line Tools[^,]*\d+\.\d+)/g
     const xcodeToolsVersion = data.match(labelRegex);
 
     if (!xcodeToolsVersion || xcodeToolsVersion.length === 0 || !xcodeToolsVersion[0]) {
-      return await this.attemptXcodeToolsInstall();
+      return await this.attemptGUIInstall();
     }
 
     await codifySpawn(`softwareupdate -i "${xcodeToolsVersion[0]}" --verbose`, { requiresRoot: true });
@@ -48,7 +49,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
   }
 
   async applyDestroy(plan: Plan<XCodeToolsConfig>): Promise<void> {
-    const { status, data: installFolder } = await codifySpawn('xcode-select -p', { throws: false });
+    const { data: installFolder, status } = await codifySpawn('xcode-select -p', { throws: false });
     if (status === SpawnStatus.ERROR || !installFolder) {
       return;
     }
@@ -60,10 +61,10 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
       return;
     }
 
-    await codifySpawn(`rm -rf /Library/Developer/CommandLineTools`, { requiresRoot: true });
+    await codifySpawn('rm -rf /Library/Developer/CommandLineTools', { requiresRoot: true });
   }
 
-  private async attemptXcodeToolsInstall(): Promise<void> {
+  private async attemptGUIInstall(): Promise<void> {
     console.warn('Unable to find installable xcode tools version. Defaulting to xcode-select --install');
     await codifySpawn('xcode-select --install');
   }
