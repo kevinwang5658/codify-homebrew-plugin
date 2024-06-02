@@ -28,24 +28,28 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
   async applyCreate(plan: Plan<XCodeToolsConfig>): Promise<void> {
     await codifySpawn('touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;');
 
-    /* Example response:
-     * Finding available software
-     * Software Update found the following new or updated software:
-     * * Label: Command Line Tools for Xcode-15.3
-     *         Title: Command Line Tools for Xcode, Version: 15.3, Size: 707501KiB, Recommended: YES,
-     */
-    const { data } = await codifySpawn('softwareupdate -l');
+    try {
+      /* Example response:
+       * Finding available software
+       * Software Update found the following new or updated software:
+       * * Label: Command Line Tools for Xcode-15.3
+       *         Title: Command Line Tools for Xcode, Version: 15.3, Size: 707501KiB, Recommended: YES,
+       */
+      const { data } = await codifySpawn('softwareupdate -l');
 
-    // This regex will only match the label because it doesn't match commas.
-    const labelRegex = /(Command Line Tools[^,]*\d+\.\d+)/g
-    const xcodeToolsVersion = data.match(labelRegex);
+      // This regex will only match the label because it doesn't match commas.
+      const labelRegex = /(Command Line Tools[^,]*\d+\.\d+)/g
+      const xcodeToolsVersion = data.match(labelRegex);
 
-    if (!xcodeToolsVersion || xcodeToolsVersion.length === 0 || !xcodeToolsVersion[0]) {
-      return await this.attemptGUIInstall();
+      if (!xcodeToolsVersion || xcodeToolsVersion.length === 0 || !xcodeToolsVersion[0]) {
+        return await this.attemptGUIInstall();
+      }
+
+      await codifySpawn(`softwareupdate -i "${xcodeToolsVersion[0]}" --verbose`, { requiresRoot: true });
+
+    } finally {
+      await codifySpawn('rm /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress')
     }
-
-    await codifySpawn(`softwareupdate -i "${xcodeToolsVersion[0]}" --verbose`, { requiresRoot: true });
-    await codifySpawn('rm /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress')
   }
 
   async applyDestroy(plan: Plan<XCodeToolsConfig>): Promise<void> {

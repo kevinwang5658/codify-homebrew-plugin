@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus, ValidationResult } from 'codify-plugin-lib';
+import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
@@ -38,28 +38,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
 
   async onInitialize(): Promise<void> {
     await this.downloadSudoPopupIfNotExists();
-  }
-
-  async validate(config: unknown): Promise<ValidationResult> {
-    const homebrewConfig = config as HomebrewConfig;
-
-    if (homebrewConfig.directory) {
-      const dir = homebrewConfig.directory
-      const isDirectory = await this.dirExists(dir)
-        ? (await fs.lstat(dir)).isDirectory()
-        : true
-
-      if (!path.isAbsolute(homebrewConfig.directory) || !isDirectory) {
-        return {
-          errors: [`HomebrewConfig directory ${dir} does not exist`],
-          isValid: false
-        }
-      }
-    }
-
-    return {
-      isValid: true
-    }
   }
 
   async refresh(desired: Map<keyof HomebrewConfig, any>): Promise<Partial<HomebrewConfig> | null> {
@@ -106,15 +84,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     const zshEnvFile = await fs.readFile(zshEnvLocation, 'utf8')
     const editedZshEnvFile = zshEnvFile.replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
     await fs.writeFile(zshEnvLocation, editedZshEnvFile)
-  }
-
-  private async dirExists(dir: string): Promise<boolean> {
-    try {
-      await fs.access(dir)
-      return true;
-    } catch {
-      return false;
-    }
   }
 
   private async installBrewInCustomDir(dir: string): Promise<void> {
