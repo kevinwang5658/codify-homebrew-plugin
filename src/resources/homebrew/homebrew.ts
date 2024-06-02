@@ -11,6 +11,7 @@ import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
 import HomebrewSchema from './homebrew-schema.json'
 import { TapsParameter } from './tap-parameter.js';
+import { FileUtils } from '../../utils/file-utils.js';
 
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 const SUDO_ASKPASS_URL = 'https://codify-homebrew-plugin.s3.amazonaws.com/sudo_prompt.sh';
@@ -60,7 +61,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
-    await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshenv'); // TODO: may need to support non zsh shells here
+    await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshrc'); // TODO: may need to support non zsh shells here
 
     // TODO: Add a check here to see if homebrew is writable
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
@@ -79,11 +80,8 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
 
     await codifySpawn(`sudo rm -rf ${homebrewDirectory}`);
 
-    // Delete eval from .zshenv
-    const zshEnvLocation = `${process.env.HOME}/.zshenv`
-    const zshEnvFile = await fs.readFile(zshEnvLocation, 'utf8')
-    const editedZshEnvFile = zshEnvFile.replace(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`, '')
-    await fs.writeFile(zshEnvLocation, editedZshEnvFile)
+    // Delete eval from .zshrc
+    await FileUtils.removeLineFromZshrc(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`)
   }
 
   private async installBrewInCustomDir(dir: string): Promise<void> {
@@ -103,7 +101,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     await codifySpawn('./brew config', { cwd: path.join(absoluteDir, '/bin') })
 
     // Update shell startup scripts
-    await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshenv`);
+    await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshrc`);
   }
 
   // Ex:

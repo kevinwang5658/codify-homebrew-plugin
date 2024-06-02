@@ -1,7 +1,5 @@
 import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
-import { homedir } from 'node:os';
-import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
@@ -41,9 +39,9 @@ export class NvmResource extends Resource<NvmConfig> {
 
     // Add to startup script
     // TODO: Need to support bash in addition to zsh here
-    await codifySpawn('echo \'export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"\' >> $HOME/.zshenv')
-    await codifySpawn('echo \'[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" # This loads nvm\' >> $HOME/.zshenv')
-    await codifySpawn('echo \'[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion\' >> $HOME/.zshenv')
+    await codifySpawn('echo \'export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" # This loads nvm\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion\' >> $HOME/.zshrc')
   }
 
   async applyDestroy(plan: Plan<NvmConfig>): Promise<void> {
@@ -51,8 +49,8 @@ export class NvmResource extends Resource<NvmConfig> {
     await codifySpawn('nvm unload');
     await codifySpawn(`rm -rf ${nvmDir.trim()}`);
 
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'echo \'export NVM_DIR="$([ -z "\${XDG_CONFIG_HOME-}" ] && printf %s "\${HOME}/.nvm" || printf %s "\${XDG_CONFIG_HOME}/nvm")"')
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), '[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" # This loads nvm')
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'eval "[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion')
+    await FileUtils.removeLineFromZshrc('echo \'export NVM_DIR="$([ -z "\${XDG_CONFIG_HOME-}" ] && printf %s "\${HOME}/.nvm" || printf %s "\${XDG_CONFIG_HOME}/nvm")"')
+    await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" # This loads nvm')
+    await FileUtils.removeLineFromZshrc('eval "[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion')
   }
 }

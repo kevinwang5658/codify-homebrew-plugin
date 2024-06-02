@@ -1,6 +1,12 @@
 import * as fs from 'node:fs/promises';
+import path from 'node:path';
+import { homedir } from 'node:os';
 
 export class FileUtils {
+  static async removeLineFromZshrc(search: string | RegExp): Promise<void> {
+    return FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), search);
+  }
+
   static async removeLineFromFile(filePath: string, search: string | RegExp): Promise<void> {
     const file = await fs.readFile(filePath, 'utf8')
     const lines = file.split('\n');

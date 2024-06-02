@@ -1,7 +1,5 @@
 import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
-import { homedir } from 'node:os';
-import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
@@ -41,9 +39,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
 
     // Add to startup script
     // TODO: Need to support bash in addition to zsh here
-    await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshenv')
-    await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshenv')
-    await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshenv')
+    await codifySpawn('echo \'export PYENV_ROOT="$HOME/.pyenv"\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\' >> $HOME/.zshrc')
+    await codifySpawn('echo \'eval "$(pyenv init -)"\' >> $HOME/.zshrc')
 
     // TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
   }
@@ -52,8 +50,8 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await codifySpawn('rm -rf $(pyenv root)', { requiresRoot: true });
     await codifySpawn('rm -rf $HOME/.pyenv', { requiresRoot: true });
 
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'export PYENV_ROOT="$HOME/.pyenv"')
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
-    await FileUtils.removeLineFromFile(path.join(homedir(), '.zshenv'), 'eval "$(pyenv init -)"')
+    await FileUtils.removeLineFromZshrc('export PYENV_ROOT="$HOME/.pyenv"')
+    await FileUtils.removeLineFromZshrc('[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
+    await FileUtils.removeLineFromZshrc('eval "$(pyenv init -)"')
   }
 }
