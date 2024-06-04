@@ -1,4 +1,4 @@
-import { Plan, Resource } from 'codify-plugin-lib';
+import { Resource } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import path from 'node:path';
 
@@ -25,7 +25,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     return {};
   }
 
-  async applyCreate(plan: Plan<XCodeToolsConfig>): Promise<void> {
+  async applyCreate(): Promise<void> {
     await codifySpawn('touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;');
 
     try {
@@ -52,7 +52,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     }
   }
 
-  async applyDestroy(plan: Plan<XCodeToolsConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     const { data: installFolder, status } = await codifySpawn('xcode-select -p', { throws: false });
     if (status === SpawnStatus.ERROR || !installFolder) {
       return;

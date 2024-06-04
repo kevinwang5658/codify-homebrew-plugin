@@ -1,4 +1,4 @@
-import { ParameterChange, Plan, Resource, ValidationResult } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ValidationResult } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
@@ -24,8 +24,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     super({
       dependencies: ['aws-cli'],
       parameterOptions: {
-        awsAccessKeyId: { canModify: true },
-        awsSecretAccessKey: { canModify: true },
+        awsAccessKeyId: { modifyOnChange: true },
+        awsSecretAccessKey: { modifyOnChange: true },
         csvCredentials: { transformParameter: new CSVCredentialsParameter() },
         profile: { default: 'default' },
       },
@@ -47,8 +47,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     }
   }
 
-  async refresh(keys: Map<string, any>): Promise<Partial<AwsConfigureConfig> | null> {
-    const profile = keys.get('profile');
+  async refresh(parameters: Map<string, any>): Promise<Partial<AwsConfigureConfig> | null> {
+    const profile = parameters.get('profile');
 
     // Make sure aws-cli is installed
     const { status: awsStatus } = await codifySpawn('which aws', { throws: false });
@@ -71,26 +71,26 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
       profile,
     };
 
-    if (keys.has('region')) {
+    if (parameters.has('region')) {
       result.region = await this.getAwsConfigureValueOrNull('region', profile);
     }
 
-    if (keys.has('output')) {
+    if (parameters.has('output')) {
       result.output = await this.getAwsConfigureValueOrNull('output', profile);
     }
 
-    if (keys.has('metadataServiceTimeout')) {
+    if (parameters.has('metadataServiceTimeout')) {
       result.region = await this.getAwsConfigureValueOrNull('metadata_service_timeout', profile);
     }
 
-    if (keys.has('metadataServiceNumAttempts')) {
+    if (parameters.has('metadataServiceNumAttempts')) {
       result.output = await this.getAwsConfigureValueOrNull('metadata_service_num_attempts', profile);
     }
 
     return result;
   }
 
-  async applyCreate(plan: Plan<AwsConfigureConfig>): Promise<void> {
+  async applyCreate(plan: CreatePlan<AwsConfigureConfig>): Promise<void> {
     // Assert that aws-cli is installed
     await codifySpawn('which aws')
 
@@ -126,7 +126,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
 
   async applyModify(
     pc: ParameterChange<AwsConfigureConfig>,
-    plan: Plan<AwsConfigureConfig>
+    plan: ModifyPlan<AwsConfigureConfig>
   ): Promise<void> {
     if (pc.name === 'awsAccessKeyId') {
       await this.setAwsConfigureValue('aws_access_key_id', pc.newValue, plan.desiredConfig.profile);
@@ -137,7 +137,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     }
   }
 
-  async applyDestroy(plan: Plan<AwsConfigureConfig>): Promise<void> {
+  async applyDestroy(plan: DestroyPlan<AwsConfigureConfig>): Promise<void> {
     const regex = /^\[.*]$/g;
     const { profile } = plan.currentConfig;
 

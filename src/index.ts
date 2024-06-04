@@ -10,40 +10,18 @@ import { VscodeResource } from './resources/vscode/vscode.js';
 import { AwsConfigureResource } from './resources/aws-cli/configure/aws-configure.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 
-function buildPlugin(): Plugin {
-  const resourceMap = new Map();
-
-  const xcodeToolsResource = new XcodeToolsResource();
-  resourceMap.set(xcodeToolsResource.typeId, xcodeToolsResource);
-
-  const homebrewResource = new HomebrewResource()
-  resourceMap.set(homebrewResource.typeId, homebrewResource)
-
-  const pythonResource = new PyenvResource()
-  resourceMap.set(pythonResource.typeId, pythonResource)
-
-  const gitLfsResource = new GitLfsResource()
-  resourceMap.set(gitLfsResource.typeId, gitLfsResource)
-
-  const awsCliResource = new AwsCliResource()
-  resourceMap.set(awsCliResource.typeId, awsCliResource)
-
-  const awsConfigureResource = new AwsConfigureResource()
-  resourceMap.set(awsConfigureResource.typeId, awsConfigureResource)
-
-  const terraformResource = new TerraformResource()
-  resourceMap.set(terraformResource.typeId, terraformResource)
-
-  const nvmResource = new NvmResource();
-  resourceMap.set(nvmResource.typeId, nvmResource);
-
-  const pgcliResource = new PgcliResource();
-  resourceMap.set(pgcliResource.typeId, pgcliResource);
-
-  const vscodeResource = new VscodeResource();
-  resourceMap.set(vscodeResource.typeId, vscodeResource);
-
-  return new Plugin('default', resourceMap);
-}
-
-runPlugin(buildPlugin())
+runPlugin(Plugin.create(
+  'default',
+  [
+    new XcodeToolsResource(),
+    new HomebrewResource(),
+    new PyenvResource(),
+    new GitLfsResource(),
+    new AwsCliResource(),
+    new AwsConfigureResource(),
+    new TerraformResource(),
+    new NvmResource(),
+    new PgcliResource(),
+    new VscodeResource()
+  ])
+)

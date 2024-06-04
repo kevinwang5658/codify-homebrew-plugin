@@ -1,4 +1,4 @@
-import { Plan, Resource } from 'codify-plugin-lib';
+import { Resource } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
@@ -29,7 +29,7 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     return {};
   }
 
-  async applyCreate(plan: Plan<AwsCliConfig>): Promise<void> {
+  async applyCreate(): Promise<void> {
     // Amazon has not released a standalone way to install arm aws-cli. See: https://github.com/aws/aws-cli/issues/7252
     // Prefer the homebrew version on M1
     const isArmArch = await Utils.isArmArch();
@@ -63,7 +63,7 @@ softwareupdate --install-rosetta
     }
   }
 
-  async applyDestroy(plan: Plan<AwsCliConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     const installLocation = await this.findInstallLocation();
     if (!installLocation) {
       return;

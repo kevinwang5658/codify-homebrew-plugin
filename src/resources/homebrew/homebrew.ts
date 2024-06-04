@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
@@ -41,21 +41,21 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     await this.downloadSudoPopupIfNotExists();
   }
 
-  async refresh(desired: Map<keyof HomebrewConfig, any>): Promise<Partial<HomebrewConfig> | null> {
+  async refresh(parameters: Map<keyof HomebrewConfig, any>): Promise<Partial<HomebrewConfig> | null> {
     const homebrewInfo = await codifySpawn('brew config', { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
     }
 
     const result: Partial<HomebrewConfig> = {}
-    if (desired.has('directory')) {
+    if (parameters.has('directory')) {
       result.directory = this.getCurrentLocation(homebrewInfo.data);
     }
 
     return result;
   }
 
-  async applyCreate(plan: Plan<HomebrewConfig>): Promise<void> {
+  async applyCreate(plan: CreatePlan<HomebrewConfig>): Promise<void> {
     if (plan.desiredConfig.directory) {
       return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }
@@ -67,7 +67,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
   }
 
-  async applyDestroy(plan: Plan<HomebrewConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     const homebrewInfo = await codifySpawn('brew config');
     const homebrewDirectory = this.getCurrentLocation(homebrewInfo.data)
 

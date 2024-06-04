@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, Resource, SpawnStatus } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import semver from 'semver';
 
@@ -33,21 +33,21 @@ export class TerraformResource extends Resource<TerraformConfig> {
     });
   }
 
-  async refresh(desired: Map<string, any>): Promise<Partial<TerraformConfig> | null> {
+  async refresh(parameters: Map<string, any>): Promise<Partial<TerraformConfig> | null> {
     const terraformInfo = await codifySpawn('which terraform', { throws: false });
     if (terraformInfo.status === SpawnStatus.ERROR) {
       return null;
     }
 
     const results: Partial<TerraformConfig> = {}
-    if (desired.has('directory')) {
+    if (parameters.has('directory')) {
       const directory = terraformInfo.data.trim();
 
       // which command returns the directory with the binary included. For Ex: /usr/local/bin/terraform. Remove the terraform and return.
       results.directory = directory.slice(0, Math.max(0, directory.lastIndexOf('/')));
     }
 
-    if (desired.has('version')) {
+    if (parameters.has('version')) {
       const versionQuery = await codifySpawn('terraform version -json');
       const versionJson = JSON.parse(versionQuery.data) as TerraformVersionInfo;
       
@@ -57,7 +57,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
     return results;
   }
 
-  async applyCreate(plan: Plan<TerraformConfig>): Promise<void> {
+  async applyCreate(plan: CreatePlan<TerraformConfig>): Promise<void> {
     const { version } = plan.desiredConfig;
     const isArm = await Utils.isArmArch()
     const directory = plan.desiredConfig.directory ?? '/usr/local/bin';
@@ -93,7 +93,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
     }
   }
 
-  async applyDestroy(plan: Plan<TerraformConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     const installLocationQuery = await codifySpawn('which terraform', { throws: false });
     if (installLocationQuery.status === SpawnStatus.ERROR) {
       return;

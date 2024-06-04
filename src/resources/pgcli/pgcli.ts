@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
@@ -25,7 +25,7 @@ export class PgcliResource extends Resource<PgcliConfig> {
     return {}
   }
 
-  async applyCreate(plan: Plan<PgcliConfig>): Promise<void> {
+  async applyCreate(): Promise<void> {
     const isBrewInstalled = await this.isBrewInstalled();
     if (isBrewInstalled) {
       await codifySpawn('brew install pgcli');
@@ -46,7 +46,7 @@ Brew can be installed using Codify:
     `)
   }
 
-  async applyDestroy(plan: Plan<PgcliConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     const isBrewInstalled = await this.isBrewInstalled();
     if (!isBrewInstalled) {
       console.log('Unable to uninstall pgcli because homebrew is not installed');

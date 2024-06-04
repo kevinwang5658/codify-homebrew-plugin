@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
@@ -34,7 +34,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
     return {};
   }
 
-  async applyCreate(plan: Plan<PyenvConfig>): Promise<void> {
+  async applyCreate(): Promise<void> {
     await codifySpawn('curl https://pyenv.run | bash')
 
     // Add to startup script
@@ -46,7 +46,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
     // TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
   }
 
-  async applyDestroy(plan: Plan<PyenvConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     await codifySpawn('rm -rf $(pyenv root)', { requiresRoot: true });
     await codifySpawn('rm -rf $HOME/.pyenv', { requiresRoot: true });
 
