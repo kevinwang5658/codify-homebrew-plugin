@@ -6,12 +6,12 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
+import { FileUtils } from '../../utils/file-utils.js';
 import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
 import HomebrewSchema from './homebrew-schema.json'
 import { TapsParameter } from './tap-parameter.js';
-import { FileUtils } from '../../utils/file-utils.js';
 
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 const SUDO_ASKPASS_URL = 'https://codify-homebrew-plugin.s3.amazonaws.com/sudo_prompt.sh';
