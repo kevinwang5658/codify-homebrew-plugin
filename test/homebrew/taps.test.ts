@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it } from 'vitest'
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 
-describe('Homebrew main resource integration tests', () => {
+describe('Homebrew taps tests', () => {
   let plugin: PluginTester;
 
   beforeEach(() => {

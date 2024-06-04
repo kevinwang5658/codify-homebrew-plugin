@@ -1,4 +1,4 @@
-import { Plan, Resource } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
@@ -25,8 +25,8 @@ export class VscodeResource extends Resource<VscodeConfig> {
     });
   }
 
-  async refresh(desired: Map<string, any>): Promise<Partial<VscodeConfig> | null> {
-    const directory = desired.get('directory')
+  async refresh(parameters: Map<string, any>): Promise<Partial<VscodeConfig> | null> {
+    const directory = parameters.get('directory')
 
     const isInstalled = await this.isVscodeInstalled(directory);
     if (!isInstalled) {
@@ -34,14 +34,14 @@ export class VscodeResource extends Resource<VscodeConfig> {
     }
 
     const results: Partial<TerraformConfig> = {}
-    if (desired.has('directory')) {
+    if (parameters.has('directory')) {
       results.directory = directory;
     }
 
     return results;
   }
 
-  async applyCreate(plan: Plan<VscodeConfig>): Promise<void> {
+  async applyCreate(plan: CreatePlan<VscodeConfig>): Promise<void> {
     // Create a temporary tmp dir
     const temporaryDirQuery = await codifySpawn('mktemp -d');
     const temporaryDir = temporaryDirQuery.data.trim();
@@ -58,7 +58,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
     await codifySpawn(`rm -rf ${temporaryDir}`)
   }
 
-  async applyDestroy(plan: Plan<VscodeConfig>): Promise<void> {
+  async applyDestroy(plan: DestroyPlan<VscodeConfig>): Promise<void> {
     const { directory } = plan.currentConfig;
     const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
     await codifySpawn(`rm -r ${location}`);

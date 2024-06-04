@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 
-describe('Test aws-cli', async () => {
+describe('Aws configure tests', async () => {
   let plugin: PluginTester;
 
   beforeEach(() => {

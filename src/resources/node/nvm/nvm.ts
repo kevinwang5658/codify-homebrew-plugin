@@ -1,4 +1,4 @@
-import { Plan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
@@ -25,7 +25,7 @@ export class NvmResource extends Resource<NvmConfig> {
     });
   }
 
-  async refresh(keys: Map<keyof NvmConfig, any>): Promise<Partial<NvmConfig> | null> {
+  async refresh(): Promise<Partial<NvmConfig> | null> {
     const nvmQuery = await codifySpawn('command -v nvm', { throws: false })
     if (nvmQuery.status === SpawnStatus.ERROR) {
       return null
@@ -34,7 +34,7 @@ export class NvmResource extends Resource<NvmConfig> {
     return {};
   }
 
-  async applyCreate(plan: Plan<NvmConfig>): Promise<void> {
+  async applyCreate(): Promise<void> {
     await codifySpawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash')
 
     // Add to startup script
@@ -44,7 +44,7 @@ export class NvmResource extends Resource<NvmConfig> {
     await codifySpawn('echo \'[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion\' >> $HOME/.zshrc')
   }
 
-  async applyDestroy(plan: Plan<NvmConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     const { data: nvmDir } = await codifySpawn('echo "${NVM_DIR:-~/.nvm}"');
     await codifySpawn('nvm unload');
     await codifySpawn(`rm -rf ${nvmDir.trim()}`);

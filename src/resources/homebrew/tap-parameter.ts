@@ -1,5 +1,6 @@
-import { codifySpawn, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
+import { codifySpawn } from '../../utils/codify-spawn.js'
 import { HomebrewConfig } from './homebrew.js';
 
 export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
@@ -41,13 +42,8 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
       return;
     }
 
-    const result = await codifySpawn(`brew tap ${taps.join(' ')}`)
-
-    if (result.status === SpawnStatus.SUCCESS) {
-      console.log(`Installed taps: ${taps}`);
-    } else {
-      throw new Error(`Failed to install taps: ${taps}. ${JSON.stringify(result.data, null, 2)}`)
-    }
+    await codifySpawn(`brew tap ${taps.join(' ')}`)
+    console.log(`Installed taps: ${taps}`);
   }
 
   private async uninstallTaps(taps: string[]): Promise<void> {
@@ -55,13 +51,8 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
       return;
     }
 
-    const result = await codifySpawn(`brew untap ${taps.join(' ')}`)
-
-    if (result.status === SpawnStatus.SUCCESS) {
-      console.log(`Uninstalled taps: ${taps}`);
-    } else {
-      throw new Error(`Failed to uninstall taps: ${taps}. ${JSON.stringify(result.data, null, 2)}`)
-    }
+    await codifySpawn(`brew untap ${taps.join(' ')}`)
+    console.log(`Uninstalled taps: ${taps}`);
   }
 
 }
