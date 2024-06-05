@@ -19,7 +19,7 @@ export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, string>
       return null;
     }
 
-    return data;
+    return data.trim();
   }
 
   async applyAdd(valueToAdd: string, plan: Plan<PyenvConfig>): Promise<void> {
