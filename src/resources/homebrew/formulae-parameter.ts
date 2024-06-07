@@ -3,6 +3,8 @@ import { ArrayStatefulParameter, Plan, SpawnStatus } from 'codify-plugin-lib';
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { HomebrewConfig } from './homebrew.js';
 
+const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
+
 export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
   constructor() {
     super({
@@ -55,7 +57,7 @@ export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, st
       return;
     }
 
-    const result = await codifySpawn(`brew install --formula ${formulae.join(' ')}`)
+    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --formula ${formulae.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Installed formula: ${formulae.join(' ')}`);
@@ -73,7 +75,7 @@ export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, st
       return;
     }
 
-    const result = await codifySpawn(`brew uninstall ${formulae.join(' ')}`)
+    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew uninstall ${formulae.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Uninstalled formulae: ${formulae.join(' ')}`);

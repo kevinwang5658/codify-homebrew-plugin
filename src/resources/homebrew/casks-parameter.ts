@@ -1,6 +1,9 @@
-import { ArrayStatefulParameter, codifySpawn, Plan, SpawnStatus } from 'codify-plugin-lib';
+import { ArrayStatefulParameter, Plan, SpawnStatus } from 'codify-plugin-lib';
 
 import { HomebrewConfig } from './homebrew.js';
+import { codifySpawn } from '../../utils/codify-spawn.js';
+
+const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 
 export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
   constructor() {
@@ -57,7 +60,7 @@ export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, strin
       return;
     }
 
-    const result = await codifySpawn(`brew install --casks ${casks.join(' ')}`)
+    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --casks ${casks.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Installed casks: ${casks.join(' ')}`);
@@ -71,7 +74,7 @@ export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, strin
       return;
     }
 
-    const result = await codifySpawn(`brew uninstall ${casks.join(' ')}`)
+    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew uninstall ${casks.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Uninstalled casks: ${casks.join(' ')}`);
