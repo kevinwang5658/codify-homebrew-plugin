@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
 import path from 'node:path';
 import { homedir } from 'node:os';
 
@@ -55,5 +56,27 @@ export class FileUtils {
     }
 
     await fs.writeFile(filePath, lines.join('\n'));
+  }
+
+  static async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
+    let stat;
+    try {
+      stat = await fs.stat(path);
+    } catch (e) {
+      console.log('stat error')
+      return false;
+    }
+
+    if (stat.isDirectory()) {
+      return true;
+    } else {
+      throw new Error(`Directory ${path} already exists and is a file`);
+    }
+  }
+
+  static async createDirIfNotExists(path: string): Promise<void> {
+    if (!fsSync.existsSync(path)){
+      await fs.mkdir(path, { recursive: true });
+    }
   }
 }

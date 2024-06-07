@@ -1,6 +1,6 @@
 import { Resource, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
-import { codifySpawn } from '../../utils/codify-spawn.js';
+import { codifySpawn } from '../../../utils/codify-spawn.js';
 import Schema from './git-lfs-schema.json';
 
 export interface GitLfsConfig extends ResourceConfig {
