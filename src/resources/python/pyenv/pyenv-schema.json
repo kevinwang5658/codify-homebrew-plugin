@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://www.codify.com/pyenv.json",
+  "$id": "https://www.codifycli.com/pyenv.json",
   "title": "Pyenv resource",
   "type": "object",
   "properties": {

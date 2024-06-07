@@ -33,9 +33,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     });
   }
 
-  async validate(parameters: unknown): Promise<ValidationResult> {
-    const p = parameters as Partial<AwsConfigureConfig>;
-    if (p.csvCredentials && (p.awsAccessKeyId || p.awsSecretAccessKey)) {
+  async validate(parameters: Partial<AwsConfigureConfig>): Promise<ValidationResult> {
+    if (parameters.csvCredentials && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
       return {
         errors: ['Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey'],
         isValid: false,
@@ -47,8 +46,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     }
   }
 
-  async refresh(parameters: Map<string, any>): Promise<Partial<AwsConfigureConfig> | null> {
-    const profile = parameters.get('profile');
+  async refresh(parameters: Partial<AwsConfigureConfig>): Promise<Partial<AwsConfigureConfig> | null> {
+    const profile = parameters.profile!;
 
     // Make sure aws-cli is installed
     const { status: awsStatus } = await codifySpawn('which aws', { throws: false });
@@ -71,19 +70,19 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
       profile,
     };
 
-    if (parameters.has('region')) {
+    if (parameters.region) {
       result.region = await this.getAwsConfigureValueOrNull('region', profile);
     }
 
-    if (parameters.has('output')) {
+    if (parameters.output) {
       result.output = await this.getAwsConfigureValueOrNull('output', profile);
     }
 
-    if (parameters.has('metadataServiceTimeout')) {
+    if (parameters.metadataServiceTimeout) {
       result.region = await this.getAwsConfigureValueOrNull('metadata_service_timeout', profile);
     }
 
-    if (parameters.has('metadataServiceNumAttempts')) {
+    if (parameters.metadataServiceNumAttempts) {
       result.output = await this.getAwsConfigureValueOrNull('metadata_service_num_attempts', profile);
     }
 

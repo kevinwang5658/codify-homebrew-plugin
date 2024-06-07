@@ -3,7 +3,6 @@ import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
 import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
-import { TerraformConfig } from '../terraform/terraform.js';
 import Schema from './vscode-schema.json';
 
 const VSCODE_APPLICATION_NAME = 'Visual Studio Code.app';
@@ -25,20 +24,15 @@ export class VscodeResource extends Resource<VscodeConfig> {
     });
   }
 
-  async refresh(parameters: Map<string, any>): Promise<Partial<VscodeConfig> | null> {
-    const directory = parameters.get('directory')
+  async refresh(parameters: Partial<VscodeConfig>): Promise<Partial<VscodeConfig> | null> {
+    const directory = parameters.directory!;
 
     const isInstalled = await this.isVscodeInstalled(directory);
     if (!isInstalled) {
       return null;
     }
 
-    const results: Partial<TerraformConfig> = {}
-    if (parameters.has('directory')) {
-      results.directory = directory;
-    }
-
-    return results;
+    return parameters;
   }
 
   async applyCreate(plan: CreatePlan<VscodeConfig>): Promise<void> {

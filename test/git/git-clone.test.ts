@@ -19,8 +19,8 @@ describe('Git clone integration tests', async () => {
     ]);
   })
 
-  it('Can install git repo to any dir', { timeout: 300000 }, async () => {
-    await plugin.uninstall([
+  it('Can install git repo to specified dir', { timeout: 300000 }, async () => {
+    await plugin.fullTest([
       {
         type: 'git-clone',
         directory: '~/projects/nested/codify-plugin',

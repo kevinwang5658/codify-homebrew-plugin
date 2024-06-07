@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://www.codify.com/nvm.json",
+  "$id": "https://www.codifycli.com/nvm.json",
   "title": "Nvm resource",
   "type": "object",
   "properties": {

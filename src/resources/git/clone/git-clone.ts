@@ -1,7 +1,11 @@
-import { codifySpawn, CreatePlan, DestroyPlan, Resource } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 import { FileUtils } from '../../../utils/file-utils.js';
+import Schema from './git-clone-schema.json';
+import { codifySpawn } from '../../../utils/codify-spawn.js';
+import { untildify } from '../../../utils/untildify.js';
+
 
 export interface GitCloneConfig extends ResourceConfig {
   parentDirectory?: string,
@@ -11,27 +15,40 @@ export interface GitCloneConfig extends ResourceConfig {
 }
 
 export class GitCloneResource extends Resource<GitCloneConfig> {
-  private readonly REPO_NAME_REGEX = /\/(.*)\.git\/?$/gm;
-
   constructor() {
     super({
-      type: 'git-clone'
+      type: 'git-clone',
+      schema: Schema,
     });
   }
 
-  async refresh(values: Map<keyof GitCloneConfig, unknown>): Promise<Partial<GitCloneConfig> | null> {
-    const repositoryUrl = (values.get('repository') ?? values.get('remote')) as string;
+  async validate(parameters: Partial<GitCloneConfig>): Promise<ValidationResult> {
+    if (parameters.parentDirectory && parameters.directory) {
+      return {
+        errors: ['Cannot specify both parentDirectory and directory together'],
+        isValid: false,
+      };
+    }
 
-    if (values.has('parentDirectory')) {
-      const parentDirectory = values.get('parentDirectory') as string
+    if (parameters.remote && parameters.repository) {
+      return {
+        errors: ['Cannot specify both remote and repository together'],
+        isValid: false,
+      };
+    }
 
-      // Converts https://github.com/kevinwang5658/codify-homebrew-plugin.git => codify-homebrew-plugin
-      const folderName = repositoryUrl
-        .split('/')
-        .at(-1)
-        ?.replace('.git', '')
-        ?.replace('/', '');
+    return {
+      isValid: true,
+    }
+  }
 
+  async refresh(parameters: Partial<GitCloneConfig>): Promise<Partial<GitCloneConfig> | null> {
+    const repositoryUrl = parameters.repository?? parameters.remote!;
+
+    if (parameters.parentDirectory) {
+      const parentDirectory = path.resolve(untildify(parameters.parentDirectory));
+
+      const folderName = this.extractBasename(repositoryUrl);
       if (!folderName) {
         throw new Error('Invalid git repository or remote name. Un-able to parse');
       }
@@ -43,36 +60,32 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
         return null;
       }
 
-      const { data: url } = await codifySpawn('git config --get remote.origin.url', [], { cwd: fullPath });
-      if (url !== repositoryUrl) {
-        throw new Error(`Folder found at location: '${fullPath}'. However the remote url '${url}' does not match desired url '${repositoryUrl}'`);
+      const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: fullPath });
+      if (this.extractBasename(url) !== folderName) {
+        console.log(this.extractBasename(url))
+        console.log(folderName)
+        throw new Error(`Folder found at location: '${fullPath}'. However the remote url '${url}' repo does not match desired repo '${repositoryUrl}'`);
       }
 
-      return {
-        parentDirectory: values.get('parentDirectory') as string,
-        ...( values.has('remote') ? { remote: values.get('remote') as string | undefined } : {}),
-        ...( values.has('repository') ? { repository: values.get('repository') as string | undefined } : {}),
-      };
+      return parameters;
     }
 
-    if (values.has('directory')) {
-      const directory = values.get('directory') as string;
+    if (parameters.directory) {
+      const directory = path.resolve(untildify(parameters.directory));
 
       const exists = await FileUtils.checkDirExistsOrThrowIfFile(directory);
       if (!exists) {
         return null;
       }
 
-      const { data: url } = await codifySpawn('git config --get remote.origin.url', [], { cwd: directory });
-      if (url !== repositoryUrl) {
+      const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: directory });
+      if (this.extractBasename(url) !== this.extractBasename(repositoryUrl)) {
+        console.log(this.extractBasename(url))
+        console.log(this.extractBasename(url))
         throw new Error(`Folder found at location: '${directory}'. However the remote url '${url}' does not match desired url '${repositoryUrl}'`);
       }
 
-      return {
-        directory: values.get('directory') as string,
-        remote: values.get('remote') as string | undefined,
-        repository: values.get('repository') as string | undefined,
-      };
+      return parameters;
     }
 
     throw new Error('Either directory or parent directory must be supplied');
@@ -84,15 +97,30 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     const repositoryUrl = config.repository ?? config.remote!;
 
     if (config.parentDirectory) {
-      await FileUtils.createDirIfNotExists(config.parentDirectory);
+      const parentDirectory = path.resolve(untildify(config.parentDirectory));
+      await FileUtils.createDirIfNotExists(parentDirectory);
 
-      await codifySpawn(`git clone ${repositoryUrl}`, [], { cwd: config.parentDirectory });
+      console.log(`git clone ${repositoryUrl}`);
+      await codifySpawn(`git clone ${repositoryUrl}`, { cwd: parentDirectory });
     } else {
-      await codifySpawn(`git clone ${repositoryUrl} ${config.directory}`);
+      const directory = path.resolve(untildify(config.directory!));
+      console.log(`git clone ${repositoryUrl} ${directory}`);
+
+      await codifySpawn(`git clone ${repositoryUrl} ${directory}`);
     }
   }
 
   async applyDestroy(plan: DestroyPlan<GitCloneConfig>): Promise<void> {
     // Do nothing here. We don't want to destroy a user's repository.
+  }
+
+  // Converts https://github.com/kevinwang5658/codify-homebrew-plugin.git => codify-homebrew-plugin
+  private extractBasename(name: string): string | undefined {
+    return name
+      .split('/')
+      .at(-1)
+      ?.replace('.git', '')
+      ?.replace('/', '')
+      ?.trim();
   }
 }

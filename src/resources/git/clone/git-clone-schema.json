@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codifycli.com/git-clone.json",
+  "title": "Git-clone resource",
+  "type": "object",
+  "properties": {
+    "remote": {
+      "type": "string",
+      "description": "Remote tracking url to clone repo from. Equivalent to repository and only one should be specified"
+    },
+    "repository": {
+      "type": "string",
+      "description": "Remote repository to clone repo from. Equivalent to remote and only one should be specified"
+    },
+    "parentDirectory": {
+      "type": "string",
+      "description": "Parent directory to clone into. The folder name will use default git semantics which extracts the last part of the clone url. Only one of parentDirectory or directory can be specified"
+    },
+    "directory": {
+      "type": "string",
+      "description": "Directory to clone contents into. This value is directly passed into git clone. This differs from parent directory in that the last part of the path will be the folder name of the repo"
+    }
+  },
+  "additionalProperties": false
+}

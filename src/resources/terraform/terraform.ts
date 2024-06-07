@@ -33,21 +33,21 @@ export class TerraformResource extends Resource<TerraformConfig> {
     });
   }
 
-  async refresh(parameters: Map<string, any>): Promise<Partial<TerraformConfig> | null> {
+  async refresh(parameters: Partial<TerraformConfig>): Promise<Partial<TerraformConfig> | null> {
     const terraformInfo = await codifySpawn('which terraform', { throws: false });
     if (terraformInfo.status === SpawnStatus.ERROR) {
       return null;
     }
 
     const results: Partial<TerraformConfig> = {}
-    if (parameters.has('directory')) {
+    if (parameters.directory) {
       const directory = terraformInfo.data.trim();
 
       // which command returns the directory with the binary included. For Ex: /usr/local/bin/terraform. Remove the terraform and return.
       results.directory = directory.slice(0, Math.max(0, directory.lastIndexOf('/')));
     }
 
-    if (parameters.has('version')) {
+    if (parameters.version) {
       const versionQuery = await codifySpawn('terraform version -json');
       const versionJson = JSON.parse(versionQuery.data) as TerraformVersionInfo;
       

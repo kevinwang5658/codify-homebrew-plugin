@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://www.codify.com/terraform.json",
+  "$id": "https://www.codifycli.com/terraform.json",
   "title": "Terraform resource",
   "type": "object",
   "properties": {

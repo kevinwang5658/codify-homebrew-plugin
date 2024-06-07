@@ -14,7 +14,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     });
   }
 
-  async refresh(keys: Map<number | string, unknown>): Promise<Partial<XCodeToolsConfig> | null> {
+  async refresh(): Promise<Partial<XCodeToolsConfig> | null> {
     const { data, status } = await codifySpawn('xcode-select -p', { throws: false })
 
     // The last check, ensures that a valid path is returned.
