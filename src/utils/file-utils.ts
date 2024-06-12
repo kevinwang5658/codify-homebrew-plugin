@@ -2,8 +2,18 @@ import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import path from 'node:path';
 import { homedir } from 'node:os';
+import { codifySpawn } from './codify-spawn.js';
 
 export class FileUtils {
+  static async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
+    if (prepend) {
+      await codifySpawn(`echo "path=(${path} $path)\n" >> $HOME/.zshrc`)
+      return;
+    }
+
+    await codifySpawn(`echo "path+=('${path}')\n" >> $HOME/.zshrc`)
+  }
+
   static async removeLineFromZshrc(search: string | RegExp): Promise<void> {
     return FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), search);
   }

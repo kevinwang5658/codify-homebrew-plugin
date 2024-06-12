@@ -10,11 +10,13 @@ import { VscodeResource } from './resources/vscode/vscode.js';
 import { AwsConfigureResource } from './resources/aws-cli/configure/aws-configure.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
+import { PathResource } from './resources/shell/path/path-resource.js';
 
 runPlugin(Plugin.create(
   'default',
   [
     new XcodeToolsResource(),
+    new PathResource(),
     new HomebrewResource(),
     new PyenvResource(),
     new GitLfsResource(),
