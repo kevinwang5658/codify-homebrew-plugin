@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codifycli.com/path.json",
+  "title": "Path resource",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "The path to append. This parameter cannot be used at the same time as paths"
+    },
+    "paths": {
+      "type": "array",
+      "description": "Multiple paths to append. This parameter cannot be used at the same time as path",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prepend": {
+      "type": "boolean",
+      "description": "Whether or not to prepend to the path."
+    }
+  },
+  "additionalProperties": false
+}
