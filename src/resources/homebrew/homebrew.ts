@@ -14,7 +14,6 @@ import HomebrewSchema from './homebrew-schema.json'
 import { TapsParameter } from './tap-parameter.js';
 
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
-const SUDO_ASKPASS_URL = 'https://codify-homebrew-plugin.s3.amazonaws.com/sudo_prompt.sh';
 
 export interface HomebrewConfig extends ResourceConfig {
   casks?: string[],
@@ -38,7 +37,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   }
 
   async onInitialize(): Promise<void> {
-    await this.downloadSudoPopupIfNotExists();
+    await this.saveSudoAskpassIfNotExists();
   }
 
   async refresh(parameters: Partial<HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
@@ -73,7 +72,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
 
     if (homebrewDirectory === '/opt/homebrew') {
       await codifySpawn(
-        'SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
+        `SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"`,
         { throws: false }
       )
     }
@@ -98,7 +97,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     await codifySpawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', { cwd: absoluteDir })
 
     // Activate brew to install it in the directory
-    await codifySpawn('./brew config', { cwd: path.join(absoluteDir, '/bin') })
+    await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 ./brew config`, { cwd: path.join(absoluteDir, '/bin') })
 
     // Update shell startup scripts
     await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshrc`);
@@ -117,7 +116,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     return homebrewPrefix.split(':')[1].trim()
   }
 
-  private async downloadSudoPopupIfNotExists(): Promise<void> {
+  private async saveSudoAskpassIfNotExists(): Promise<void> {
     const fullPath = untildify(SUDO_ASKPASS_PATH);
     const exists = fsSync.existsSync(fullPath)
     if (exists) {
@@ -125,7 +124,12 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     await mkdir(path.dirname(fullPath), { recursive: true });
-    await codifySpawn(`curl ${SUDO_ASKPASS_URL} -o ${SUDO_ASKPASS_PATH}`);
+    await codifySpawn(`cat << 'EOF' > ${SUDO_ASKPASS_PATH}
+#!/bin/bash    
+osascript -e 'display dialog "Enter user password:" default answer "" with hidden answer with icon file "System:Library:Frameworks:SecurityInterface.framework:Versions:A:Resources:Lock_Locked State@2x.png" with title "sudo"'\\
+| grep 'text returned:' \\
+| sed 's/^.*text returned:\\(.*\\).*$/\\1/'
+EOF`);
     await codifySpawn(`chmod +x ${SUDO_ASKPASS_PATH}`);
   }
 }

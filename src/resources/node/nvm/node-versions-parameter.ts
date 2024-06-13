@@ -1,6 +1,6 @@
-import { ArrayStatefulParameter, Plan } from 'codify-plugin-lib';
+import { ArrayStatefulParameter } from 'codify-plugin-lib';
 
-import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { NvmConfig } from './nvm.js';
 
 export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, string> {
@@ -11,7 +11,7 @@ export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, 
     // will match to 18.20.2. lts would match to the latest lts, etc...
     const matchedVersions = desired
       ? await Promise.all(desired.map(async (desiredVersion) => {
-        const { data, status } = await codifySpawn(`nvm which ${desiredVersion}`, { throws: false });
+        const { status } = await codifySpawn(`nvm which ${desiredVersion}`, { throws: false });
         if (status === SpawnStatus.ERROR) {
           return null;
         }
@@ -32,11 +32,11 @@ export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, 
     return matchedVersions.filter(Boolean) as string[];
   }
 
-  async applyAddItem(version: string, plan: Plan<NvmConfig>): Promise<void> {
+  async applyAddItem(version: string): Promise<void> {
     await codifySpawn(`nvm install ${version}`);
   }
 
-  async applyRemoveItem(version: string, plan: Plan<NvmConfig>): Promise<void> {
+  async applyRemoveItem(version: string): Promise<void> {
     await codifySpawn(`nvm uninstall ${version}`);
   }
 

@@ -36,21 +36,16 @@ export class NvmResource extends Resource<NvmConfig> {
 
   async applyCreate(): Promise<void> {
     await codifySpawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash')
-
-    // Add to startup script
-    // TODO: Need to support bash in addition to zsh here
-    await codifySpawn('echo \'export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"\' >> $HOME/.zshrc')
-    await codifySpawn('echo \'[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" # This loads nvm\' >> $HOME/.zshrc')
-    await codifySpawn('echo \'[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion\' >> $HOME/.zshrc')
   }
 
   async applyDestroy(): Promise<void> {
+    // eslint-disable-next-line no-template-curly-in-string
     const { data: nvmDir } = await codifySpawn('echo "${NVM_DIR:-~/.nvm}"');
     await codifySpawn('nvm unload');
     await codifySpawn(`rm -rf ${nvmDir.trim()}`);
 
-    await FileUtils.removeLineFromZshrc('echo \'export NVM_DIR="$([ -z "\${XDG_CONFIG_HOME-}" ] && printf %s "\${HOME}/.nvm" || printf %s "\${XDG_CONFIG_HOME}/nvm")"')
-    await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" # This loads nvm')
-    await FileUtils.removeLineFromZshrc('eval "[[ -r $NVM_DIR/bash_completion ]] && \\. $NVM_DIR/bash_completion')
+    await FileUtils.removeLineFromZshrc('export NVM_DIR="$HOME/.nvm"')
+    await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"  # This loads nvm')
+    await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion')
   }
 }
