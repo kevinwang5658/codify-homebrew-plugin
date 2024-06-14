@@ -42,7 +42,7 @@ export class PathResource extends Resource<PathConfig> {
     const { data: path } = await codifySpawn('echo $PATH')
 
     if (parameters.path && (path.includes(parameters.path) || path.includes(untildify(parameters.path)))) {
-      return parameters;
+        return parameters;
     }
 
     if (parameters.paths && parameters.paths.some((desired) => path.includes(desired))) {
@@ -50,7 +50,7 @@ export class PathResource extends Resource<PathConfig> {
 
       // Only add the paths that are found on the system
       for (const desiredPath of parameters.paths) {
-        if (path.includes(desiredPath) || path.includes(untildify(desiredPath))) {
+        if ((path.includes(desiredPath)) || path.includes(untildify(desiredPath))) {
           result.paths.push(desiredPath)
         }
       }
@@ -65,12 +65,14 @@ export class PathResource extends Resource<PathConfig> {
     const { path, paths, prepend } = plan.desiredConfig;
 
     if (path) {
+      // Escaping is done within file utils
       await FileUtils.addPathToZshrc(path, prepend);
       return;
     }
 
     if (paths) {
       for (const path of paths) {
+        // Escaping is done within file utils
         await FileUtils.addPathToZshrc(path, prepend);
       }
       
@@ -88,6 +90,7 @@ export class PathResource extends Resource<PathConfig> {
     // const pathsToRemove = pc.previousValue.filter((p: string) => !pc.newValue.includes(p));
 
     for (const path of pathsToAdd) {
+      // Escaping is done within file utils
       await FileUtils.addPathToZshrc(path, plan.desiredConfig.prepend);
     }
   }

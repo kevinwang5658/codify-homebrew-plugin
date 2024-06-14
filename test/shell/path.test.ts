@@ -15,11 +15,11 @@ describe('Path resource integration tests', async () => {
   })
 
   it('Can add a path to zshrc', { timeout: 300000 }, async () => {
-    const tempDir = fs.mkdtempSync('prefix');
+    const tempDir1 = fs.mkdtempSync(tempDir + '/');
     await plugin.fullTest([
       {
         type: 'path',
-        path: tempDir,
+        path: tempDir1,
       }
     ]);
   })
@@ -82,6 +82,17 @@ describe('Path resource integration tests', async () => {
       })
     });
   })
+
+  it('Shell variables are escaped', { timeout: 300000 }, async () => {
+    const tempDir = fs.mkdtempSync('$HOME/');
+    await plugin.fullTest([
+      {
+        type: 'path',
+        path: tempDir,
+      }
+    ]);
+  })
+
 
   afterEach(() => {
     plugin.kill();

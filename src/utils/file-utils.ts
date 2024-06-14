@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { codifySpawn } from './codify-spawn.js';
 import { Utils } from './index.js';
+import { untildify } from './untildify.js';
 
 export const FileUtils = {
   async addAliasToZshrc(alias: string, value: string): Promise<void> {
@@ -14,12 +15,14 @@ export const FileUtils = {
   },
 
   async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
+    const escapedPath = Utils.shellEscape(untildify(path))
+
     if (prepend) {
-      await codifySpawn(`echo "path=(${path} \\$path)\\n" >> $HOME/.zshrc`)
+      await codifySpawn(`echo "path=(${escapedPath} \\$path)\\n" >> $HOME/.zshrc`)
       return;
     }
 
-    await codifySpawn(`echo "path+=('${path}')\\n" >> $HOME/.zshrc`)
+    await codifySpawn(`echo "path+=('${escapedPath}')\\n" >> $HOME/.zshrc`)
   },
 
   async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
