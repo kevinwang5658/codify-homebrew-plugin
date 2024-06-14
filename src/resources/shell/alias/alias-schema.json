@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codifycli.com/path.json",
+  "title": "Path resource",
+  "type": "object",
+  "properties": {
+    "alias": {
+      "type": "string",
+      "pattern": "^[^ \t\n/\\$`=|&;()<>'\"]*$",
+      "description": "The path to append. This parameter cannot be used at the same time as paths"
+    },
+    "value": {
+      "type": "string",
+      "description": "The alias value"
+    }
+  },
+  "required": ["alias", "value"],
+  "additionalProperties": false
+}

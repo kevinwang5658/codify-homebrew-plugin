@@ -4,8 +4,15 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 
 import { codifySpawn } from './codify-spawn.js';
+import { Utils } from './index.js';
 
 export const FileUtils = {
+  async addAliasToZshrc(alias: string, value: string): Promise<void> {
+    const escapedValue = Utils.shellEscape(value);
+
+    await codifySpawn(`echo "alias ${alias}=${escapedValue}" >> $HOME/.zshrc`)
+  },
+
   async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
     if (prepend) {
       await codifySpawn(`echo "path=(${path} \\$path)\\n" >> $HOME/.zshrc`)
