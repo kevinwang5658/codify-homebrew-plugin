@@ -1,33 +1,52 @@
-import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
-import path from 'node:path';
+import * as fs from 'node:fs/promises';
 import { homedir } from 'node:os';
+import path from 'node:path';
+
 import { codifySpawn } from './codify-spawn.js';
 
-export class FileUtils {
-  static async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
+export const FileUtils = {
+  async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
     if (prepend) {
       await codifySpawn(`echo "path=(${path} \\$path)\\n" >> $HOME/.zshrc`)
       return;
     }
 
     await codifySpawn(`echo "path+=('${path}')\\n" >> $HOME/.zshrc`)
-  }
+  },
 
-  static async removeLineFromZshrc(search: string | RegExp): Promise<void> {
-    return FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), search);
-  }
+  async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
+    let stat;
+    try {
+      stat = await fs.stat(path);
+    } catch {
+      return false;
+    }
 
-  static async removeLineFromFile(filePath: string, search: string | RegExp): Promise<void> {
+    if (stat.isDirectory()) {
+      return true;
+    }
+ 
+      throw new Error(`Directory ${path} already exists and is a file`);
+    
+  },
+
+  async createDirIfNotExists(path: string): Promise<void> {
+    if (!fsSync.existsSync(path)){
+      await fs.mkdir(path, { recursive: true });
+    }
+  },
+
+  async removeLineFromFile(filePath: string, search: RegExp | string): Promise<void> {
     const file = await fs.readFile(filePath, 'utf8')
     const lines = file.split('\n');
 
-    let searchRegex = undefined;
-    let searchString = undefined;
+    let searchRegex;
+    let searchString;
 
     if (typeof search === 'object') {
-      const startRegex = /^([ \t]*)?/;
-      const endRegex = /([ \t]*)?/;
+      const startRegex = /^([\t ]*)?/;
+      const endRegex = /([\t ]*)?/;
 
       // Augment regex with spaces criteria to make sure this function is not deleting lines that are comments or has other content.
       searchRegex = search
@@ -66,27 +85,9 @@ export class FileUtils {
     }
 
     await fs.writeFile(filePath, lines.join('\n'));
-  }
+  },
 
-  static async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
-    let stat;
-    try {
-      stat = await fs.stat(path);
-    } catch (e) {
-      console.log('stat error')
-      return false;
-    }
-
-    if (stat.isDirectory()) {
-      return true;
-    } else {
-      throw new Error(`Directory ${path} already exists and is a file`);
-    }
-  }
-
-  static async createDirIfNotExists(path: string): Promise<void> {
-    if (!fsSync.existsSync(path)){
-      await fs.mkdir(path, { recursive: true });
-    }
-  }
-}
+  async removeLineFromZshrc(search: RegExp | string): Promise<void> {
+    return FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), search);
+  },
+};

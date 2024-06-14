@@ -1,7 +1,9 @@
+import { CreatePlan, ModifyPlan, ParameterChange, Resource, ValidationResult } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ValidationResult } from 'codify-plugin-lib';
+
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
+import { untildify } from '../../../utils/untildify.js';
 import Schema from './path-schema.json';
 
 export interface PathConfig extends StringIndexedObject {
@@ -13,45 +15,45 @@ export interface PathConfig extends StringIndexedObject {
 export class PathResource extends Resource<PathConfig> {
   constructor() {
     super({
-      type: 'path',
       parameterOptions: {
-        prepend: { default: false },
-        paths: { modifyOnChange: true }
+        paths: { modifyOnChange: true },
+        prepend: { default: false }
       },
-      schema: Schema
+      schema: Schema,
+      type: 'path'
     });
   }
 
   override async validate(parameters: Partial<PathConfig>): Promise<ValidationResult> {
     if (parameters.path && parameters.paths) {
       return {
-        isValid: false,
-        errors: ['Both path and paths cannot be specified together']
+        errors: ['Both path and paths cannot be specified together'],
+        isValid: false
       }
     }
 
     return {
-      isValid: true,
-      errors: []
+      errors: [],
+      isValid: true
     }
   }
 
   async refresh(parameters: Partial<PathConfig>): Promise<Partial<PathConfig> | null> {
     const { data: path } = await codifySpawn('echo $PATH')
 
-    if (parameters.path && path.includes(parameters.path)) {
+    if (parameters.path && (path.includes(parameters.path) || path.includes(untildify(parameters.path)))) {
       return parameters;
     }
 
     if (parameters.paths && parameters.paths.some((desired) => path.includes(desired))) {
-      const result = { prepend: parameters.prepend, paths: [] as string[] }
+      const result = { paths: [] as string[], prepend: parameters.prepend }
 
       // Only add the paths that are found on the system
-      parameters.paths.forEach(desiredPath => {
-        if (path.includes(desiredPath)) {
+      for (const desiredPath of parameters.paths) {
+        if (path.includes(desiredPath) || path.includes(untildify(desiredPath))) {
           result.paths.push(desiredPath)
         }
-      })
+      }
 
       return result;
     }
@@ -71,7 +73,7 @@ export class PathResource extends Resource<PathConfig> {
       for (const path of paths) {
         await FileUtils.addPathToZshrc(path, prepend);
       }
-      return;
+      
     }
   }
 
@@ -91,6 +93,6 @@ export class PathResource extends Resource<PathConfig> {
   }
 
   // TODO: Implement destroy some time in the future
-  async applyDestroy(plan: DestroyPlan<PathConfig>): Promise<void> {}
+  async applyDestroy(): Promise<void> {}
 
 }

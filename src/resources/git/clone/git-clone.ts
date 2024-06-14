@@ -1,24 +1,29 @@
-import { CreatePlan, DestroyPlan, Resource, ValidationResult } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ValidationResult } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
-import { FileUtils } from '../../../utils/file-utils.js';
-import Schema from './git-clone-schema.json';
+
 import { codifySpawn } from '../../../utils/codify-spawn.js';
+import { FileUtils } from '../../../utils/file-utils.js';
 import { untildify } from '../../../utils/untildify.js';
+import Schema from './git-clone-schema.json';
 
 
 export interface GitCloneConfig extends ResourceConfig {
-  parentDirectory?: string,
+  autoVerifySSH: boolean
   directory?: string,
-  repository?: string,
+  parentDirectory?: string,
   remote?: string,
+  repository?: string,
 }
 
 export class GitCloneResource extends Resource<GitCloneConfig> {
   constructor() {
     super({
-      type: 'git-clone',
+      parameterOptions: {
+        autoVerifySSH: { default: true },
+      },
       schema: Schema,
+      type: 'git-clone'
     });
   }
 
@@ -93,24 +98,23 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
 
   async applyCreate(plan: CreatePlan<GitCloneConfig>): Promise<void> {
     const config = plan.desiredConfig;
-
     const repositoryUrl = config.repository ?? config.remote!;
+
+    if (plan.desiredConfig.autoVerifySSH) {
+      await this.autoVerifySSHForFirstAttempt(repositoryUrl)
+    }
 
     if (config.parentDirectory) {
       const parentDirectory = path.resolve(untildify(config.parentDirectory));
       await FileUtils.createDirIfNotExists(parentDirectory);
-
-      console.log(`git clone ${repositoryUrl}`);
-      await codifySpawn(`git clone ${repositoryUrl}`, { cwd: parentDirectory });
+      await codifySpawn(`git clone --progress ${repositoryUrl}`, { cwd: parentDirectory });
     } else {
       const directory = path.resolve(untildify(config.directory!));
-      console.log(`git clone ${repositoryUrl} ${directory}`);
-
-      await codifySpawn(`git clone ${repositoryUrl} ${directory}`);
+      await codifySpawn(`git clone --progress ${repositoryUrl} ${directory}`);
     }
   }
 
-  async applyDestroy(plan: DestroyPlan<GitCloneConfig>): Promise<void> {
+  async applyDestroy(): Promise<void> {
     // Do nothing here. We don't want to destroy a user's repository.
   }
 
@@ -122,5 +126,38 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       ?.replace('.git', '')
       ?.replace('/', '')
       ?.trim();
+  }
+
+  private async autoVerifySSHForFirstAttempt(url: string): Promise<void> {
+    if (!(url.includes('@') || url.includes('ssh://'))) {
+      // Not an ssh url
+      return;
+    }
+
+    const baseUrlRegex = /(git)?@(?<url>[\w.]+)(:?(\/\/)?)([\w./:@~-]+)(\.git)(\/)?/gm
+    const groups = baseUrlRegex.exec(url)?.groups
+    if (!groups?.url) {
+      // Was unable to extract base url
+      console.log(`Un-able to extract base url from ssh ${url}. Skipping auto verification...`)
+      return;
+    }
+
+    // Create known hosts file it doesn't exist
+    await codifySpawn('touch ~/.ssh/known_hosts', { throws: false })
+
+    const baseUrl = groups!.url!
+    const { data: existingKey } = await codifySpawn(`ssh-keygen -F ${baseUrl}`, { throws: false })
+    console.log(`Is key blank: ${this.isBlank(existingKey)}`)
+    if (!this.isBlank(existingKey)) {
+      // An existing key is already in the file. Skipping..
+      return;
+    }
+
+    // TODO: Add fingerprint verification here
+    await codifySpawn(`ssh-keyscan ${baseUrl} >> ~/.ssh/known_hosts `)
+  }
+
+  isBlank(str: string): boolean {
+    return (!str || /^\s*$/.test(str));
   }
 }
