@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import mock from 'mock-fs'
+import * as mock from 'mock-fs'
 import { FileUtils } from './file-utils';
 import * as fs from 'node:fs/promises';
 

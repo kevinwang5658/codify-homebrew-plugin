@@ -1,7 +1,7 @@
 import { Plugin, runPlugin } from 'codify-plugin-lib';
 
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
-import { AwsConfigureResource } from './resources/aws-cli/configure/aws-configure.js';
+import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
@@ -24,7 +24,7 @@ runPlugin(Plugin.create(
     new PyenvResource(),
     new GitLfsResource(),
     new AwsCliResource(),
-    new AwsConfigureResource(),
+    new AwsProfileResource(),
     new TerraformResource(),
     new NvmResource(),
     new PgcliResource(),

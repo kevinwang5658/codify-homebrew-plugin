@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 
-describe('Aws configure tests', async () => {
+describe('Aws profile tests', async () => {
   let plugin: PluginTester;
 
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe('Aws configure tests', async () => {
       { type: 'homebrew' },
       { type: 'aws-cli' },
       {
-        type: 'aws-configure',
+        type: 'aws-profile',
         awsAccessKeyId: 'keyId',
         awsSecretAccessKey: 'secretAccessKey',
         region: 'us-west-2',
@@ -25,7 +25,7 @@ describe('Aws configure tests', async () => {
 
   it('Can add custom profiles', { timeout: 300000 }, async () => {
     await plugin.fullTest([{
-      type: 'aws-configure',
+      type: 'aws-profile',
       profile: 'codify',
       awsAccessKeyId: 'keyId',
       awsSecretAccessKey: 'secretAccessKey',

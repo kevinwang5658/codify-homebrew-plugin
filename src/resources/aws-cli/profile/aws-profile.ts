@@ -5,9 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
+import Schema from './aws-profile-schema.json'
 import { CSVCredentialsParameter } from './csv-credentials-parameter.js';
 
-export interface AwsConfigureConfig extends StringIndexedObject {
+export interface AwsProfileConfig extends StringIndexedObject {
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
   csvCredentials: string,
@@ -18,7 +19,7 @@ export interface AwsConfigureConfig extends StringIndexedObject {
   region?: string;
 }
 
-export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
+export class AwsProfileResource extends Resource<AwsProfileConfig> {
 
   constructor() {
     super({
@@ -29,18 +30,19 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
         csvCredentials: { transformParameter: new CSVCredentialsParameter() },
         profile: { default: 'default' },
       },
-      type: 'aws-configure',
+      schema: Schema,
+      type: 'aws-profile',
     });
   }
 
-  override async customValidation(parameters: Partial<AwsConfigureConfig>): Promise<void> {
+  override async customValidation(parameters: Partial<AwsProfileConfig>): Promise<void> {
     if (parameters.csvCredentials
       && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
       throw new Error('Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey')
     }
   }
 
-  async refresh(parameters: Partial<AwsConfigureConfig>): Promise<Partial<AwsConfigureConfig> | null> {
+  async refresh(parameters: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig> | null> {
     const profile = parameters.profile!;
 
     // Make sure aws-cli is installed
@@ -58,7 +60,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     const awsAccessKeyId = await this.getAwsConfigureValueOrNull('aws_access_key_id', profile);
     const awsSecretAccessKey = await this.getAwsConfigureValueOrNull('aws_secret_access_key', profile);
 
-    const result: Partial<AwsConfigureConfig> = {
+    const result: Partial<AwsProfileConfig> = {
       awsAccessKeyId: awsAccessKeyId ?? undefined,
       awsSecretAccessKey: awsSecretAccessKey ?? undefined,
       profile,
@@ -83,7 +85,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     return result;
   }
 
-  async applyCreate(plan: CreatePlan<AwsConfigureConfig>): Promise<void> {
+  async applyCreate(plan: CreatePlan<AwsProfileConfig>): Promise<void> {
     // Assert that aws-cli is installed
     await codifySpawn('which aws')
 
@@ -118,8 +120,8 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
   }
 
   async applyModify(
-    pc: ParameterChange<AwsConfigureConfig>,
-    plan: ModifyPlan<AwsConfigureConfig>
+    pc: ParameterChange<AwsProfileConfig>,
+    plan: ModifyPlan<AwsProfileConfig>
   ): Promise<void> {
     if (pc.name === 'awsAccessKeyId') {
       await this.setAwsConfigureValue('aws_access_key_id', pc.newValue, plan.desiredConfig.profile);
@@ -130,7 +132,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     }
   }
 
-  async applyDestroy(plan: DestroyPlan<AwsConfigureConfig>): Promise<void> {
+  async applyDestroy(plan: DestroyPlan<AwsProfileConfig>): Promise<void> {
     const regex = /^\[.*]$/g;
     const { profile } = plan.currentConfig;
 

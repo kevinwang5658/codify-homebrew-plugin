@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://www.codifycli.com/aws-cli.json",
+  "$id": "https://www.codifycli.com/aws-profile.json",
   "title": "Aws-CLI configure resource",
   "type": "object",
   "properties": {

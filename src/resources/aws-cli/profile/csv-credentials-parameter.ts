@@ -4,11 +4,11 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { untildify } from '../../../utils/untildify.js';
-import { AwsConfigureConfig } from './aws-configure.js';
+import { AwsProfileConfig } from './aws-profile.js';
 
-export class CSVCredentialsParameter extends TransformParameter<AwsConfigureConfig>{
+export class CSVCredentialsParameter extends TransformParameter<AwsProfileConfig>{
 
-  async transform(value: any): Promise<Partial<AwsConfigureConfig>> {
+  async transform(value: any): Promise<Partial<AwsProfileConfig>> {
     const csvPath = path.resolve(untildify(value));
 
     if (!fsSync.existsSync(csvPath)) {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { AwsConfigureResource } from './aws-configure.js';
+import { AwsProfileResource } from './aws-profile.js';
 
-describe('AWS configure validation tests', () => {
+describe('AWS profile validation tests', () => {
   it('Validates secret key id and secret key', async () => {
-    const resource = new AwsConfigureResource()
+    const resource = new AwsProfileResource()
 
     const result = await resource.validate({
       awsAccessKeyId: 'abc',
@@ -22,7 +22,7 @@ describe('AWS configure validation tests', () => {
   });
 
   it('Validates csv credentials', async () => {
-    const resource = new AwsConfigureResource()
+    const resource = new AwsProfileResource()
 
     const result = await resource.validate({
       csvCredentials: '../../path/to/csv'
@@ -40,7 +40,7 @@ describe('AWS configure validation tests', () => {
   });
 
   it('Rejects both csv credentials and secrets', async () => {
-    const resource = new AwsConfigureResource()
+    const resource = new AwsProfileResource()
 
     const result = await resource.validate({
       csvCredentials: '../../path/to/csv',
