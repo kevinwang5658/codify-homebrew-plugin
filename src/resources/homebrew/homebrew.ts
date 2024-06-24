@@ -36,10 +36,6 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     });
   }
 
-  async onInitialize(): Promise<void> {
-    await this.saveSudoAskpassIfNotExists();
-  }
-
   async refresh(parameters: Partial<HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
     const homebrewInfo = await codifySpawn('brew config', { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
@@ -55,6 +51,8 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   }
 
   async applyCreate(plan: CreatePlan<HomebrewConfig>): Promise<void> {
+    await this.saveSudoAskpassIfNotExists();
+
     if (plan.desiredConfig.directory) {
       return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }

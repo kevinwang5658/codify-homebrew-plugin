@@ -63,6 +63,12 @@ export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, strin
     const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --casks ${casks.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
+
+      // Casks can't detect if a program was installed by other means. If it returns this message, throw an error
+      if (result.data.includes('It seems there is already an App at')) {
+        throw new Error(`A program already exists for cask ${casks}`)
+      }
+
       console.log(`Installed casks: ${casks.join(' ')}`);
     } else {
       throw new Error(`Failed to install casks: ${casks}. ${JSON.stringify(result.data, null, 2)}`)
