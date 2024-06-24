@@ -1,4 +1,4 @@
-import { CreatePlan, ModifyPlan, ParameterChange, Resource, ValidationResult } from 'codify-plugin-lib';
+import { CreatePlan, ModifyPlan, ParameterChange, Resource } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
@@ -24,17 +24,9 @@ export class PathResource extends Resource<PathConfig> {
     });
   }
 
-  override async validate(parameters: Partial<PathConfig>): Promise<ValidationResult> {
+  override async customValidation(parameters: Partial<PathConfig>): Promise<void> {
     if (parameters.path && parameters.paths) {
-      return {
-        errors: ['Both path and paths cannot be specified together'],
-        isValid: false
-      }
-    }
-
-    return {
-      errors: [],
-      isValid: true
+      throw new Error('Both path and paths cannot be specified together')
     }
   }
 
@@ -75,7 +67,7 @@ export class PathResource extends Resource<PathConfig> {
         // Escaping is done within file utils
         await FileUtils.addPathToZshrc(path, prepend);
       }
-      
+
     }
   }
 

@@ -1,10 +1,10 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ValidationResult } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { CSVCredentialsParameter } from './csv-credentials-parameter.js';
 
 export interface AwsConfigureConfig extends StringIndexedObject {
@@ -33,16 +33,10 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     });
   }
 
-  async validate(parameters: Partial<AwsConfigureConfig>): Promise<ValidationResult> {
-    if (parameters.csvCredentials && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
-      return {
-        errors: ['Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey'],
-        isValid: false,
-      };
-    }
-
-    return {
-      isValid: true,
+  override async customValidation(parameters: Partial<AwsConfigureConfig>): Promise<void> {
+    if (parameters.csvCredentials
+      && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
+      throw new Error('Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey')
     }
   }
 
@@ -144,7 +138,7 @@ export class AwsConfigureResource extends Resource<AwsConfigureConfig> {
     const credentialsFile = await fs.readFile(credentialsPath, 'utf8');
     const lines = credentialsFile.split('\n');
 
-    const index = lines.indexOf(`[${plan.currentConfig.profile}]`)
+    const index = lines.indexOf(`[${profile}]`)
     if (index === -1) {
       console.log(`Unable to find profile ${profile} in .aws/credentials. Skipping...`)
       return;

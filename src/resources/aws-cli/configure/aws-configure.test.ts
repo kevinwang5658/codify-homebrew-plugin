@@ -8,11 +8,16 @@ describe('AWS configure validation tests', () => {
     const result = await resource.validate({
       awsAccessKeyId: 'abc',
       awsSecretAccessKey: 'def'
+    }, {
+      type: 'type',
+      name: 'name'
     });
 
     expect(result).to.toMatchObject({
       isValid: true,
-      errors: undefined,
+      schemaValidationErrors: [],
+      resourceType: 'type',
+      resourceName: 'name'
     })
   });
 
@@ -21,21 +26,33 @@ describe('AWS configure validation tests', () => {
 
     const result = await resource.validate({
       csvCredentials: '../../path/to/csv'
+    }, {
+      type: 'type',
+      name: 'name'
     });
 
     expect(result).to.toMatchObject({
       isValid: true,
-      errors: undefined,
+      schemaValidationErrors: [],
+      resourceType: 'type',
+      resourceName: 'name'
     })
   });
 
   it('Rejects both csv credentials and secrets', async () => {
     const resource = new AwsConfigureResource()
 
-    expect(async () => await resource.validate({
+    const result = await resource.validate({
       csvCredentials: '../../path/to/csv',
       awsAccessKeyId: 'abc',
       awsSecretAccessKey: 'def'
-    })).rejects.toThrow();
+    }, {
+      type: 'type',
+      name: 'name'
+    })
+
+    expect(result).toMatchObject({
+      isValid: false,
+    })
   });
 })

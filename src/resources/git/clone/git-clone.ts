@@ -1,4 +1,4 @@
-import { CreatePlan, Resource, ValidationResult } from 'codify-plugin-lib';
+import { CreatePlan, Resource } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
@@ -27,23 +27,13 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     });
   }
 
-  async validate(parameters: Partial<GitCloneConfig>): Promise<ValidationResult> {
+  override async customValidation(parameters: Partial<GitCloneConfig>): Promise<void> {
     if (parameters.parentDirectory && parameters.directory) {
-      return {
-        errors: ['Cannot specify both parentDirectory and directory together'],
-        isValid: false,
-      };
+      throw new Error('Cannot specify both parentDirectory and directory together')
     }
 
     if (parameters.remote && parameters.repository) {
-      return {
-        errors: ['Cannot specify both remote and repository together'],
-        isValid: false,
-      };
-    }
-
-    return {
-      isValid: true,
+      throw new Error('Cannot specify both remote and repository together')
     }
   }
 
