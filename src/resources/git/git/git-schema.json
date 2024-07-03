@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.codifycli.com/git.json",
+  "title": "Jenv resource",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "The global email to set for git"
+    },
+    "username": {
+      "type": "string",
+      "description": "The global username to set for git"
+    }
+  },
+  "additionalProperties": false
+}

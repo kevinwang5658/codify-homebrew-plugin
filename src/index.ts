@@ -3,6 +3,7 @@ import { Plugin, runPlugin } from 'codify-plugin-lib';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
+import { GitResource } from './resources/git/git/git-resource.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
 import { JenvResource } from './resources/java/jenv/jenv.js';
@@ -18,6 +19,7 @@ import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 runPlugin(Plugin.create(
   'default',
   [
+    new GitResource(),
     new XcodeToolsResource(),
     new PathResource(),
     new AliasResource(),

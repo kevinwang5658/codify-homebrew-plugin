@@ -28,6 +28,7 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
         awsAccessKeyId: { modifyOnChange: true },
         awsSecretAccessKey: { modifyOnChange: true },
         csvCredentials: { transformParameter: new CSVCredentialsParameter() },
+        output: { default: 'json' },
         profile: { default: 'default' },
       },
       schema: Schema,
