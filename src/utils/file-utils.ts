@@ -1,6 +1,6 @@
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
-import { homedir } from 'node:os';
+import os, { homedir } from 'node:os';
 import path from 'node:path';
 
 import { codifySpawn } from './codify-spawn.js';
@@ -13,6 +13,13 @@ export const FileUtils = {
 
     await codifySpawn(`echo "alias ${alias}=${escapedValue}" >> $HOME/.zshrc`)
   },
+
+  async addToStartupFile(line: string): Promise<void> {
+    const lineToInsert = line.endsWith('\n') ? line : line + '\n';
+
+    await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), lineToInsert)
+  },
+
 
   async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
     const escapedPath = Utils.shellEscape(untildify(path))
@@ -45,6 +52,10 @@ export const FileUtils = {
     if (!fsSync.existsSync(path)){
       await fs.mkdir(path, { recursive: true });
     }
+  },
+
+  homeDir(): string {
+    return os.homedir()
   },
 
   async removeLineFromFile(filePath: string, search: RegExp | string): Promise<void> {

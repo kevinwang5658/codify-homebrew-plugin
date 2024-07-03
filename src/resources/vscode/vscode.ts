@@ -2,7 +2,7 @@ import { CreatePlan, DestroyPlan, Resource } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
-import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import Schema from './vscode-schema.json';
 
 const VSCODE_APPLICATION_NAME = 'Visual Studio Code.app';
@@ -15,7 +15,6 @@ export interface VscodeConfig extends ResourceConfig {
 export class VscodeResource extends Resource<VscodeConfig> {
   constructor() {
     super({
-      dependencies: ['homebrew'],
       parameterOptions: {
         directory: { default: '/Applications' }
       },

@@ -5,6 +5,7 @@ import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
+import { JenvResource } from './resources/java/jenv/jenv.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
 import { PyenvResource } from './resources/python/pyenv/pyenv.js';
@@ -27,6 +28,7 @@ runPlugin(Plugin.create(
     new AwsProfileResource(),
     new TerraformResource(),
     new NvmResource(),
+    new JenvResource(),
     new PgcliResource(),
     new VscodeResource(),
     new GitCloneResource(),

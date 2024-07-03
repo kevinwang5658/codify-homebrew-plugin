@@ -3,11 +3,11 @@ import { StringIndexedObject } from 'codify-schemas';
 import semver from 'semver';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
+import { FileUtils } from '../../utils/file-utils.js';
 import { Utils } from '../../utils/index.js';
 import { untildify } from '../../utils/untildify.js';
 import Schema from './terraform-schema.json';
 import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
-import { FileUtils } from '../../utils/file-utils.js';
 
 const TERRAFORM_RELEASES_API_URL = 'https://api.releases.hashicorp.com/v1/releases/terraform';
 const TERRAFORM_RELEASE_INFO_API_URL = (version: string) => `https://api.releases.hashicorp.com/v1/releases/terraform/${version}`;
