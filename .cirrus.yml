@@ -18,4 +18,4 @@ integration_individual_test_task:
     image: codify-test-vm
   test_script:
     - echo $FILE_NAME
-    - npm run test -- $FILE_NAME
+    - npm run test -- $FILE_NAME --disable-console-intercept
