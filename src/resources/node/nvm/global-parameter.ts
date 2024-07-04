@@ -52,12 +52,10 @@ export class NvmGlobalParameter extends StatefulParameter<NvmConfig, string>{
     const version =  output.split('\n')
       .find((l) => l.includes('default'))
 
-    console.log(version);
-
     return version
       ?.trim()
       ?.replace('default', '') // Remove word default
       ?.replace(/\(.*\)/g, '') // Remove brackets and anything inside
-      ?.replaceAll(/\r*->v/g, '') ?? null; // Replace characters ->v and spaces
+      ?.replaceAll(/[ \->*]/g, '') ?? null; // Replace characters ->v and spaces
   }
 }
