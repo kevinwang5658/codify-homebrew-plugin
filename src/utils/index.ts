@@ -47,8 +47,8 @@ export const Utils = {
   },
 
   async isArmArch(): Promise<boolean> {
-    const query = await codifySpawn('uname -m');
-    return query.data.includes('arm');
+    const query = await codifySpawn('sysctl -n machdep.cpu.brand_string');
+    return /M([0-9])/.test(query.data);
   },
 
   async isDirectoryOnPath(directory: string): Promise<boolean> {

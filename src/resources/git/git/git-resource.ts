@@ -1,9 +1,10 @@
-import { CreatePlan, DestroyPlan, Resource } from 'codify-plugin-lib';
+import { Resource } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { GitEmailParameter } from './git-email-paramater.js';
 import { GitNameParameter } from './git-name-parameter.js';
+import Schema from './git-schema.json';
 
 export interface GitConfig extends StringIndexedObject {
   email?: string,
@@ -19,6 +20,7 @@ export class GitResource extends Resource<GitConfig> {
         email: { statefulParameter: new GitEmailParameter(), },
         username: { statefulParameter: new GitNameParameter() },
       },
+      schema: Schema,
       type: 'git'
     });
   }
