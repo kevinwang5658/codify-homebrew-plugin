@@ -1,5 +1,6 @@
 import { Plugin, runPlugin } from 'codify-plugin-lib';
 
+import { AndroidStudioResource } from './resources/android/android-studio.js';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
@@ -34,5 +35,6 @@ runPlugin(Plugin.create(
     new PgcliResource(),
     new VscodeResource(),
     new GitCloneResource(),
+    new AndroidStudioResource(),
   ])
 )

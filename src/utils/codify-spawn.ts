@@ -1,9 +1,9 @@
 import { spawn, SpawnOptions } from 'node:child_process';
 import { IpcMessage, MessageCmd, SudoRequestResponseData, SudoRequestResponseDataSchema } from 'codify-schemas';
-import Ajv2020 from 'ajv/dist/2020.js';
+import { Ajv } from 'ajv';
 import { SudoError } from 'codify-plugin-lib';
 
-const ajv = new Ajv2020.default({
+const ajv = new Ajv({
   strict: true,
 });
 const validateSudoRequestResponse = ajv.compile(SudoRequestResponseDataSchema);

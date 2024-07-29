@@ -49,8 +49,15 @@ export class JenvResource extends Resource<JenvConfig> {
   }
 
   async refresh(): Promise<Partial<JenvConfig> | null> {
-    const nvmQuery = await codifySpawn('which jenv', { throws: false })
-    if (nvmQuery.status === SpawnStatus.ERROR) {
+    const jenvQuery = await codifySpawn('which jenv', { throws: false })
+    if (jenvQuery.status === SpawnStatus.ERROR) {
+      return null
+    }
+
+    // For some reason jenv doctor will return with a non-zero status code even
+    // if it's successful. We can ignore the status code and only check for the text
+    const jenvDoctor = await codifySpawn('jenv doctor', { throws: false })
+    if (jenvDoctor.data.includes('Jenv is not loaded in')) {
       return null
     }
 
@@ -58,13 +65,18 @@ export class JenvResource extends Resource<JenvConfig> {
   }
 
   async applyCreate(): Promise<void> {
-    await codifySpawn('git clone https://github.com/jenv/jenv.git ~/.jenv')
+    const jenvQuery = await codifySpawn('which jenv', { throws: false })
+    if (jenvQuery.status === SpawnStatus.ERROR) {
+      await codifySpawn('git clone https://github.com/jenv/jenv.git ~/.jenv')
+    }
 
-    await FileUtils.addToStartupFile('export PATH="$HOME/.jenv/bin:$PATH"')
-    await FileUtils.addToStartupFile('eval "$(jenv init -)"')
+    const jenvDoctor = await codifySpawn('jenv doctor')
+    if (jenvDoctor.data.includes('Jenv is not loaded in')) {
+      await FileUtils.addToStartupFile('export PATH="$HOME/.jenv/bin:$PATH"')
+      await FileUtils.addToStartupFile('eval "$(jenv init -)"')
 
-    await codifySpawn('cat $HOME/.zshrc')
-    await codifySpawn('jenv enable-plugin export')
+      await codifySpawn('jenv enable-plugin export')
+    }
   }
 
   async applyDestroy(): Promise<void> {

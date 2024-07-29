@@ -19,7 +19,7 @@ export class JenvGlobalParameter extends StatefulParameter<JenvConfig, string>{
       return null;
     }
 
-    return data;
+    return data.trim();
   }
 
   async applyAdd(valueToAdd: string): Promise<void> {
