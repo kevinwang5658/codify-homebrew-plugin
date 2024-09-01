@@ -1,8 +1,32 @@
 import * as fs from 'node:fs/promises';
 
-import { SpawnStatus, codifySpawn } from './codify-spawn.js';
+import { codifySpawn, SpawnStatus } from './codify-spawn.js';
+import { SpotlightKind, SpotlightUtils } from './spotlight-search.js';
+import path from 'node:path';
 
 export const Utils = {
+  async findApplication(name: string): Promise<string[]> {
+    const [
+      spotlightResult,
+      applicationDir
+    ] = await Promise.all([
+      SpotlightUtils.mdfind(name, SpotlightKind.APPLICATION),
+      Utils.findInFolder('/Applications', name)
+    ])
+
+    return [...new Set([...spotlightResult, ...applicationDir])]
+  },
+
+  async findInFolder(dir: string, search: string): Promise<string[]> {
+    const { data } = await codifySpawn('ls -a', {
+      cwd: dir,
+    })
+
+    return data.split(/\n/)
+      .filter((l) => l.includes(search))
+      .map((l) => path.join(dir, l));
+  },
+
   async createBinDirectoryIfNotExists(): Promise<void> {
     let lstat = null;
     try {

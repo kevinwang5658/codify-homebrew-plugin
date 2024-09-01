@@ -3,6 +3,7 @@ import { ResourceConfig } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import Schema from './android-studio-schema.json';
+import { AndroidStudioVersionData, JetbrainsAndroidStudiosResponse } from './types.js';
 
 export interface AndroidStudioConfig extends ResourceConfig {}
 
@@ -16,6 +17,8 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
   }
 
   async refresh(): Promise<Partial<AndroidStudioConfig> | null> {
+    const versions = await this.fetchAndroidStudioVersions();
+
     const { data: files } = await codifySpawn('ls /Applications');
     const { status: brewStatus } = await codifySpawn('brew list --cask -l android-studio', { throws: false });
 
@@ -56,5 +59,15 @@ Brew can be installed using Codify:
   private async isBrewInstalled(): Promise<boolean> {
     const brewCheck = await codifySpawn('which brew', { throws: false });
     return brewCheck.status === SpawnStatus.SUCCESS;
+  }
+
+  async fetchAndroidStudioVersions(): Promise<AndroidStudioVersionData[]> {
+    const res = await fetch('https://jb.gg/android-studio-releases-list.json')
+
+    if (!res.ok) {
+      throw new Error('Unable to fetch android-studio-releases-list at https://jb.gg/android-studio-releases-list.json');
+    }
+
+    return JSON.parse(await res.text()).content.item
   }
 }
