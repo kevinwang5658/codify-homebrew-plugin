@@ -11,12 +11,7 @@ describe('Android studios tests', async () => {
 
   it('Can install the latest Android studios', { timeout: 300000 }, async () => {
     await plugin.fullTest([
-      {
-        type: 'homebrew',
-      },
-      {
-        type: 'android-studio'
-      }
+      { type: 'android-studio' }
     ]);
   })
 

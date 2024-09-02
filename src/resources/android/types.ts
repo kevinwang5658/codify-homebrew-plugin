@@ -18,3 +18,13 @@ export interface AndroidStudioVersionData {
   channel: 'Canary' | 'RC' | 'Release' | 'Beta';
   version: string; // "2024.1.1.11"
 }
+
+export interface AndroidStudioPlist {
+  CFBundleExecutable: string; // 'studio',
+  CFBundleName: string; // 'Android Studio',
+  CFBundleGetInfoString: string; // 'Android Studio EAP AI-242.20224.300.2421.12299964, build AI-242.20224.300.2421.12299964. Copyright JetBrains s.r.o., (c) 2000-2024',
+  CFBundleShortVersionString: string; // 'EAP AI-242.20224.300.2421.12299964', '2024.1', '2021.3'
+  CFBundleVersion: string; // 'AI-242.20224.300.2421.12299964'
+  LSMinimumSystemVersion: string; // '10.13',
+  LSArchitecturePriority: string[] // [ 'arm64' ]
+}
