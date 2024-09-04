@@ -1,8 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://www.codifycli.com/pgcli.json",
-  "title": "Pgcli resource",
+  "title": "Android studios resource",
   "type": "object",
-  "properties": {},
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Android studios version. Visit: https://developer.android.com/studio/releases for version info"
+    },
+    "directory": {
+
+    }
+  },
   "additionalProperties": false
 }
