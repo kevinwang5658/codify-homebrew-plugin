@@ -23,35 +23,32 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       dependencies: ['homebrew'],
       schema: Schema,
       type: 'android-studio',
+      parameterOptions: {
+        directory: {
+          default: '/Applications'
+        },
+        version: {
+          isEqual: (desired, current) => current.includes(desired)
+        }
+      }
     });
   }
 
   async refresh(parameters: Partial<AndroidStudioConfig>): Promise<Partial<AndroidStudioConfig> | null> {
+    // Attempt to fetch all versions. The plist doesn't give detailed info on the version
+    this.allAndroidStudioVersions = await this.fetchAllAndroidStudioVersions()
+
     const installedVersions = (await Utils.findApplication('Android Studio')
       .then((locations) => Promise.all(
         locations.map((l) => this.addPlistData(l))
       )))
       .filter(Boolean)
       .map((l) => l!)
+      .map((installed) => this.addWebInfo(installed, this.allAndroidStudioVersions!))
 
     const match = this.matchVersionAndDirectory(parameters, installedVersions);
     if (match) {
       return match;
-    }
-
-    // Attempt to fetch all versions. The plist doesn't give detailed info on the version
-    this.allAndroidStudioVersions = await this.fetchAllAndroidStudioVersions()
-
-    // Attempt to match with the additional information form the web.
-    const secondaryMatch = this.matchVersionAndDirectory(
-      parameters,
-      installedVersions.map(
-        (installed) => this.addWebInfo(installed, this.allAndroidStudioVersions!)
-      )
-    )
-
-    if (secondaryMatch) {
-      return secondaryMatch;
     }
 
     return null;
@@ -75,35 +72,46 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     const temporaryDirQuery = await codifySpawn('mktemp -d');
     const temporaryDir = temporaryDirQuery.data.trim();
 
-    // Download and unzip the terraform binary
-    await codifySpawn(`curl -fsSL ${downloadLink.link} -o android-studio.dmg`, { cwd: temporaryDir });
+    try {
 
-    const { data } = await codifySpawn('hdiutil attach android-studio.dmg', { cwd: temporaryDir });
-    const mountedDir = data.split(/\n/)
-      .find((l) => l.includes('/Volumes/'))
-      ?.split('                 ')
-      ?.at(-1)
-      ?.trim()
+      // Download and unzip the terraform binary
+      await codifySpawn(`curl -fsSL --progress-bar ${downloadLink.link} -o android-studio.dmg`, { cwd: temporaryDir });
 
-    if (!mountedDir) {
-      throw new Error('Unable to mount dmg or find the mounted volume')
+
+      const { data } = await codifySpawn('hdiutil attach android-studio.dmg', { cwd: temporaryDir });
+      const mountedDir = data.split(/\n/)
+        .find((l) => l.includes('/Volumes/'))
+        ?.split('                 ')
+        ?.at(-1)
+        ?.trim()
+
+      if (!mountedDir) {
+        throw new Error('Unable to mount dmg or find the mounted volume')
+      }
+
+      try {
+        const { data: contents } = await codifySpawn('ls', { cwd: mountedDir })
+
+        // Depending on it's preview or regular the name is different
+        const appName = contents.split(/\n/)
+          .find((l) => l.includes('Android'))
+
+        await codifySpawn(`rsync -rl "${appName}" Applications/`, { cwd: mountedDir, requiresRoot: true })
+
+
+      } finally {
+        // Unmount
+        await codifySpawn(`hdiutil detach "${mountedDir}"`)
+      }
+
+    } finally {
+      // Delete the tmp directory
+      await codifySpawn(`rm -r ${temporaryDir}`)
     }
-
-    const { data: contents } = await codifySpawn('ls', { cwd: mountedDir })
-
-    // Depending on it's preview or regular the name is different
-    const appName = contents.split(/\n/)
-      .find((l) => l.includes('Android'))
-
-    await codifySpawn(`rsync -rl "${appName}" Applications/`, { cwd: mountedDir })
-
-    // Unmount
-    await codifySpawn(`hdiutil detach "${mountedDir}"`)
-    await codifySpawn(`rm -r ${temporaryDir}`)
   }
 
   async applyDestroy(): Promise<void> {
-    await codifySpawn('rm -r /Applications/Android Studio.app')
+    await codifySpawn('rm -r "/Applications/Android Studio.app"')
   }
 
   async fetchAllAndroidStudioVersions(): Promise<AndroidStudioVersionData[]> {
@@ -131,10 +139,10 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
   addWebInfo(
     installed: { location: string; plist: AndroidStudioPlist },
     allWebInfo: AndroidStudioVersionData[],
-  ): { location: string, plist: AndroidStudioPlist, webInfo: AndroidStudioVersionData } {
-    const webInfo = allWebInfo!.find((all) =>
-      all.platformVersion === installed.plist.CFBundleVersion
-    )!
+  ): { location: string, plist: AndroidStudioPlist, webInfo?: AndroidStudioVersionData } {
+    const webInfo = allWebInfo!.find((webVersion) =>
+      webVersion.build === installed.plist.CFBundleVersion
+    )
 
     return { ...installed, webInfo }
   }
@@ -147,17 +155,19 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       return null;
     }
 
-    const matchedVersions = installedVersions
-      .filter(({ plist, webInfo }) =>
-        !parameters.version
-        || plist.CFBundleShortVersionString.includes(parameters.version)
-        || (webInfo && (webInfo.platformVersion.includes(parameters.version)))
-      ).filter(({ location }) =>
-        !parameters.directory || parameters.directory === path.dirname(location)
+    const matched = installedVersions
+      .filter(({ plist, webInfo, location }) =>
+        parameters.directory === path.dirname(location)
+        || !parameters.version
+        || webInfo && webInfo.version.includes(parameters.version)
+        || parameters.version === plist.CFBundleShortVersionString
       )
 
-    return matchedVersions.length > 0
-      ? parameters
+    return matched.length > 0
+      ? {
+        directory: path.dirname(matched[0].location),
+        version: matched[0].webInfo?.version ?? matched[0].plist.CFBundleShortVersionString
+      }
       : null;
   }
 
@@ -170,6 +180,6 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       return allVersionData.find((d) => d.channel === 'Release')!
     }
 
-    return allVersionData.find((d) => d.platformVersion.toString().includes(version)) ?? null
+    return allVersionData.find((d) => d.version.toString().includes(version)) ?? null
   }
 }
