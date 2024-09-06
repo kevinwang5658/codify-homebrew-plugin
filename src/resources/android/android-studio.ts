@@ -170,6 +170,6 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       return allVersionData.find((d) => d.channel === 'Release')!
     }
 
-    return allVersionData.find((d) => d.platformVersion.includes(version)) ?? null
+    return allVersionData.find((d) => d.platformVersion.toString().includes(version)) ?? null
   }
 }
