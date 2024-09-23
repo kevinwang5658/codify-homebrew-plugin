@@ -9,10 +9,24 @@ export const JAVA_VERSION_INTEGER = /^\d+$/;
 
 export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string> {
   async refresh(desired: null | string[]): Promise<null | string[]> {
-    const { data: jenvVersions } = await codifySpawn('jenv versions')
+    const { data } = await codifySpawn('jenv versions')
+
+    /** Example:
+     *   system
+     * * 17 (set by /Users/kevinwang/.jenv/version)
+     *   17.0
+     *   17.0.11
+     *   openjdk64-17.0.11
+     */
+    const versions = new Set(
+      data
+        .split(/\n/)
+        // Regex to split out the version part
+        .map((v) => this.getFirstRegexGroup(/^[ *] ([\d.A-Za-z-]+)[ \\n]?/g, v))
+    );
 
     return desired
-      ?.filter((v) => jenvVersions.includes(v))
+      ?.filter((v) => versions.has(v))
       ?.filter(Boolean) ?? null;
   }
 
@@ -88,6 +102,10 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
       return null;
     }
 
-    return libexec + '/openjdk.jdk/Contents/Home';
+    return libexec + 'openjdk.jdk/Contents/Home';
+  }
+
+  private getFirstRegexGroup(regexp: RegExp, str: string): null | string {
+    return Array.from(str.matchAll(regexp), m => m[1])?.at(0) ?? null;
   }
 }
