@@ -1,4 +1,4 @@
-import { CreatePlan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
@@ -23,20 +23,21 @@ export interface HomebrewConfig extends ResourceConfig {
 }
 
 export class HomebrewResource extends Resource<HomebrewConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
-        casks: { order: 3, statefulParameter: new CasksParameter() },
-        directory: { isEqual: (a, b) => untildify(a) === untildify(b) },
-        formulae: { order: 2, statefulParameter: new FormulaeParameter() },
-        taps: { order: 1, statefulParameter: new TapsParameter() },
-      },
+
+  override getSettings(): ResourceSettings<HomebrewConfig> {
+    return {
       schema: HomebrewSchema,
-      type: 'homebrew'
-    });
+      id: 'homebrew',
+      parameterSettings: {
+        taps: { type: 'stateful', definition: new TapsParameter(), order: 1 },
+        formulae: { type: 'stateful', definition: new FormulaeParameter(), order: 2 },
+        casks: { type: 'stateful', definition: new CasksParameter(), order: 3 },
+        directory: { type: 'directory' },
+      },
+    };
   }
 
-  async refresh(parameters: Partial<HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
+  override async refresh(parameters: Partial<HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
     const homebrewInfo = await codifySpawn('brew config', { throws: false });
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
@@ -50,7 +51,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     return result;
   }
 
-  async applyCreate(plan: CreatePlan<HomebrewConfig>): Promise<void> {
+  override async create(plan: CreatePlan<HomebrewConfig>): Promise<void> {
     await this.saveSudoAskpassIfNotExists();
 
     if (plan.desiredConfig.directory) {
@@ -64,7 +65,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     const homebrewInfo = await codifySpawn('brew config');
     const homebrewDirectory = this.getCurrentLocation(homebrewInfo.data)
 

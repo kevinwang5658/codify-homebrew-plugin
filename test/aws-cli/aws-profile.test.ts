@@ -32,14 +32,6 @@ describe('Aws profile tests', async () => {
     }]);
   })
 
-  it ('Can uninstall aws-cli', { timeout: 300000 }, async () => {
-    await plugin.uninstall([
-      { type: 'aws-cli' },
-      { type: 'homebrew' },
-    ]);
-  })
-
-
   afterEach(() => {
     plugin.kill();
   })

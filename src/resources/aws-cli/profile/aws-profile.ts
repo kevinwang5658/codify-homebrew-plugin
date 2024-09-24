@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
@@ -21,29 +21,29 @@ export interface AwsProfileConfig extends StringIndexedObject {
 
 export class AwsProfileResource extends Resource<AwsProfileConfig> {
 
-  constructor() {
-    super({
+  getSettings(): ResourceSettings<AwsProfileConfig> {
+    return {
+      id: 'aws-profile',
       dependencies: ['aws-cli'],
-      parameterOptions: {
-        awsAccessKeyId: { modifyOnChange: true },
-        awsSecretAccessKey: { modifyOnChange: true },
-        csvCredentials: { transformParameter: new CSVCredentialsParameter() },
+      schema: Schema,
+      parameterSettings: {
+        awsAccessKeyId: { canModify: true },
+        awsSecretAccessKey: { canModify: true },
         output: { default: 'json' },
         profile: { default: 'default' },
       },
-      schema: Schema,
-      type: 'aws-profile',
-    });
+      inputTransformation: CSVCredentialsParameter.transform
+    };
   }
 
-  override async customValidation(parameters: Partial<AwsProfileConfig>): Promise<void> {
+  override async validate(parameters: Partial<AwsProfileConfig>): Promise<void> {
     if (parameters.csvCredentials
       && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
       throw new Error('Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey')
     }
   }
 
-  async refresh(parameters: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig> | null> {
+  override async refresh(parameters: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig> | null> {
     const profile = parameters.profile!;
 
     // Make sure aws-cli is installed
@@ -86,7 +86,7 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
     return result;
   }
 
-  async applyCreate(plan: CreatePlan<AwsProfileConfig>): Promise<void> {
+  override async create(plan: CreatePlan<AwsProfileConfig>): Promise<void> {
     // Assert that aws-cli is installed
     await codifySpawn('which aws')
 
@@ -120,7 +120,7 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
     }
   }
 
-  async applyModify(
+  override async modify(
     pc: ParameterChange<AwsProfileConfig>,
     plan: ModifyPlan<AwsProfileConfig>
   ): Promise<void> {
@@ -133,7 +133,7 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
     }
   }
 
-  async applyDestroy(plan: DestroyPlan<AwsProfileConfig>): Promise<void> {
+  override async destroy(plan: DestroyPlan<AwsProfileConfig>): Promise<void> {
     const regex = /^\[.*]$/g;
     const { profile } = plan.currentConfig;
 
