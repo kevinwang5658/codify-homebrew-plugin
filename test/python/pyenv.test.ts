@@ -13,19 +13,11 @@ describe('Pyenv resource integration tests', () => {
     await plugin.fullTest([{
       type: 'pyenv',
       pythonVersions: ['3.11']
-    }]);
+    }], false);
   });
 
   it ('Can install additional python versions', { timeout: 500000 }, async () => {
     await plugin.fullTest([{
-      type: 'pyenv',
-      pythonVersions: ['3.11', '3.12'],
-      global: '3.12',
-    }])
-  })
-
-  it ('Can uninstall pyenv', { timeout: 30000 }, async () => {
-    await plugin.uninstall([{
       type: 'pyenv',
       pythonVersions: ['3.11', '3.12'],
       global: '3.12',

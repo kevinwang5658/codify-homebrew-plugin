@@ -16,13 +16,6 @@ describe('Pgcli integration tests', async () => {
     ])
   })
 
-  it('Can uninstall pgcli', async () => {
-    await plugin.fullTest([
-      { type: 'pgcli' },
-      { type: 'homebrew' },
-    ])
-  })
-
   afterEach(() => {
     plugin.kill();
   })

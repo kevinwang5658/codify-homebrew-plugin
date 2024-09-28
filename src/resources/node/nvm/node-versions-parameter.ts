@@ -20,7 +20,7 @@ export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, 
     // current with what we currently have installed. This is because nvm has weird
     // matching logic that we cannot replicate
     for (const desiredVersion of desired ?? []) {
-      const { status, data } = await codifySpawn(`nvm ls ${desiredVersion} --no-colors`);
+      const { status, data } = await codifySpawn(`nvm ls ${desiredVersion} --no-colors`, { throws: false });
 
       if (status !== SpawnStatus.SUCCESS) {
         continue;

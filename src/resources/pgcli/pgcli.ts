@@ -1,4 +1,4 @@
-import { Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
@@ -7,15 +7,15 @@ import Schema from './pgcli-schema.json';
 export interface PgcliConfig extends ResourceConfig {}
 
 export class PgcliResource extends Resource<PgcliConfig> {
-  constructor() {
-    super({
-      dependencies: ['homebrew'],
+  getSettings(): ResourceSettings<PgcliConfig> {
+    return {
+      id: 'pgcli',
       schema: Schema,
-      type: 'pgcli',
-    });
+      dependencies: ['homebrew'],
+    }
   }
 
-  async refresh(): Promise<Partial<PgcliConfig> | null> {
+  override async refresh(): Promise<Partial<PgcliConfig> | null> {
     const result = await codifySpawn('which pgcli', { throws: false });
 
     if (result.status === SpawnStatus.ERROR) {
@@ -25,7 +25,7 @@ export class PgcliResource extends Resource<PgcliConfig> {
     return {}
   }
 
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
     const isBrewInstalled = await this.isBrewInstalled();
     if (isBrewInstalled) {
       await codifySpawn('brew install pgcli');
@@ -46,7 +46,7 @@ Brew can be installed using Codify:
     `)
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     const isBrewInstalled = await this.isBrewInstalled();
     if (!isBrewInstalled) {
       console.log('Unable to uninstall pgcli because homebrew is not installed');
@@ -59,15 +59,5 @@ Brew can be installed using Codify:
   private async isBrewInstalled(): Promise<boolean> {
     const brewCheck = await codifySpawn('which brew', { throws: false });
     return brewCheck.status === SpawnStatus.SUCCESS;
-  }
-
-  private async isPipInstalled(): Promise<boolean> {
-    const pipCheck = await codifySpawn('which pip', { throws: false });
-    return pipCheck.status === SpawnStatus.SUCCESS;
-  }
-
-  private async isPostgresqlInstalled(): Promise<boolean> {
-    const pipCheck = await codifySpawn('which postgresql', { throws: false });
-    return pipCheck.status === SpawnStatus.SUCCESS;
   }
 }
