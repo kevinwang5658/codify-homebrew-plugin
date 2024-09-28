@@ -16,7 +16,7 @@ describe('Git integration tests', async () => {
         username: 'test',
         email: 'test@test.com'
       }
-    ]);
+    ], true);
   })
 
   it('Can modify git user name and email', { timeout: 300000 }, async () => {

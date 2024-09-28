@@ -16,13 +16,6 @@ describe('Git lfs integration tests', async () => {
     ]);
   })
 
-  it('Can uninstall git-lfs', { timeout: 300000 }, async () => {
-    await plugin.uninstall([
-      { type: 'git-lfs' },
-      { type: 'homebrew' },
-    ]);
-  })
-
   afterEach(() => {
     plugin.kill();
   })

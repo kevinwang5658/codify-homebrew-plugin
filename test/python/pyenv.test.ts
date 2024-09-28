@@ -13,7 +13,7 @@ describe('Pyenv resource integration tests', () => {
     await plugin.fullTest([{
       type: 'pyenv',
       pythonVersions: ['3.11']
-    }], false);
+    }], true);
   });
 
   it ('Can install additional python versions', { timeout: 500000 }, async () => {

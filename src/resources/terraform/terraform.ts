@@ -1,11 +1,10 @@
-import { CreatePlan, Resource, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import semver from 'semver';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { Utils } from '../../utils/index.js';
-import { untildify } from '../../utils/untildify.js';
 import Schema from './terraform-schema.json';
 import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
 
@@ -21,19 +20,19 @@ export interface TerraformConfig extends StringIndexedObject {
 
 export class TerraformResource extends Resource<TerraformConfig> {
 
-  constructor() {
-    super({
-      parameterOptions: {
+  getSettings(): ResourceSettings<TerraformConfig> {
+    return {
+      id: 'terraform',
+      schema: Schema,
+      parameterSettings: {
         directory: {
-          isEqual: (desired, current) => untildify(desired) === untildify(current),
+          type: 'directory',
         }
       },
-      schema: Schema,
-      type: 'terraform'
-    });
+    }
   }
 
-  async refresh(parameters: Partial<TerraformConfig>): Promise<Partial<TerraformConfig> | null> {
+  override async refresh(parameters: Partial<TerraformConfig>): Promise<Partial<TerraformConfig> | null> {
     const terraformInfo = await codifySpawn('which terraform', { throws: false });
     if (terraformInfo.status === SpawnStatus.ERROR) {
       return null;
@@ -57,19 +56,19 @@ export class TerraformResource extends Resource<TerraformConfig> {
     return results;
   }
 
-  async applyCreate(plan: CreatePlan<TerraformConfig>): Promise<void> {
+  override async create(plan: CreatePlan<TerraformConfig>): Promise<void> {
     const { version } = plan.desiredConfig;
     const isArm = await Utils.isArmArch()
     const directory = plan.desiredConfig.directory ?? '/usr/local/bin';
 
     const releaseInfo = await (version ? this.getReleaseInfo(version) : this.getLatestTerraformInfo());
     if (!releaseInfo) {
-      throw new Error(`Resource ${this.typeId} unable to resolve Terraform download url ${version}`);
+      throw new Error(`Resource ${this.getSettings().id} unable to resolve Terraform download url ${version}`);
     }
 
     const downloadUrl = await this.getDownloadUrl(releaseInfo, isArm);
     if (!downloadUrl) {
-      throw new Error(`Resource ${this.typeId}. Could not parse download url for arch ${isArm ? 'arm64' : 'amd64'}, os: darwin, and version: ${version}. 
+      throw new Error(`Resource ${this.getSettings().id}. Could not parse download url for arch ${isArm ? 'arm64' : 'amd64'}, os: darwin, and version: ${version}. 
 ${JSON.stringify(releaseInfo, null, 2)}
       `);
     }
@@ -93,7 +92,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
     }
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     const installLocationQuery = await codifySpawn('which terraform', { throws: false });
     if (installLocationQuery.status === SpawnStatus.ERROR) {
       return;
@@ -108,10 +107,10 @@ ${JSON.stringify(releaseInfo, null, 2)}
     await FileUtils.removeLineFromZshrc(`echo 'export PATH=$PATH:${installLocationQuery.data}' >> $HOME/.zshrc`);
   }
 
-  async getLatestTerraformInfo(): Promise<HashicorpReleaseInfo> {
+  private async getLatestTerraformInfo(): Promise<HashicorpReleaseInfo> {
     const terraformVersionQuery = await fetch(TERRAFORM_RELEASES_API_URL)
     if (!terraformVersionQuery.ok) {
-      throw new Error(`Resource ${this.typeId}. Un-able to fetch Terraform version list`)
+      throw new Error(`Resource ${this.getSettings().id}. Un-able to fetch Terraform version list`)
     }
 
     const json = await terraformVersionQuery.json() as HashicorpReleasesAPIResponse;
@@ -124,16 +123,16 @@ ${JSON.stringify(releaseInfo, null, 2)}
       )[0];
   }
 
-  async getReleaseInfo(version: string): Promise<HashicorpReleaseInfo | null> {
+  private async getReleaseInfo(version: string): Promise<HashicorpReleaseInfo | null> {
     const terraformVersionQuery = await fetch(TERRAFORM_RELEASE_INFO_API_URL(version))
     if (!terraformVersionQuery.ok) {
       return null;
     }
 
-    return await terraformVersionQuery.json()
+    return terraformVersionQuery.json()
   }
 
-  async getDownloadUrl(releaseInfo: HashicorpReleaseInfo, isArm: boolean): Promise<null | string> {
+  private async getDownloadUrl(releaseInfo: HashicorpReleaseInfo, isArm: boolean): Promise<null | string> {
     const arch = isArm ? 'arm64' : 'amd64';
     const os = 'darwin';
 

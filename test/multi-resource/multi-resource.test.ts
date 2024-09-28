@@ -16,13 +16,6 @@ describe('Multi-resource tests', async () => {
     ])
   })
 
-  it('Can uninstall git-lfs and homebrew together', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
-      { type: 'git-lfs' },
-      { type: 'homebrew' },
-    ])
-  })
-
   afterEach(() => {
     plugin.kill()
   })

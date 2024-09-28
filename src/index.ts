@@ -21,7 +21,7 @@ runPlugin(Plugin.create(
   'default',
   [
     new GitResource(),
-    // new XcodeToolsResource(),
+    new XcodeToolsResource(),
     new PathResource(),
     new AliasResource(),
     new HomebrewResource(),
@@ -29,11 +29,11 @@ runPlugin(Plugin.create(
     new GitLfsResource(),
     new AwsCliResource(),
     new AwsProfileResource(),
-    // new TerraformResource(),
+    new TerraformResource(),
     new NvmResource(),
     new JenvResource(),
     new PgcliResource(),
-    // new VscodeResource(),
+    new VscodeResource(),
     new GitCloneResource(),
     new AndroidStudioResource(),
   ])

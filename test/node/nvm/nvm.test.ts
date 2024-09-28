@@ -18,9 +18,7 @@ describe('nvm tests', () => {
         nodeVersions: ['20', '18']
       }
     ]);
-
   });
-
 });
 
 export {};
