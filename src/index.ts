@@ -20,21 +20,21 @@ import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 runPlugin(Plugin.create(
   'default',
   [
-    // new GitResource(),
+    new GitResource(),
     // new XcodeToolsResource(),
     // new PathResource(),
     // new AliasResource(),
     new HomebrewResource(),
     // new PyenvResource(),
-    // new GitLfsResource(),
+    new GitLfsResource(),
     new AwsCliResource(),
     new AwsProfileResource(),
     // new TerraformResource(),
     // new NvmResource(),
-    // new JenvResource(),
+    new JenvResource(),
     // new PgcliResource(),
     // new VscodeResource(),
-    // new GitCloneResource(),
+    new GitCloneResource(),
     new AndroidStudioResource(),
   ])
 )

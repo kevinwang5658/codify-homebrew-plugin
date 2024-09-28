@@ -1,4 +1,4 @@
-import { Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 
@@ -18,19 +18,19 @@ export interface JenvConfig extends ResourceConfig {
 }
 
 export class JenvResource extends Resource<JenvConfig> {
-  constructor() {
-    super({
-      dependencies: ['homebrew'],
-      parameterOptions: {
-        add: { order: 1, statefulParameter: new JenvAddParameter() },
-        global: { order: 2, statefulParameter: new JenvGlobalParameter() },
-      },
+  getSettings(): ResourceSettings<JenvConfig> {
+    return {
+      id: 'jenv',
       schema: Schema,
-      type: 'jenv'
-    });
+      dependencies: ['homebrew'],
+      parameterSettings: {
+        add: { type: 'stateful', definition: new JenvAddParameter(), order: 1 },
+        global: { type: 'stateful', definition: new JenvGlobalParameter(), order: 2 },
+      },
+    };
   }
 
-  async customValidation(parameters: Partial<JenvConfig>): Promise<void> {
+  override async validate(parameters: Partial<JenvConfig>): Promise<void> {
     if (parameters.add) {
       for (const version of parameters.add) {
         if (JAVA_VERSION_INTEGER.test(version)) {
@@ -48,7 +48,7 @@ export class JenvResource extends Resource<JenvConfig> {
     }
   }
 
-  async refresh(): Promise<Partial<JenvConfig> | null> {
+  override async refresh(): Promise<Partial<JenvConfig> | null> {
     const jenvQuery = await codifySpawn('which jenv', { throws: false })
     if (jenvQuery.status === SpawnStatus.ERROR) {
       return null
@@ -64,10 +64,12 @@ export class JenvResource extends Resource<JenvConfig> {
     return {};
   }
 
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
+    await this.assertBrewInstalled()
+
     const jenvQuery = await codifySpawn('which jenv', { throws: false })
     if (jenvQuery.status === SpawnStatus.ERROR) {
-      await codifySpawn('git clone https://github.com/jenv/jenv.git ~/.jenv')
+      await codifySpawn('brew install jenv')
     }
 
     const jenvDoctor = await codifySpawn('jenv doctor')
@@ -75,14 +77,29 @@ export class JenvResource extends Resource<JenvConfig> {
       await FileUtils.addToStartupFile('export PATH="$HOME/.jenv/bin:$PATH"')
       await FileUtils.addToStartupFile('eval "$(jenv init -)"')
 
+      await codifySpawn('eval "$(jenv init -)"')
       await codifySpawn('jenv enable-plugin export')
     }
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     await codifySpawn('rm -rf $HOME/.jenv');
 
     await FileUtils.removeLineFromZshrc('export PATH="$HOME/.jenv/bin:$PATH"')
     await FileUtils.removeLineFromZshrc('eval "$(jenv init -)"')
+  }
+
+  private async assertBrewInstalled(): Promise<void> {
+    const brewCheck = await codifySpawn('which brew', { throws: false });
+    if (brewCheck.status === SpawnStatus.ERROR) {
+      throw new Error(
+        `Homebrew is not installed. Cannot install jenv without Homebrew installed.
+
+Brew can be installed using Codify:
+{
+  "type": "homebrew",
+}`
+      );
+    }
   }
 }

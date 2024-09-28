@@ -11,15 +11,15 @@ export class GitNameParameter extends StatefulParameter<GitConfig, string> {
     return status === SpawnStatus.ERROR ? null : email.trim()
   }
 
-  async applyAdd(valueToAdd: string): Promise<void> {
+  async add(valueToAdd: string): Promise<void> {
     await codifySpawn(`git config --global user.name "${valueToAdd}"`)
   }
 
-  async applyModify(newValue: string): Promise<void> {
+  async modify(newValue: string): Promise<void> {
     await codifySpawn(`git config --global user.name "${newValue}"`)
   }
 
-  async applyRemove(): Promise<void> {
+  async remove(): Promise<void> {
     await codifySpawn('git config --global --unset user.name')
   }
 }

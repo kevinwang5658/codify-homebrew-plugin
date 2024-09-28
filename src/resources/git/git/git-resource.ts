@@ -1,4 +1,4 @@
-import { Resource } from 'codify-plugin-lib';
+import { Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
@@ -13,28 +13,29 @@ export interface GitConfig extends StringIndexedObject {
 }
 
 export class GitResource extends Resource<GitConfig> {
-  constructor() {
-    super({
-      callStatefulParameterRemoveOnDestroy: true,
-      parameterOptions: {
-        email: { statefulParameter: new GitEmailParameter(), },
-        username: { statefulParameter: new GitNameParameter() },
-      },
+  getSettings(): ResourceSettings<GitConfig> {
+    return {
+      id: 'git',
       schema: Schema,
-      type: 'git'
-    });
+      removeStatefulParametersBeforeDestroy: true,
+      parameterSettings: {
+        email: { type: 'stateful', definition: new GitEmailParameter(), },
+        username: { type: 'stateful', definition: new GitNameParameter() },
+      },
+
+    }
   }
-  
+
   async refresh(): Promise<Partial<GitConfig> | null> {
     const { status } = await codifySpawn('which git', { throws: false })
     return status === SpawnStatus.ERROR ? null : {}
   }
 
-  async applyCreate(): Promise<void> {
+  async create(): Promise<void> {
     // Git should always be installed with xcode tools. Nothing to do here.
   }
 
-  async applyDestroy(): Promise<void> {
+  async destroy(): Promise<void> {
     // Don't uninstall git. It will break things.
   }
 }

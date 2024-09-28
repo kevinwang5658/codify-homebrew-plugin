@@ -8,7 +8,7 @@ export const OPENJDK_SUPPORTED_VERSIONS = [8, 11, 17, 21, 22]
 export const JAVA_VERSION_INTEGER = /^\d+$/;
 
 export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string> {
-  async refresh(desired: null | string[]): Promise<null | string[]> {
+  override async refresh(desired: null | string[]): Promise<null | string[]> {
     const { data } = await codifySpawn('jenv versions')
 
     /** Example:
@@ -30,7 +30,7 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
       ?.filter(Boolean) ?? null;
   }
 
-  async applyAddItem(param: string): Promise<void> {
+  override async addItem(param: string): Promise<void> {
     
     const isHomebrewInstalled = await Utils.isHomebrewInstalled();
     
@@ -69,7 +69,7 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
     await codifySpawn(`jenv add ${param}`);
   }
 
-  async applyRemoveItem(param: string): Promise<void> {
+  override async removeItem(param: string): Promise<void> {
     const isHomebrewInstalled = await Utils.isHomebrewInstalled();
 
     if (JAVA_VERSION_INTEGER.test(param) && isHomebrewInstalled) {
