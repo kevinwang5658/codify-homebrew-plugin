@@ -1,7 +1,7 @@
 import { Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
-import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { Utils } from '../../../utils/index.js';
 import Schema from './aws-cli-schema.json';
 
@@ -38,11 +38,11 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     const isHomebrewInstalled = await Utils.isHomebrewInstalled();
 
     if (isArmArch && isHomebrewInstalled) {
-      console.log(`Resource: 'aws-cli'. Detected that mac is aarch64. Installing AWS-CLI via homebrew`)
+      console.log('Resource: \'aws-cli\'. Detected that mac is aarch64. Installing AWS-CLI via homebrew')
       await codifySpawn('brew install awscli')
 
     } else if (!isArmArch || isRosettaInstalled) {
-      console.log(`Resource: 'aws-cli'. Detected that mac is not ARM or Rosetta is installed. Installing AWS-CLI standalone version`)
+      console.log('Resource: \'aws-cli\'. Detected that mac is not ARM or Rosetta is installed. Installing AWS-CLI standalone version')
       await codifySpawn('curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"');
       await codifySpawn('installer -pkg ./AWSCLIV2.pkg -target /', { requiresRoot: true })
       await codifySpawn('rm -rf ./AWSCLIV2.pkg')

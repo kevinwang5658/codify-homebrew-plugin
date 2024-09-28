@@ -30,8 +30,11 @@ export const CSVCredentialsParameter = {
       throw new Error(`File ${csvPath} is not properly formatted. It must be a csv in the format: awsAccessKeyId, awsSecretAccessKey`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { csvCredentials: _, awsAccessKeyId: __, awsSecretAccessKey: ___, ...restOfParameters } = input;
+
     return {
-      ...input,
+      ...restOfParameters,
       awsAccessKeyId,
       awsSecretAccessKey,
     };
