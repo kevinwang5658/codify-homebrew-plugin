@@ -30,7 +30,7 @@ runPlugin(Plugin.create(
     new AwsCliResource(),
     new AwsProfileResource(),
     // new TerraformResource(),
-    // new NvmResource(),
+    new NvmResource(),
     new JenvResource(),
     // new PgcliResource(),
     // new VscodeResource(),
