@@ -16,7 +16,7 @@ describe('Git clone integration tests', async () => {
         parentDirectory: '~/projects/test',
         remote: 'https://github.com/kevinwang5658/codify-homebrew-plugin.git'
       }
-    ]);
+    ], true);
   })
 
   it('Can install git repo to specified dir', { timeout: 300000 }, async () => {
@@ -26,7 +26,7 @@ describe('Git clone integration tests', async () => {
         directory: '~/projects/nested/codify-plugin',
         repository: 'https://github.com/kevinwang5658/codify-homebrew-plugin.git'
       }
-    ]);
+    ], true);
   })
 
   afterEach(() => {

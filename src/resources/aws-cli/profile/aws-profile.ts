@@ -16,7 +16,7 @@ export interface AwsProfileConfig extends StringIndexedObject {
   metadataServiceTimeout?: number;
   output?: string;
   profile: string;
-  region?: string;
+  region: string;
 }
 
 export class AwsProfileResource extends Resource<AwsProfileConfig> {

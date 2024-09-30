@@ -39,8 +39,8 @@
     }
   },
   "oneOf": [
-    { "required": ["awsAccessKeyId", "awsSecretAccessKey"]},
-    { "required": ["csvCredentials"] }
+    { "required": ["awsAccessKeyId", "awsSecretAccessKey", "region"]},
+    { "required": ["csvCredentials", "region"] }
   ],
   "additionalProperties": false
 }

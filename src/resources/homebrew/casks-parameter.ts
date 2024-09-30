@@ -31,8 +31,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
         .filter(Boolean)
     }
 
-      return null;
-
+    return null;
   }
 
   override async add(valueToAdd: string[]): Promise<void> {

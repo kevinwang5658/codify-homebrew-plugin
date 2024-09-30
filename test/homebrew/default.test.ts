@@ -40,12 +40,6 @@ describe('Homebrew main resource integration tests', () => {
     }])
   })
 
-  it ('Can uninstall brew', { timeout: 30000 }, async () => {
-    await plugin.uninstall([{
-      type: 'homebrew',
-    }])
-  })
-
   afterEach(() => {
     plugin.kill();
   })

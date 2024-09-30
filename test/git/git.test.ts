@@ -26,7 +26,7 @@ describe('Git integration tests', async () => {
         username: 'test2',
         email: 'test2@test.com'
       }
-    ]);
+    ], true); // Set true here because git resource cannot be destroyed right now
   })
 
   afterEach(() => {

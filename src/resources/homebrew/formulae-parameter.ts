@@ -1,4 +1,4 @@
-import { ArrayParameterSetting, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ArrayParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { HomebrewConfig } from './homebrew.js';
@@ -30,8 +30,7 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
         .filter(Boolean);
     }
 
-      return null;
-
+    return null;
   }
 
   async add(valueToAdd: string[]): Promise<void> {
