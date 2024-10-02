@@ -1,4 +1,4 @@
-import { CreatePlan, ModifyPlan, ParameterChange, Resource } from 'codify-plugin-lib';
+import { CreatePlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
@@ -13,24 +13,25 @@ export interface PathConfig extends StringIndexedObject {
 }
 
 export class PathResource extends Resource<PathConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
-        paths: { modifyOnChange: true },
+  getSettings(): ResourceSettings<PathConfig> {
+    return {
+      id: 'path',
+      schema: Schema,
+      parameterSettings: {
+        path: { canModify: true },
+        paths: { canModify: true, type: 'array' },
         prepend: { default: false }
       },
-      schema: Schema,
-      type: 'path'
-    });
+    }
   }
 
-  override async customValidation(parameters: Partial<PathConfig>): Promise<void> {
+  override async validate(parameters: Partial<PathConfig>): Promise<void> {
     if (parameters.path && parameters.paths) {
       throw new Error('Both path and paths cannot be specified together')
     }
   }
 
-  async refresh(parameters: Partial<PathConfig>): Promise<Partial<PathConfig> | null> {
+  override async refresh(parameters: Partial<PathConfig>): Promise<Partial<PathConfig> | null> {
     const { data: path } = await codifySpawn('echo $PATH')
 
     if (parameters.path && (path.includes(parameters.path) || path.includes(untildify(parameters.path)))) {
@@ -53,7 +54,7 @@ export class PathResource extends Resource<PathConfig> {
     return null;
   }
 
-  async applyCreate(plan: CreatePlan<PathConfig>): Promise<void> {
+  override async create(plan: CreatePlan<PathConfig>): Promise<void> {
     const { path, paths, prepend } = plan.desiredConfig;
 
     if (path) {
@@ -71,7 +72,7 @@ export class PathResource extends Resource<PathConfig> {
     }
   }
 
-  async applyModify(pc: ParameterChange<PathConfig>, plan: ModifyPlan<PathConfig>): Promise<void> {
+  override async modify(pc: ParameterChange<PathConfig>, plan: ModifyPlan<PathConfig>): Promise<void> {
     if (pc.name !== 'paths') {
       return;
     }
@@ -88,6 +89,6 @@ export class PathResource extends Resource<PathConfig> {
   }
 
   // TODO: Implement destroy some time in the future
-  async applyDestroy(): Promise<void> {}
+  override async destroy(): Promise<void> {}
 
 }

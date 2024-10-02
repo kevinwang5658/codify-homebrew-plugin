@@ -1,4 +1,4 @@
-import { CreatePlan, Resource } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
@@ -11,17 +11,17 @@ export interface AliasConfig extends StringIndexedObject {
 }
 
 export class AliasResource extends Resource<AliasConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
-        value: { modifyOnChange: true }
-      },
+  getSettings(): ResourceSettings<AliasConfig> {
+    return {
+      id: 'alias',
       schema: Schema,
-      type: 'alias'
-    });
+      parameterSettings: {
+        value: { canModify: true }
+      },
+    }
   }
 
-  async refresh(parameters: Partial<AliasConfig>): Promise<Partial<AliasConfig> | null> {
+  override async refresh(parameters: Partial<AliasConfig>): Promise<Partial<AliasConfig> | null> {
     const { alias: desired } = parameters;
 
     const { data, status } = await codifySpawn(`alias ${desired}`, { throws: false })
@@ -48,18 +48,18 @@ export class AliasResource extends Resource<AliasConfig> {
     }
   }
 
-  async applyCreate(plan: CreatePlan<AliasConfig>): Promise<void> {
+  override async create(plan: CreatePlan<AliasConfig>): Promise<void> {
     const { alias, value } = plan.desiredConfig;
 
     await FileUtils.addAliasToZshrc(alias, value);
   }
 
   // TODO: Implement updating an alias
-  async applyModify(): Promise<void> {
+  override async modify(): Promise<void> {
     throw new Error('Unsupported for now. Un-able to update an alias value for now')
   }
 
   // TODO: Implement destroy some time in the future
-  async applyDestroy(): Promise<void> {}
+  override async destroy(): Promise<void> {}
 
 }

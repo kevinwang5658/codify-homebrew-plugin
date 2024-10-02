@@ -1,13 +1,15 @@
-import { ArrayStatefulParameter, Plan, SpawnStatus } from 'codify-plugin-lib';
+import { ParameterSetting, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
-import { HomebrewConfig } from './homebrew.js';
 import { codifySpawn } from '../../utils/codify-spawn.js';
+import { HomebrewConfig } from './homebrew.js';
 
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 
-export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
-  constructor() {
-    super({
+export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> {
+
+  override getSettings(): ParameterSetting {
+    return {
+      type: 'array',
       isElementEqual(desired, current) {
         // Handle the case where the name is fully qualified (tap + name)
         if (desired.includes('/')) {
@@ -17,43 +19,36 @@ export class CasksParameter extends ArrayStatefulParameter<HomebrewConfig, strin
 
         return desired === current;
       },
-    });
+    }
   }
 
-  async refresh(): Promise<null | string[]> {
-    const formulaeQuery = await codifySpawn('brew list --casks -1')
+  override async refresh(): Promise<null | string[]> {
+    const caskQuery = await codifySpawn('brew list --casks -1')
 
-    if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
-      return formulaeQuery.data
+    if (caskQuery.status === SpawnStatus.SUCCESS && caskQuery.data !== null && caskQuery.data !== undefined) {
+      return caskQuery.data
         .split('\n')
         .filter(Boolean)
     }
 
-      return null;
-
+    return null;
   }
 
-  async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  override async add(valueToAdd: string[]): Promise<void> {
     await this.installCasks(valueToAdd);
   }
 
-  async applyModify(newValue: string[], previousValue: string[], allowDeletes: boolean, plan: Plan<HomebrewConfig>): Promise<void> {
+  override async modify(newValue: string[], previousValue: string[]): Promise<void> {
     const casksToInstall = newValue.filter((x: string) => !previousValue.includes(x));
     const casksToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
 
     await this.installCasks(casksToInstall);
-
-    if (allowDeletes) {
-      await this.uninstallCasks(casksToUninstall);
-    }
+    await this.uninstallCasks(casksToUninstall);
   }
 
-  async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  override async remove(valueToRemove: string[]): Promise<void> {
     await this.uninstallCasks(valueToRemove);
   }
-
-  async applyAddItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
-  async applyRemoveItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
 
   private async installCasks(casks: string[]): Promise<void> {
     if (!casks || casks.length === 0) {

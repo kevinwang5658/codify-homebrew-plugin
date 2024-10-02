@@ -20,25 +20,22 @@ describe('Aws profile tests', async () => {
         region: 'us-west-2',
         output: 'json'
       }
-    ]);
+    ], true);
   })
 
   it('Can add custom profiles', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
-      type: 'aws-profile',
-      profile: 'codify',
-      awsAccessKeyId: 'keyId',
-      awsSecretAccessKey: 'secretAccessKey',
-    }]);
-  })
-
-  it ('Can uninstall aws-cli', { timeout: 300000 }, async () => {
-    await plugin.uninstall([
-      { type: 'aws-cli' },
+    await plugin.fullTest([
       { type: 'homebrew' },
+      { type: 'aws-cli' },
+      {
+        type: 'aws-profile',
+        profile: 'codify',
+        awsAccessKeyId: 'keyId',
+        awsSecretAccessKey: 'secretAccessKey',
+        region: 'us-west-2',
+      }
     ]);
   })
-
 
   afterEach(() => {
     plugin.kill();

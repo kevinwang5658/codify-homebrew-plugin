@@ -16,7 +16,7 @@ describe('Alias resource integration tests', async () => {
         alias: 'test',
         value: 'ls'
       }
-    ]);
+    ], true);
   })
 
   it('Validates against invalid alias', { timeout: 300000 }, async () => {
@@ -26,7 +26,7 @@ describe('Alias resource integration tests', async () => {
         alias: 'test$$$',
         value: 'ls'
       }
-    ])).rejects.toThrowError();
+    ], true)).rejects.toThrowError();
   })
 
   afterEach(() => {

@@ -1,4 +1,4 @@
-import { CreatePlan, Resource } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 import path from 'node:path';
@@ -18,23 +18,18 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
 
   allAndroidStudioVersions?: AndroidStudioVersionData[];
 
-  constructor() {
-    super({
-      dependencies: ['homebrew'],
+  override getSettings(): ResourceSettings<AndroidStudioConfig> {
+    return {
+      id: 'android-studio',
       schema: Schema,
-      type: 'android-studio',
-      parameterOptions: {
-        directory: {
-          default: '/Applications'
-        },
-        version: {
-          isEqual: (desired, current) => current.includes(desired)
-        }
+      parameterSettings: {
+        directory: { type: 'directory', default: '/Applications' },
+        version: { type: 'version' }
       }
-    });
+    };
   }
 
-  async refresh(parameters: Partial<AndroidStudioConfig>): Promise<Partial<AndroidStudioConfig> | null> {
+  override async refresh(parameters: Partial<AndroidStudioConfig>): Promise<Partial<AndroidStudioConfig> | null> {
     // Attempt to fetch all versions. The plist doesn't give detailed info on the version
     this.allAndroidStudioVersions = await this.fetchAllAndroidStudioVersions()
 
@@ -54,7 +49,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     return null;
   }
 
-  async applyCreate(plan: CreatePlan<AndroidStudioConfig>): Promise<void> {
+  override async create(plan: CreatePlan<AndroidStudioConfig>): Promise<void> {
     if (!this.allAndroidStudioVersions) {
       this.allAndroidStudioVersions = await this.fetchAllAndroidStudioVersions()
     }
@@ -110,11 +105,11 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     }
   }
 
-  async applyDestroy(): Promise<void> {
-    await codifySpawn('rm -r "/Applications/Android Studio.app"')
+  override async destroy(): Promise<void> {
+    await codifySpawn('rm -r "/Applications/Android Studio.app"', { requiresRoot: true })
   }
 
-  async fetchAllAndroidStudioVersions(): Promise<AndroidStudioVersionData[]> {
+  private async fetchAllAndroidStudioVersions(): Promise<AndroidStudioVersionData[]> {
     const res = await fetch('https://jb.gg/android-studio-releases-list.json')
 
     if (!res.ok) {
@@ -124,7 +119,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     return JSON.parse(await res.text()).content.item
   }
 
-  async addPlistData(location: string): Promise<{ location: string, plist: AndroidStudioPlist } | null> {
+  private async addPlistData(location: string): Promise<{ location: string, plist: AndroidStudioPlist } | null> {
     try {
       const file = fs.readFileSync(path.join(location, '/Contents/Info.plist'), 'utf8');
       const plistData = plist.parse(file) as unknown as AndroidStudioPlist;
@@ -136,7 +131,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     }
   }
 
-  addWebInfo(
+  private addWebInfo(
     installed: { location: string; plist: AndroidStudioPlist },
     allWebInfo: AndroidStudioVersionData[],
   ): { location: string, plist: AndroidStudioPlist, webInfo?: AndroidStudioVersionData } {
@@ -147,7 +142,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     return { ...installed, webInfo }
   }
 
-  matchVersionAndDirectory(
+  private matchVersionAndDirectory(
     parameters: Partial<AndroidStudioConfig>,
     installedVersions: Array<{ location: string; plist: AndroidStudioPlist; webInfo?: AndroidStudioVersionData }>
   ): Partial<AndroidStudioConfig> | null {
@@ -171,7 +166,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       : null;
   }
 
-  getVersionData(
+  private getVersionData(
     version: string | undefined,
     allVersionData: AndroidStudioVersionData[],
   ): AndroidStudioVersionData | null {

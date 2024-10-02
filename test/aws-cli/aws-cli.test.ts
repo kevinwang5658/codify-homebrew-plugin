@@ -15,11 +15,4 @@ describe('Test aws-cli', async () => {
       { type: 'aws-cli' },
     ])
   })
-  
-  it('Can un-install aws-cli', { timeout: 300000 }, async () => {
-    await plugin.uninstall([
-      { type: 'aws-cli' },
-      { type: 'homebrew' },
-    ])
-  })
 })

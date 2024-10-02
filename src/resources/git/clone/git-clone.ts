@@ -1,4 +1,4 @@
-import { CreatePlan, Resource } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
@@ -17,17 +17,17 @@ export interface GitCloneConfig extends ResourceConfig {
 }
 
 export class GitCloneResource extends Resource<GitCloneConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
+  getSettings(): ResourceSettings<GitCloneConfig> {
+    return {
+      id: 'git-clone',
+      schema: Schema,
+      parameterSettings: {
         autoVerifySSH: { default: true },
       },
-      schema: Schema,
-      type: 'git-clone'
-    });
+    }
   }
 
-  override async customValidation(parameters: Partial<GitCloneConfig>): Promise<void> {
+  override async validate(parameters: Partial<GitCloneConfig>): Promise<void> {
     if (parameters.parentDirectory && parameters.directory) {
       throw new Error('Cannot specify both parentDirectory and directory together')
     }
@@ -37,7 +37,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     }
   }
 
-  async refresh(parameters: Partial<GitCloneConfig>): Promise<Partial<GitCloneConfig> | null> {
+  override async refresh(parameters: Partial<GitCloneConfig>): Promise<Partial<GitCloneConfig> | null> {
     const repositoryUrl = parameters.repository?? parameters.remote!;
 
     if (parameters.parentDirectory) {
@@ -86,7 +86,8 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     throw new Error('Either directory or parent directory must be supplied');
   }
 
-  async applyCreate(plan: CreatePlan<GitCloneConfig>): Promise<void> {
+
+  override async create(plan: CreatePlan<GitCloneConfig>): Promise<void> {
     const config = plan.desiredConfig;
     const repositoryUrl = config.repository ?? config.remote!;
 
@@ -104,7 +105,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     }
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     // Do nothing here. We don't want to destroy a user's repository.
   }
 

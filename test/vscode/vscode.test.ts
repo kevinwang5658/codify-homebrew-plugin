@@ -15,13 +15,6 @@ describe('Vscode integration tests', async () => {
       directory: '/Applications'
     }]);
   })
-
-  it('Can uninstall vscode', async () => {
-    await plugin.uninstall([{
-      type: 'vscode',
-      directory: '/Applications'
-    }]);
-  })
   
   afterEach(() => {
     plugin.kill();

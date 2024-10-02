@@ -1,4 +1,4 @@
-import { Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
@@ -14,18 +14,18 @@ export interface PyenvConfig extends ResourceConfig {
 }
 
 export class PyenvResource extends Resource<PyenvConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
-        global: { order: 2, statefulParameter: new PyenvGlobalParameter() },
-        pythonVersions: { order: 1, statefulParameter: new PythonVersionsParameter() },
-      },
+  getSettings(): ResourceSettings<PyenvConfig> {
+    return {
+      id: 'pyenv',
       schema: Schema,
-      type: 'pyenv'
-    });
+      parameterSettings: {
+        global: { type: 'stateful', definition: new PyenvGlobalParameter(), order: 2 },
+        pythonVersions: { type: 'stateful', definition: new PythonVersionsParameter(), order: 1, },
+      },
+    }
   }
 
-  async refresh(): Promise<Partial<PyenvConfig> | null> {
+  override async refresh(): Promise<Partial<PyenvConfig> | null> {
     const pyenvVersion = await codifySpawn('pyenv --version', { throws: false })
     if (pyenvVersion.status === SpawnStatus.ERROR) {
       return null
@@ -34,7 +34,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
     return {};
   }
 
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
     await codifySpawn('curl https://pyenv.run | bash')
 
     // Add to startup script
@@ -46,7 +46,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
     // TODO: Ensure that python pre-requisite dependencies are installed. See: https://github.com/pyenv/pyenv/wiki#suggested-build-environment
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     await codifySpawn('rm -rf $(pyenv root)', { requiresRoot: true });
     await codifySpawn('rm -rf $HOME/.pyenv', { requiresRoot: true });
 

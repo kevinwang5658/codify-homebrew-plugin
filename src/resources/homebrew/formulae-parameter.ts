@@ -1,13 +1,14 @@
-import { ArrayStatefulParameter, Plan, SpawnStatus } from 'codify-plugin-lib';
+import { ArrayParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { HomebrewConfig } from './homebrew.js';
 
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 
-export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, string> {
-  constructor() {
-    super({
+export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[]> {
+  getSettings(): ArrayParameterSetting {
+    return {
+      type: 'array',
       isElementEqual(desired, current) {
         // Handle the case where the name is fully qualified (tap + name)
         if (desired.includes('/')) {
@@ -17,38 +18,34 @@ export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, st
 
         return desired === current;
       },
-    });
+    }
   }
 
-  async refresh(): Promise<null | string[]> {
+  override async refresh(): Promise<null | string[]> {
     const formulaeQuery = await codifySpawn('brew list --formula -1')
 
-    if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data != null) {
+    if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data !== null && formulaeQuery.data !== undefined) {
       return formulaeQuery.data
         .split('\n')
         .filter(Boolean);
     }
 
-      return null;
-
+    return null;
   }
 
-  async applyAdd(valueToAdd: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  async add(valueToAdd: string[]): Promise<void> {
     await this.installFormulae(valueToAdd);
   }
 
-  async applyModify(newValue: string[], previousValue: string[], allowDeletes: boolean, plan: Plan<HomebrewConfig>): Promise<void> {
+  async modify(newValue: string[], previousValue: string[]): Promise<void> {
     const formulaeToInstall = newValue.filter((x: string) => !previousValue.includes(x));
     const formulaeToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
 
     await this.installFormulae(formulaeToInstall);
-
-    if (allowDeletes) {
-      await this.uninstallFormulae(formulaeToUninstall);
-    }
+    await this.uninstallFormulae(formulaeToUninstall);
   }
 
-  async applyRemove(valueToRemove: string[], plan: Plan<HomebrewConfig>): Promise<void> {
+  async remove(valueToRemove: string[]): Promise<void> {
     await this.uninstallFormulae(valueToRemove);
   }
 
@@ -65,10 +62,6 @@ export class FormulaeParameter extends ArrayStatefulParameter<HomebrewConfig, st
       throw new Error(`Failed to install formula: ${formulae}. ${JSON.stringify(result.data, null, 2)}`)
     }
   }
-
-  // These aren't being used since the apply* methods of the parent are being overridden
-  async applyAddItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
-  async applyRemoveItem(item: string, plan: Plan<HomebrewConfig>): Promise<void> {}
 
   private async uninstallFormulae(formulae: string[]): Promise<void> {
     if (!formulae || formulae.length === 0) {

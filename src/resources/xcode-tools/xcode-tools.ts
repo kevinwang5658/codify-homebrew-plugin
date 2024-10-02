@@ -1,20 +1,20 @@
-import { Resource } from 'codify-plugin-lib';
+import { Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import path from 'node:path';
 
-import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 
 interface XCodeToolsConfig extends StringIndexedObject {}
 
 export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
 
-  constructor() {
-    super({
-      type: 'xcode-tools',
-    });
+  getSettings(): ResourceSettings<XCodeToolsConfig> {
+    return {
+      id: 'xcode-tools',
+    }
   }
 
-  async refresh(): Promise<Partial<XCodeToolsConfig> | null> {
+  override async refresh(): Promise<Partial<XCodeToolsConfig> | null> {
     const { data, status } = await codifySpawn('xcode-select -p', { throws: false })
 
     // The last check, ensures that a valid path is returned.
@@ -25,7 +25,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     return {};
   }
 
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
     await codifySpawn('touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;');
 
     try {
@@ -52,7 +52,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
     }
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     const { data: installFolder, status } = await codifySpawn('xcode-select -p', { throws: false });
     if (status === SpawnStatus.ERROR || !installFolder) {
       return;

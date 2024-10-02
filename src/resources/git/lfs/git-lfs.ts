@@ -1,5 +1,6 @@
-import { Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
+
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import Schema from './git-lfs-schema.json';
 
@@ -8,15 +9,15 @@ export interface GitLfsConfig extends ResourceConfig {
 }
 
 export class GitLfsResource extends Resource<GitLfsConfig> {
-  constructor() {
-    super({
-      type: 'git-lfs',
+  getSettings(): ResourceSettings<GitLfsConfig> {
+    return {
+      id: 'git-lfs',
       schema: Schema,
       dependencies: ['homebrew'],
-    });
+    }
   }
 
-  async refresh(): Promise<Partial<GitLfsConfig> | null> {
+  override async refresh(): Promise<Partial<GitLfsConfig> | null> {
     const result = await codifySpawn('git lfs', { throws: false });
 
     if (result.status === SpawnStatus.ERROR) {
@@ -32,7 +33,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   }
 
   // FYI: This create might be called if git-lfs is installed but not initialized.
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
     await this.assertBrewInstalled();
 
     const gitLfsCheck = await codifySpawn('git lfs', { throws: false });
@@ -43,7 +44,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
     // await codifySpawn('git lfs install');
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     await this.assertBrewInstalled();
 
     // await codifySpawn('git lfs uninstall');
@@ -56,7 +57,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
     const lines = gitLfsStatus.data.split('\n');
     const emptyLfsLines = lines.filter((l) => l.includes('git config'))
       .map((l) => l.split('=')[1].trim())
-      .some((s) => s === '""');
+      .includes('""');
 
     return !emptyLfsLines;
   }

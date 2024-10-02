@@ -17,7 +17,7 @@ describe('Jenv resource integration tests', () => {
         global: '17',
         add: ['17']
       }
-    ]);
+    ], true);
   });
 
   it ('Can install additional java versions', { timeout: 500000 }, async () => {
@@ -28,29 +28,6 @@ describe('Jenv resource integration tests', () => {
         global: '21',
         add: ['17', '21']
       }
-    ])
-  })
-
-  it ('Can install additional java versions', { timeout: 500000 }, async () => {
-    console.log('hihi')
-    await plugin.fullTest([
-      { type: 'homebrew' },
-      {
-        type: 'jenv',
-        global: '21',
-        add: ['17', '21']
-      }
-    ])
-  })
-
-  it ('Can uninstall jenv', { timeout: 30000 }, async () => {
-    await plugin.uninstall([
-      {
-        type: 'jenv',
-        global: '21',
-        add: ['17', '21']
-      },
-      { type: 'homebrew' }
     ])
   })
 

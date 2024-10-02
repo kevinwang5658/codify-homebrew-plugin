@@ -17,7 +17,7 @@ describe('Homebrew main resource integration tests', () => {
         'glib',
         'gettext'
       ]
-    }]);
+    }], true);
   });
 
   it ('Can install additional casks and formulas', { timeout: 300000 }, async () => {
@@ -28,7 +28,7 @@ describe('Homebrew main resource integration tests', () => {
         'gettext',
         'jenv',
       ],
-    }])
+    }], true)
   })
 
   it ('Can handle fully qualified formula names (tap + formula)', { timeout: 300000 }, async () => {
@@ -37,12 +37,6 @@ describe('Homebrew main resource integration tests', () => {
       formulae: [
         'cirruslabs/cli/cirrus',
       ],
-    }])
-  })
-
-  it ('Can uninstall brew', { timeout: 30000 }, async () => {
-    await plugin.uninstall([{
-      type: 'homebrew',
     }])
   })
 

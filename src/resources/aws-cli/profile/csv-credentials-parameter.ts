@@ -1,4 +1,3 @@
-import { TransformParameter } from 'codify-plugin-lib/dist/entities/transform-parameter.js';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
@@ -6,10 +5,14 @@ import path from 'node:path';
 import { untildify } from '../../../utils/untildify.js';
 import { AwsProfileConfig } from './aws-profile.js';
 
-export class CSVCredentialsParameter extends TransformParameter<AwsProfileConfig>{
+export const CSVCredentialsParameter = {
 
-  async transform(value: any): Promise<Partial<AwsProfileConfig>> {
-    const csvPath = path.resolve(untildify(value));
+  async transform(input: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig>> {
+    if (!input.csvCredentials) {
+      return input;
+    }
+
+    const csvPath = path.resolve(untildify(input.csvCredentials));
 
     if (!fsSync.existsSync(csvPath)) {
       throw new Error(`File ${csvPath} does not exist`);
@@ -27,9 +30,13 @@ export class CSVCredentialsParameter extends TransformParameter<AwsProfileConfig
       throw new Error(`File ${csvPath} is not properly formatted. It must be a csv in the format: awsAccessKeyId, awsSecretAccessKey`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { csvCredentials: _, awsAccessKeyId: __, awsSecretAccessKey: ___, ...restOfParameters } = input;
+
     return {
+      ...restOfParameters,
       awsAccessKeyId,
       awsSecretAccessKey,
     };
-  }
-}
+  },
+};

@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
@@ -13,17 +13,17 @@ export interface VscodeConfig extends ResourceConfig {
 }
 
 export class VscodeResource extends Resource<VscodeConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
-        directory: { default: '/Applications' }
-      },
+  getSettings(): ResourceSettings<VscodeConfig> {
+    return {
+      id: 'vscode',
       schema: Schema,
-      type: 'vscode'
-    });
+      parameterSettings: {
+        directory: { type: 'directory', default: '/Applications' }
+      },
+    };
   }
 
-  async refresh(parameters: Partial<VscodeConfig>): Promise<Partial<VscodeConfig> | null> {
+  override async refresh(parameters: Partial<VscodeConfig>): Promise<Partial<VscodeConfig> | null> {
     const directory = parameters.directory!;
 
     const isInstalled = await this.isVscodeInstalled(directory);
@@ -34,7 +34,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
     return parameters;
   }
 
-  async applyCreate(plan: CreatePlan<VscodeConfig>): Promise<void> {
+  override async create(plan: CreatePlan<VscodeConfig>): Promise<void> {
     // Create a temporary tmp dir
     const temporaryDirQuery = await codifySpawn('mktemp -d');
     const temporaryDir = temporaryDirQuery.data.trim();
@@ -51,7 +51,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
     await codifySpawn(`rm -rf ${temporaryDir}`)
   }
 
-  async applyDestroy(plan: DestroyPlan<VscodeConfig>): Promise<void> {
+  override async destroy(plan: DestroyPlan<VscodeConfig>): Promise<void> {
     const { directory } = plan.currentConfig;
     const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
     await codifySpawn(`rm -r ${location}`);

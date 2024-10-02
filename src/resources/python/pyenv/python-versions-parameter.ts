@@ -1,46 +1,42 @@
-import { ArrayStatefulParameter, Plan } from 'codify-plugin-lib';
+import { ArrayStatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
 import { PyenvConfig } from './pyenv.js';
 
 export class PythonVersionsParameter extends ArrayStatefulParameter<PyenvConfig, string> {
+  override async refresh(desired: string[]): Promise<string[] | null> {
+    const { data } = await codifySpawn('pyenv versions --bare --skip-aliases --skip-envs')
 
-  constructor() {
-    super({
-      // The current version number must be at least as specific as the desired one. Ex: 3.12.9 = 3.12 but 3 != 3.12
-      isElementEqual: (desired, current) => current.includes(desired),
-    });
-  }
+    const versions = data.split(/\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
 
-  async refresh(desired: string[]): Promise<string[] | null> {
     // Use pyenv latest to match the desired values to existing installed versions. The
     // reason behind this is that pyenv does special version processing during installs. For ex: specifying
     // pyenv install 3 will install the latest version 3.12.2
-    const matchedVersions = desired
-      ? await Promise.all(desired.map(async (desiredVersion) => {
-        const { status, data } = await codifySpawn(`pyenv latest ${desiredVersion}`, { throws: false });
-        if (status === SpawnStatus.ERROR) {
-          return null;
-        }
+    for (const desiredVersion of desired ?? []) {
+      const { status, data } = await codifySpawn(`pyenv latest ${desiredVersion}`, { throws: false });
 
-        return desiredVersion;
-      }))
-      : [];
+      if (status !== SpawnStatus.SUCCESS) {
+        continue;
+      }
 
-    // TODO: Add this when stateful parameters get implemented. Otherwise this is un-needed.
-    // const { status, data } = await codifySpawn('pyenv versions --bare')
-    // if (status === SpawnStatus.ERROR) {
-    //   return null;
-    // }
+      const matchedVersion = data.trim();
 
-    return matchedVersions.filter(Boolean) as string[];
+      if (versions.includes(matchedVersion)) {
+        const index = versions.indexOf(matchedVersion);
+        versions.splice(index, 1, desiredVersion);
+      }
+    }
+
+    return versions;
   }
 
-  async applyAddItem(version: string, plan: Plan<PyenvConfig>): Promise<void> {
+  override async addItem(version: string): Promise<void> {
     await codifySpawn(`pyenv install ${version}`);
   }
 
-  async applyRemoveItem(version: string, plan: Plan<PyenvConfig>): Promise<void> {
+  override async removeItem(version: string): Promise<void> {
     await codifySpawn(`pyenv uninstall ${version}`);
   }
 }

@@ -1,4 +1,4 @@
-import { Resource, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
@@ -14,18 +14,19 @@ export interface NvmConfig extends ResourceConfig {
 }
 
 export class NvmResource extends Resource<NvmConfig> {
-  constructor() {
-    super({
-      parameterOptions: {
-        global: { order: 2, statefulParameter: new NvmGlobalParameter() },
-        nodeVersions: { order: 1, statefulParameter: new NvmNodeVersionsParameter() },
-      },
+
+  getSettings(): ResourceSettings<NvmConfig> {
+    return {
+      id: 'nvm',
       schema: Schema,
-      type: 'nvm'
-    });
+      parameterSettings: {
+        global: { type: 'stateful', definition: new NvmGlobalParameter(), order: 2 },
+        nodeVersions: { type: 'stateful', definition: new NvmNodeVersionsParameter(), order: 1 },
+      },
+    }
   }
 
-  async refresh(): Promise<Partial<NvmConfig> | null> {
+  override async refresh(): Promise<Partial<NvmConfig> | null> {
     const nvmQuery = await codifySpawn('command -v nvm', { throws: false })
     if (nvmQuery.status === SpawnStatus.ERROR) {
       return null
@@ -34,11 +35,17 @@ export class NvmResource extends Resource<NvmConfig> {
     return {};
   }
 
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
+    // Node installer was previously used.
+    const { data } = await codifySpawn('echo $npm_config_prefix')
+    if (data !== '' ) {
+      await FileUtils.addToStartupFile('unset npm_config_prefix');
+    }
+
     await codifySpawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash')
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     // eslint-disable-next-line no-template-curly-in-string
     const { data: nvmDir } = await codifySpawn('echo "${NVM_DIR:-~/.nvm}"');
     await codifySpawn('nvm unload');

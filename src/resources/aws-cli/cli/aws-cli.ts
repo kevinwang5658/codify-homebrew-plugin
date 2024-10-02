@@ -1,7 +1,7 @@
-import { Resource } from 'codify-plugin-lib';
+import { Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
-import { codifySpawn, SpawnStatus } from '../../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { Utils } from '../../../utils/index.js';
 import Schema from './aws-cli-schema.json';
 
@@ -13,14 +13,15 @@ export interface AwsCliConfig extends StringIndexedObject {
 
 export class AwsCliResource extends Resource<AwsCliConfig> {
 
-  constructor() {
-    super({
+  getSettings(): ResourceSettings<AwsCliConfig> {
+    return {
       schema: Schema,
-      type: 'aws-cli',
-    });
+      id: 'aws-cli',
+    };
   }
 
-  async refresh(): Promise<Partial<AwsCliConfig> | null> {
+
+  override async refresh(): Promise<Partial<AwsCliConfig> | null> {
     const awsCliInfo = await codifySpawn('which aws', { throws: false });
     if (awsCliInfo.status === SpawnStatus.ERROR) {
       return null;
@@ -29,7 +30,7 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     return {};
   }
 
-  async applyCreate(): Promise<void> {
+  override async create(): Promise<void> {
     // Amazon has not released a standalone way to install arm aws-cli. See: https://github.com/aws/aws-cli/issues/7252
     // Prefer the homebrew version on M1
     const isArmArch = await Utils.isArmArch();
@@ -37,18 +38,18 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     const isHomebrewInstalled = await Utils.isHomebrewInstalled();
 
     if (isArmArch && isHomebrewInstalled) {
-      console.log(`Resource: ${this.typeId}. Detected that mac is aarch64. Installing AWS-CLI via homebrew`)
+      console.log('Resource: \'aws-cli\'. Detected that mac is aarch64. Installing AWS-CLI via homebrew')
       await codifySpawn('brew install awscli')
 
     } else if (!isArmArch || isRosettaInstalled) {
-      console.log(`Resource: ${this.typeId}. Detected that mac is not ARM or Rosetta is installed. Installing AWS-CLI standalone version`)
+      console.log('Resource: \'aws-cli\'. Detected that mac is not ARM or Rosetta is installed. Installing AWS-CLI standalone version')
       await codifySpawn('curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"');
       await codifySpawn('installer -pkg ./AWSCLIV2.pkg -target /', { requiresRoot: true })
       await codifySpawn('rm -rf ./AWSCLIV2.pkg')
 
     } else {
       // This covers arm arch + Homebrew is not installed
-      throw new Error(`Resource: ${this.typeId}. This plugin prefers installing AWS-CLI via homebrew for M1 macs.
+      throw new Error(`Resource: 'aws-cli'. This plugin prefers installing AWS-CLI via homebrew for M1 macs.
 AWS has not updated the standalone installer to support M1 macs. See: https://github.com/aws/aws-cli/issues/7252. 
 
 Homebrew can be installed by adding: 
@@ -63,7 +64,7 @@ softwareupdate --install-rosetta
     }
   }
 
-  async applyDestroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     const installLocation = await this.findInstallLocation();
     if (!installLocation) {
       return;
@@ -85,7 +86,7 @@ softwareupdate --install-rosetta
     if (query.status === SpawnStatus.ERROR) {
       return null;
     }
-    
+
     return query.data;
   }
 }

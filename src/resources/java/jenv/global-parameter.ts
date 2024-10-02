@@ -1,18 +1,17 @@
-import { SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { JenvConfig } from './jenv.js';
 
 export class JenvGlobalParameter extends StatefulParameter<JenvConfig, string>{
 
-  constructor() {
-    super({
-      // The current version number must be at least as specific as the desired one. Ex: 3.12.9 = 3.12 but 3 != 3.12
-      isEqual: (desired: string, current: string) => current.includes(desired)
-    });
+  getSettings(): ParameterSetting {
+    return {
+      type: 'version'
+    }
   }
 
-  async refresh(): Promise<null | string> {
+  override async refresh(): Promise<null | string> {
     const { data, status } = await codifySpawn('jenv global', { throws: false })
 
     if (status === SpawnStatus.ERROR) {
@@ -22,15 +21,15 @@ export class JenvGlobalParameter extends StatefulParameter<JenvConfig, string>{
     return data.trim();
   }
 
-  async applyAdd(valueToAdd: string): Promise<void> {
+  override async add(valueToAdd: string): Promise<void> {
     await codifySpawn(`jenv global ${valueToAdd}`)
   }
 
-  async applyModify(newValue: string): Promise<void> {
+  override async modify(newValue: string): Promise<void> {
     await codifySpawn(`jenv global ${newValue}`)
   }
 
-  async applyRemove(): Promise<void> {
+  override async remove(): Promise<void> {
     await codifySpawn('jenv global system')
   }
 }

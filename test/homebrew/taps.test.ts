@@ -14,18 +14,11 @@ describe('Homebrew taps tests', () => {
     await plugin.fullTest([{
       type: 'homebrew',
       taps: ['cirruslabs/cli'],
-    }]);
+    }], true);
   });
 
   it ('Can install additional taps', { timeout: 300000 }, async () => {
     await plugin.fullTest([{
-      type: 'homebrew',
-      taps: ['cirruslabs/cli', 'hashicorp/tap'],
-    }])
-  })
-
-  it ('Can uninstall brew', { timeout: 300000 }, async () => {
-    await plugin.uninstall([{
       type: 'homebrew',
       taps: ['cirruslabs/cli', 'hashicorp/tap'],
     }])
