@@ -15,9 +15,23 @@ export const FileUtils = {
   },
 
   async addToStartupFile(line: string): Promise<void> {
-    const lineToInsert = line.endsWith('\n') ? line : line + '\n';
+    const lineToInsert = addLeadingSpacer(
+      addTrailingSpacer(line)
+    );
 
     await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), lineToInsert)
+
+    function addLeadingSpacer(line: string): string {
+      return line.startsWith('\n')
+        ? line
+        : '\n' + line;
+    }
+
+    function addTrailingSpacer(line: string): string {
+      return line.endsWith('\n')
+        ? line
+        : line + '\n';
+    }
   },
 
 
