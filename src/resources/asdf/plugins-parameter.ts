@@ -8,7 +8,8 @@ export class AsdfPluginsParameter extends ArrayStatefulParameter<AsdfConfig, str
     const { data: plugins } = await codifySpawn('asdf plugin list ')
 
     return plugins
-      .split(/\n/);
+      .split(/\n/)
+      .filter(Boolean);
   }
 
   async addItem(item: string, plan: Plan<AsdfConfig>): Promise<void> {

@@ -10,7 +10,7 @@ import AsdfInstallSchema from './asdf-plugin-schema.json';
 export interface AsdfPluginConfig extends ResourceConfig {
   plugin: string;
   gitUrl: string;
-  install: string[];
+  versions: string[];
 }
 
 const PLUGIN_LIST_REGEX = /^([^ ]*) +([^ ]*)$/
@@ -22,7 +22,7 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
       dependencies: ['asdf'],
       schema: AsdfInstallSchema,
       parameterSettings: {
-        install: { type: 'stateful', definition: new AsdfInstallVersionsParameter() }
+        versions: { type: 'stateful', definition: new AsdfPluginVersionsParameter() }
       },
     }
   }
@@ -48,13 +48,13 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
         return [name, gitUrl] as const;
       })
 
-    const installedPlugin = installedVersions.find(([name]) => name === parameters.name);
+    const installedPlugin = installedVersions.find(([name]) => name === parameters.plugin);
     if (!installedPlugin) {
       return null;
     }
 
     return {
-      name: parameters.name,
+      plugin: parameters.plugin,
       gitUrl: installedPlugin[1],
     };
   }
@@ -68,7 +68,7 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
   }
 }
 
-export class AsdfInstallVersionsParameter extends ArrayStatefulParameter<AsdfPluginConfig, string> {
+export class AsdfPluginVersionsParameter extends ArrayStatefulParameter<AsdfPluginConfig, string> {
 
   async refresh(desired: null | string[], config: Partial<AsdfPluginConfig>): Promise<null | string[]> {
     const { data: versions } = await codifySpawn(`asdf list ${config.plugin}`);
