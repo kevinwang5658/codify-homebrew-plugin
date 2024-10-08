@@ -40,7 +40,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
     const temporaryDir = temporaryDirQuery.data.trim();
 
     // Download vscode
-    await codifySpawn(`curl -fsSL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
+    await codifySpawn(`curl -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36" -SL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
 
     // Unzip
     await codifySpawn('unzip vscode.zip', { cwd: temporaryDir });

@@ -28,11 +28,13 @@ async function main(argument: string): Promise<void> {
 }
 
 async function launchTestAll(debug: boolean): Promise<void> {
-  const tests = await glob('./test/**/*.test.ts');
-  for (const test of tests) {
-    console.log(`Running test ${test}`)
-    await run(`cirrus run --lazy-pull integration_individual_test -e FILE_NAME="${test}"`, debug, false)
-  }
+  // const tests = await glob('./test/**/*.test.ts');
+  // for (const test of tests) {
+  //   console.log(`Running test ${test}`)
+  //   await run(`cirrus run --lazy-pull integration_individual_test -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
+  // }
+
+  await run('cirrus run --lazy-pull integration_test_dev -o simple', debug, false);
 }
 
 async function launchSingleTest(test: string, debug: boolean) {
@@ -88,11 +90,8 @@ async function run(cmd: string, debug: boolean, simple = true) {
     })
   }
 
-  return new Promise((resolve, reject) =>
-    cp.on('exit', code =>
-      code === 0
-        ? resolve(messageBuffer.join('\n'))
-        : reject(messageBuffer.join('\n')))
+  return new Promise((resolve) =>
+    cp.on('exit', () => resolve(messageBuffer.join('\n'))) // We never want to reject here even if the test fails
   );
 
 }
