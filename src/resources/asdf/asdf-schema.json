@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://www.codifycli.com/asdf-schema.json",
+  "title": "Asdf resource",
+  "type": "object",
+  "properties": {
+    "plugins": {
+      "type": "array",
+      "description": "Asdf plugins to install. See: https://github.com/asdf-community for a full list",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

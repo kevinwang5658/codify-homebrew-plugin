@@ -34,6 +34,14 @@ export const FileUtils = {
     }
   },
 
+  async addAllToStartupFile(lines: string[]): Promise<void> {
+    const formattedLines = '\n' + lines.join('\n') + '\n';
+
+    console.log(`Adding to .zshrc:
+${lines.join('\n')}`)
+
+    await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), formattedLines)
+  },
 
   async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
     const escapedPath = Utils.shellEscape(untildify(path))
