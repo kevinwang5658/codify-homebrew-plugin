@@ -4,26 +4,33 @@
 run_dev_task:
   macos_instance:
     image: codify-test-vm
+    port: 9226:9226
+  node_modules_cache:
+    folder: node_modules
+    fingerprint_script: cat package-lock.json
+    populate_script: npm ci
   run_script:
     - sleep 2000
 
 integration_test_dev_task:
   macos_instance:
     image: codify-test-vm
+    port: 9226:9226
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
   test_script:
-    - npm run test:integration
+    - npm run test:integration -- --disable-console-intercept --inspect-brk --no-file-parallelism
 
 integration_individual_test_task:
   macos_instance:
     image: codify-test-vm
+    port: 9226:9226
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
   test_script:
     - echo $FILE_NAME
-    - npm run test -- $FILE_NAME --disable-console-intercept
+    - npm run test -- $FILE_NAME --disable-console-intercept --inspect --no-file-parallelism
