@@ -28,13 +28,13 @@ async function main(argument: string): Promise<void> {
 }
 
 async function launchTestAll(debug: boolean): Promise<void> {
-  // const tests = await glob('./test/**/*.test.ts');
-  // for (const test of tests) {
-  //   console.log(`Running test ${test}`)
-  //   await run(`cirrus run --lazy-pull integration_individual_test -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
-  // }
+  const tests = await glob('./test/**/*.test.ts');
+  for (const test of tests) {
+    console.log(`Running test ${test}`)
+    await run(`cirrus run --lazy-pull integration_individual_test -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
+  }
 
-  await run('cirrus run --lazy-pull integration_test_dev -o simple', debug, false);
+  // await run('cirrus run --lazy-pull integration_test_dev -o simple', debug, false);
 }
 
 async function launchSingleTest(test: string, debug: boolean) {

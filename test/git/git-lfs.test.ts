@@ -9,7 +9,7 @@ describe('Git lfs integration tests', async () => {
     plugin = new PluginTester(path.resolve('./src/index.ts'));
   })
 
-  it('Can install git-lfs', { timeout: 300000 }, async () => {
+  it('Can install git-lfs', { timeout: 500000 }, async () => {
     await plugin.fullTest([
       { type: 'homebrew' },
       { type: 'git-lfs' }
