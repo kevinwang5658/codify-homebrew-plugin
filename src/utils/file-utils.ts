@@ -15,11 +15,33 @@ export const FileUtils = {
   },
 
   async addToStartupFile(line: string): Promise<void> {
-    const lineToInsert = line.endsWith('\n') ? line : line + '\n';
+    const lineToInsert = addLeadingSpacer(
+      addTrailingSpacer(line)
+    );
 
     await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), lineToInsert)
+
+    function addLeadingSpacer(line: string): string {
+      return line.startsWith('\n')
+        ? line
+        : '\n' + line;
+    }
+
+    function addTrailingSpacer(line: string): string {
+      return line.endsWith('\n')
+        ? line
+        : line + '\n';
+    }
   },
 
+  async addAllToStartupFile(lines: string[]): Promise<void> {
+    const formattedLines = '\n' + lines.join('\n') + '\n';
+
+    console.log(`Adding to .zshrc:
+${lines.join('\n')}`)
+
+    await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), formattedLines)
+  },
 
   async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
     const escapedPath = Utils.shellEscape(untildify(path))
@@ -44,8 +66,7 @@ export const FileUtils = {
       return true;
     }
  
-      throw new Error(`Directory ${path} already exists and is a file`);
-    
+    throw new Error(`Directory ${path} already exists and is a file`);
   },
 
   async createDirIfNotExists(path: string): Promise<void> {
@@ -88,14 +109,6 @@ export const FileUtils = {
       }
 
       if (searchString && lines[counter].includes(searchString)) {
-        // Check that the line only contains white space other than matched portion
-        const reducedLine = lines[counter].replace(searchString, '');
-
-        // Line contains non space characters
-        if ([...reducedLine].some((character) => character !== ' ' && character !== '\t')) {
-          continue;
-        }
-
         lines.splice(counter, 1);
         continue;
       }

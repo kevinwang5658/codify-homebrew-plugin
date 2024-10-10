@@ -19,6 +19,10 @@
     "directory": {
       "type": "string",
       "description": "Directory to clone contents into. This value is directly passed into git clone. This differs from parent directory in that the last part of the path will be the folder name of the repo"
+    },
+    "autoVerifySSH": {
+      "type": "boolean",
+      "description": "Automatically verifies the ssh connection for ssh git clones. Defaults to true."
     }
   },
   "additionalProperties": false

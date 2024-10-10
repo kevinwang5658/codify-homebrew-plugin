@@ -1,9 +1,16 @@
-import { ArrayStatefulParameter } from 'codify-plugin-lib';
+import { ArrayParameterSetting, ArrayStatefulParameter } from 'codify-plugin-lib';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { NvmConfig } from './nvm.js';
 
 export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, string> {
+  getSettings(): ArrayParameterSetting {
+    return {
+      type: 'array',
+      isElementEqual: (desired, current) => current.includes(desired),
+    }
+  }
+
   override async refresh(desired: null | string[]): Promise<null | string[]> {
     const { data } = await codifySpawn('nvm ls --no-colors --no-alias')
 

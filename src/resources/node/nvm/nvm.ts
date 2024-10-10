@@ -1,7 +1,7 @@
-import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { NvmGlobalParameter } from './global-parameter.js';
 import { NvmNodeVersionsParameter } from './node-versions-parameter.js';
@@ -38,11 +38,20 @@ export class NvmResource extends Resource<NvmConfig> {
   override async create(): Promise<void> {
     // Node installer was previously used.
     const { data } = await codifySpawn('echo $npm_config_prefix')
-    if (data !== '' ) {
+    if (data.trim() !== '') {
       await FileUtils.addToStartupFile('unset npm_config_prefix');
     }
 
-    await codifySpawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash')
+    const { data: installResult } = await codifySpawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash')
+
+    // Nvm doesn't handle if the init string is commented out
+    // This check first checks that nvm detects the init string is there but nvm itself is still not present
+    if (installResult.includes('nvm source string already in /Users/kevinwang/.zshrc')
+      && (await codifySpawn('which nvm', { throws: false })).status === SpawnStatus.ERROR
+    ) {
+      await FileUtils.addToStartupFile('export NVM_DIR="$HOME/.nvm"')
+      await FileUtils.addToStartupFile('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" ');
+    }
   }
 
   override async destroy(): Promise<void> {
