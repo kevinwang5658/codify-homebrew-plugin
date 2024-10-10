@@ -5,7 +5,7 @@ import {
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
-import AsdfInstallSchema from './asdf-plugin-schema.json';
+import AsdfPluginSchema from './asdf-plugin-schema.json';
 
 export interface AsdfPluginConfig extends ResourceConfig {
   plugin: string;
@@ -20,7 +20,7 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
     return {
       id: 'asdf-plugin',
       dependencies: ['asdf'],
-      schema: AsdfInstallSchema,
+      schema: AsdfPluginSchema,
       parameterSettings: {
         versions: { type: 'stateful', definition: new AsdfPluginVersionsParameter() }
       },
@@ -38,8 +38,6 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
       .filter(Boolean)
       .map((l) => {
         const matches = l.match(PLUGIN_LIST_REGEX)
-        console.log(matches)
-
         if (!matches) {
           throw new Error(`Unable to parse asdf plugin name and gitUrl from: "${l}" using regex ${PLUGIN_LIST_REGEX}`)
         }
@@ -74,12 +72,13 @@ export class AsdfPluginVersionsParameter extends ArrayStatefulParameter<AsdfPlug
     const { data: versions } = await codifySpawn(`asdf list ${config.plugin}`);
 
     const latest = desired?.includes('latest')
-      ? (await codifySpawn(`asdf latest ${config.plugin}`)).data
+      ? (await codifySpawn(`asdf latest ${config.plugin}`)).data.trim()
       : null;
 
     return versions.split(/\n/)
       .map((l) => l.trim())
-      .map((l) => l.trim() === latest?.trim() ? 'latest' : l)
+      .map((l) => l.replaceAll('*', ''))
+      .map((l) => l.trim() === latest ? 'latest' : l)
       .filter(Boolean);
   }
   

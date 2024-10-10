@@ -66,8 +66,7 @@ ${lines.join('\n')}`)
       return true;
     }
  
-      throw new Error(`Directory ${path} already exists and is a file`);
-    
+    throw new Error(`Directory ${path} already exists and is a file`);
   },
 
   async createDirIfNotExists(path: string): Promise<void> {
@@ -110,14 +109,6 @@ ${lines.join('\n')}`)
       }
 
       if (searchString && lines[counter].includes(searchString)) {
-        // Check that the line only contains white space other than matched portion
-        const reducedLine = lines[counter].replace(searchString, '');
-
-        // Line contains non space characters
-        if ([...reducedLine].some((character) => character !== ' ' && character !== '\t')) {
-          continue;
-        }
-
         lines.splice(counter, 1);
         continue;
       }

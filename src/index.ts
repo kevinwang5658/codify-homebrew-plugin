@@ -3,6 +3,8 @@ import { Plugin, runPlugin } from 'codify-plugin-lib';
 import { AndroidStudioResource } from './resources/android/android-studio.js';
 import { AsdfResource } from './resources/asdf/asdf.js';
 import { AsdfPluginResource } from './resources/asdf/asdf-plugin.js';
+import { AsdfPluginGlobalResource } from './resources/asdf/asdf-plugin-global.js';
+import { AsdfPluginLocalResource } from './resources/asdf/asdf-plugin-local.js';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
@@ -39,6 +41,8 @@ runPlugin(Plugin.create(
     new GitCloneResource(),
     new AndroidStudioResource(),
     new AsdfResource(),
-    new AsdfPluginResource()
+    new AsdfPluginResource(),
+    new AsdfPluginGlobalResource(),
+    new AsdfPluginLocalResource(),
   ])
 )

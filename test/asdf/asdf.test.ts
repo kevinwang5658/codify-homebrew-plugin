@@ -1,6 +1,9 @@
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
+import os from 'node:os';
+import { PlanRequestDataSchema, PlanResponseDataSchema } from 'codify-schemas';
 
 describe('Asdf tests', async () => {
   let plugin: PluginTester;
@@ -19,6 +22,11 @@ describe('Asdf tests', async () => {
         type: 'asdf-plugin',
         plugin: 'nodejs',
         versions: ['latest', '18.20.4']
+      },
+      {
+        type: 'asdf-plugin-global',
+        plugin: 'nodejs',
+        version: 'latest',
       }
     ]);
   })
@@ -33,7 +41,7 @@ describe('Asdf tests', async () => {
         plugin: 'nodejs',
         versions: ['latest']
       }
-    ], false);
+    ]);
   })
 
   it('Can install custom gitUrls', { timeout: 300000 }, async () => {
@@ -60,6 +68,75 @@ describe('Asdf tests', async () => {
         versions: ['latest']
       }
     ]);
+  })
+
+  it('Can install a local version', { timeout: 300000 }, async () => {
+    await fs.mkdir(path.join(os.homedir(), 'localDir'));
+
+    await plugin.fullTest([
+      {
+        type: 'asdf',
+        plugins: ['nodejs'],
+      },
+      {
+        type: 'asdf-plugin',
+        plugin: 'nodejs',
+        versions: ['20.18.0']
+      },
+      {
+        type: 'asdf-plugin-local',
+        plugin: 'nodejs',
+        version: '20.18.0',
+        directory: '~/localDir'
+      }
+    ]);
+  })
+
+  it('Can uninstall asdf-plugin-version separately from asdf-plugin', { timeout: 300000 }, async () => {
+    // localDir1 is created in the previous test
+    await fs.mkdir(path.join(os.homedir(), 'localDir2'));
+
+    await plugin.fullTest([
+      {
+        type: 'asdf',
+        plugins: ['nodejs'],
+      },
+      {
+        type: 'asdf-plugin',
+        plugin: 'golang',
+        versions: ['latest'],
+      },
+      {
+        type: 'asdf-plugin-local',
+        plugin: 'golang',
+        version: 'latest',
+        directories: ['~/localDir', '~/localDir2']
+      }
+    ], true);
+
+    await plugin.uninstall([
+      {
+        type: 'asdf-plugin-local',
+        plugin: 'golang',
+        version: 'latest',
+        directories: ['~/localDir', '~/localDir2']
+      }
+    ])
+
+    const plan = await plugin.plan({
+      desired: {
+        type: 'asdf-plugin',
+        plugin: 'golang',
+        versions: ['latest'],
+      },
+      state: undefined,
+      isStateful: false
+    });
+
+    expect(plan).toMatchObject({
+      resourceType: 'asdf-plugin',
+      operation: 'noop'
+    })
   })
 
   afterEach(() => {

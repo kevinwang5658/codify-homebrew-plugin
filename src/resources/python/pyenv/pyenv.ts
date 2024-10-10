@@ -81,28 +81,4 @@ export class PyenvResource extends Resource<PyenvConfig> {
     const { data: doctor } = await codifySpawn('pyenv doctor', { throws: false })
     return doctor.includes('Congratulations! You are ready to build pythons!');
   }
-
-  private async installBuildDependencies(): Promise<void> {
-    if ((await codifySpawn('which brew')).status === SpawnStatus.ERROR) {
-      console.error('Homebrew not installed. Cannot pre-install build dependencies. ' +
-        'Pyenv will still work but will opt to build dependencies from source');
-      return;
-    }
-
-    await codifySpawn('openssl -v');
-    await codifySpawn('readline -v')
-
-    const dependenciesToInstall = [];
-    const dependenciesNeeded = ['openssl', 'readline', 'sqlite3', 'xz', 'zlib', 'tcl-tk']
-
-    for (const dep of dependenciesNeeded) {
-      if ((await codifySpawn(`which ${dep}`)).status === SpawnStatus.ERROR) {
-        dependenciesToInstall.push(dep);
-      }
-    }
-
-    if (dependenciesToInstall.length > 0) {
-      await codifySpawn(`brew install ${dependenciesToInstall.join(' ')}`);
-    }
-  }
 }
