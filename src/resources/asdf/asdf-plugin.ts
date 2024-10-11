@@ -11,7 +11,7 @@ export interface AsdfPluginConfig extends ResourceConfig {
   versions: string[];
 }
 
-const PLUGIN_LIST_REGEX = /^([^ ]*) +([^ ]*)$/
+const PLUGIN_LIST_REGEX = /^([^ ]+) +([^ ]+)$/
 
 export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
   getSettings(): ResourceSettings<AsdfPluginConfig> {
@@ -34,15 +34,20 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
       .data
       .split(/\n/)
       .filter(Boolean)
+      .map((l) => l.trim())
+      .map((l) => l.replaceAll('*', ''))
       .map((l) => {
+        console.log(l);
         const matches = l.match(PLUGIN_LIST_REGEX)
         if (!matches) {
-          throw new Error(`Unable to parse asdf plugin name and gitUrl from: "${l}" using regex ${PLUGIN_LIST_REGEX}`)
+          return null;
         }
+
+        console.log(matches);
 
         const [original, name, gitUrl] = matches;
         return [name, gitUrl] as const;
-      })
+      }).filter(Boolean)
 
     const installedPlugin = installedVersions.find(([name]) => name === parameters.plugin);
     if (!installedPlugin) {
