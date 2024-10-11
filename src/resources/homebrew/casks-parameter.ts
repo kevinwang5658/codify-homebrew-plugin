@@ -1,4 +1,4 @@
-import { ParameterSetting, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { HomebrewConfig } from './homebrew.js';
