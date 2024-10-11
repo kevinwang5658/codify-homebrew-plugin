@@ -3,8 +3,8 @@ import { Plugin, runPlugin } from 'codify-plugin-lib';
 import { AndroidStudioResource } from './resources/android/android-studio.js';
 import { AsdfResource } from './resources/asdf/asdf.js';
 import { AsdfPluginResource } from './resources/asdf/asdf-plugin.js';
-import { AsdfPluginGlobalResource } from './resources/asdf/asdf-plugin-global.js';
-import { AsdfPluginLocalResource } from './resources/asdf/asdf-plugin-local.js';
+import { AsdfGlobalResource } from './resources/asdf/asdf-global.js';
+import { AsdfLocalResource } from './resources/asdf/asdf-local.js';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-clone.js';
@@ -20,6 +20,7 @@ import { PathResource } from './resources/shell/path/path-resource.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
+import { AsdfInstallResource } from './resources/asdf/asdf-install.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -42,7 +43,8 @@ runPlugin(Plugin.create(
     new AndroidStudioResource(),
     new AsdfResource(),
     new AsdfPluginResource(),
-    new AsdfPluginGlobalResource(),
-    new AsdfPluginLocalResource(),
+    new AsdfGlobalResource(),
+    new AsdfLocalResource(),
+    new AsdfInstallResource()
   ])
 )

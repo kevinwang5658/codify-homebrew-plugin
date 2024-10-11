@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://www.codifycli.com/asdf-plugin-schema.json",
+  "$id": "https://www.codifycli.com/asdf-install-schema.json",
   "title": "Asdf plugin resource",
   "type": "object",
   "properties": {
@@ -15,11 +15,10 @@
         "type": "string"
       }
     },
-    "gitUrl": {
+    "directory": {
       "type": "string",
-      "description": "The gitUrl of the plugin"
+      "description": "The directory to run the install command"
     }
   },
-  "required": ["plugin"],
   "additionalProperties": false
 }

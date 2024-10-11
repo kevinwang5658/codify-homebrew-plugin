@@ -24,7 +24,7 @@ describe('Asdf tests', async () => {
         versions: ['latest', '18.20.4']
       },
       {
-        type: 'asdf-plugin-global',
+        type: 'asdf-global',
         plugin: 'nodejs',
         version: 'latest',
       }
@@ -84,7 +84,7 @@ describe('Asdf tests', async () => {
         versions: ['20.18.0']
       },
       {
-        type: 'asdf-plugin-local',
+        type: 'asdf-local',
         plugin: 'nodejs',
         version: '20.18.0',
         directory: '~/localDir'
@@ -107,7 +107,7 @@ describe('Asdf tests', async () => {
         versions: ['latest'],
       },
       {
-        type: 'asdf-plugin-local',
+        type: 'asdf-local',
         plugin: 'golang',
         version: 'latest',
         directories: ['~/localDir', '~/localDir2']
@@ -116,7 +116,7 @@ describe('Asdf tests', async () => {
 
     await plugin.uninstall([
       {
-        type: 'asdf-plugin-local',
+        type: 'asdf-local',
         plugin: 'golang',
         version: 'latest',
         directories: ['~/localDir', '~/localDir2']
@@ -137,6 +137,39 @@ describe('Asdf tests', async () => {
       resourceType: 'asdf-plugin',
       operation: 'noop'
     })
+  })
+
+  it('Can install a .tool-versions file', { timeout: 300000 }, async () => {
+    await fs.mkdir(path.join(os.homedir(), 'toolDir'));
+    await fs.writeFile(
+      path.join(os.homedir(), 'toolDir', '.tool-versions'),
+      'nodejs 22.9.0\n' +
+      'golang 1.23.2'
+    )
+
+    await plugin.fullTest([
+      {
+        type: 'asdf',
+      },
+      {
+        type: 'asdf-install',
+        directory: '~/toolDir',
+      },
+    ]);
+  })
+
+  it('Can install a plugin and then a version', { timeout: 300000 }, async () => {
+    await plugin.fullTest([
+      {
+        type: 'asdf',
+        plugins: ['nodejs']
+      },
+      {
+        type: 'asdf-install',
+        plugin: 'nodejs',
+        versions: ['20.18.0']
+      },
+    ]);
   })
 
   afterEach(() => {

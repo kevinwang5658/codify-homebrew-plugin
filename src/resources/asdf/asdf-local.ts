@@ -1,29 +1,29 @@
 import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings, } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
+import * as fs from 'node:fs';
 import path from 'node:path';
 
-import { codifySpawn, SpawnStatus } from '../../utils/codify-spawn.js';
+import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { untildify } from '../../utils/untildify.js';
-import AsdfPluginLocalSchema from './asdf-plugin-local-schema.json';
-import * as fs from 'node:fs';
+import AsdfLocalSchema from './asdf-local-schema.json';
 
 const CURRENT_VERSION_REGEX = /[^ ]+ +([^ ]+).*/;
 const VARIOUS_VERSIONS = 'various versions';
 
-export interface AsdfPluginLocalConfig extends ResourceConfig {
+export interface AsdfLocalConfig extends ResourceConfig {
   plugin: string;
   version: string;
   directory?: string;
   directories?: string[];
 }
 
-export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
-  getSettings(): ResourceSettings<AsdfPluginLocalConfig> {
+export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
+  getSettings(): ResourceSettings<AsdfLocalConfig> {
     return {
-      id: 'asdf-plugin-local',
+      id: 'asdf-local',
       dependencies: ['asdf', 'asdf-plugin'],
-      schema: AsdfPluginLocalSchema,
+      schema: AsdfLocalSchema,
       parameterSettings: {
         directory: {
           inputTransformation: (input) => untildify(input),
@@ -40,7 +40,7 @@ export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
     }
   }
 
-  async validate(parameters: Partial<AsdfPluginLocalConfig>): Promise<void> {
+  async validate(parameters: Partial<AsdfLocalConfig>): Promise<void> {
     if (!parameters.directory && !parameters.directories) {
       throw new Error('Either directory or directories must be specified');
     }
@@ -58,7 +58,7 @@ export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
     }
   }
 
-  async refresh(parameters: Partial<AsdfPluginLocalConfig>): Promise<Partial<AsdfPluginLocalConfig> | Partial<AsdfPluginLocalConfig>[] | null> {
+  async refresh(parameters: Partial<AsdfLocalConfig>): Promise<Partial<AsdfLocalConfig> | Partial<AsdfLocalConfig>[] | null> {
     if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
       return null;
     }
@@ -105,6 +105,7 @@ export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
       if (status === SpawnStatus.ERROR || data.trim() === '') {
         continue;
       }
+
       installedDirectories.push(dir.trim());
 
 
@@ -135,7 +136,7 @@ export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
     };
   }
 
-  async create(plan: CreatePlan<AsdfPluginLocalConfig>): Promise<void> {
+  async create(plan: CreatePlan<AsdfLocalConfig>): Promise<void> {
     if (plan.desiredConfig.directory) {
       await codifySpawn(`asdf local ${plan.desiredConfig.plugin} ${plan.desiredConfig.version}`, { cwd: plan.desiredConfig.directory });
       return;
@@ -146,7 +147,7 @@ export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
     }
   }
 
-  async modify(pc: ParameterChange<AsdfPluginLocalConfig>, plan: ModifyPlan<AsdfPluginLocalConfig>): Promise<void> {
+  async modify(pc: ParameterChange<AsdfLocalConfig>, plan: ModifyPlan<AsdfLocalConfig>): Promise<void> {
     if (plan.desiredConfig.directory) {
       await codifySpawn(`asdf local ${plan.desiredConfig.plugin} ${plan.desiredConfig.version}`, { cwd: plan.desiredConfig.directory });
       return;
@@ -157,7 +158,7 @@ export class AsdfPluginLocalResource extends Resource<AsdfPluginLocalConfig> {
     }
   }
 
-  async destroy(plan: DestroyPlan<AsdfPluginLocalConfig>): Promise<void> {
+  async destroy(plan: DestroyPlan<AsdfLocalConfig>): Promise<void> {
     if (plan.currentConfig.directory) {
       await FileUtils.removeLineFromFile(path.join(plan.currentConfig.directory, '.tool-versions'), plan.currentConfig.plugin);
       return;

@@ -5,23 +5,23 @@ import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
-import AsdfPluginGlobalSchema from './asdf-plugin-global-schema.json';
+import AsdfGlobalSchema from './asdf-global-schema.json';
 
-export interface AsdfPluginGlobalConfig extends ResourceConfig {
+export interface AsdfGlobalConfig extends ResourceConfig {
   plugin: string;
   version: string;
 }
 
-export class AsdfPluginGlobalResource extends Resource<AsdfPluginGlobalConfig> {
-  getSettings(): ResourceSettings<AsdfPluginGlobalConfig> {
+export class AsdfGlobalResource extends Resource<AsdfGlobalConfig> {
+  getSettings(): ResourceSettings<AsdfGlobalConfig> {
     return {
-      id: 'asdf-plugin-global',
+      id: 'asdf-global',
       dependencies: ['asdf', 'asdf-plugin'],
-      schema: AsdfPluginGlobalSchema,
+      schema: AsdfGlobalSchema,
     }
   }
 
-  async refresh(parameters: Partial<AsdfPluginGlobalConfig>): Promise<Partial<AsdfPluginGlobalConfig> | Partial<AsdfPluginGlobalConfig>[] | null> {
+  async refresh(parameters: Partial<AsdfGlobalConfig>): Promise<Partial<AsdfGlobalConfig> | Partial<AsdfGlobalConfig>[] | null> {
     if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
       return null;
     }
@@ -52,11 +52,11 @@ export class AsdfPluginGlobalResource extends Resource<AsdfPluginGlobalConfig> {
       : parameters;
   }
 
-  async create(plan: CreatePlan<AsdfPluginGlobalConfig>): Promise<void> {
+  async create(plan: CreatePlan<AsdfGlobalConfig>): Promise<void> {
     await codifySpawn(`asdf global ${plan.desiredConfig.plugin} ${plan.desiredConfig.version}`);
   }
 
-  async destroy(plan: DestroyPlan<AsdfPluginGlobalConfig>): Promise<void> {
+  async destroy(plan: DestroyPlan<AsdfGlobalConfig>): Promise<void> {
     await FileUtils.removeLineFromFile(path.join(os.homedir(), '.tool-versions'), plan.currentConfig.plugin);
   }
 }

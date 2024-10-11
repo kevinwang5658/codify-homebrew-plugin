@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://www.codifycli.com/asdf-plugin-global-schema.json",
+  "$id": "https://www.codifycli.com/asdf-global-schema.json",
   "title": "Asdf plugin global resource",
   "type": "object",
   "properties": {
     "plugin": {
       "type": "string",
-      "description": "Asdf plugin"
+      "description": "Asdf plugin name"
     },
     "version": {
       "type": "string",
