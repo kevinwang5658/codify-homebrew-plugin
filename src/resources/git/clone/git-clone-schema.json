@@ -25,5 +25,10 @@
       "description": "Automatically verifies the ssh connection for ssh git clones. Defaults to true."
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "oneOf": [
+    { "required": ["repository", "directory"] },
+    { "required": ["repository", "parentDirectory"] },
+    { "required": ["remote", "directory"] }
+  ]
 }

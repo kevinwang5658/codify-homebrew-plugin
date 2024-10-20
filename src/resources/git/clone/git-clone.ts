@@ -27,16 +27,6 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     }
   }
 
-  override async validate(parameters: Partial<GitCloneConfig>): Promise<void> {
-    if (parameters.parentDirectory && parameters.directory) {
-      throw new Error('Cannot specify both parentDirectory and directory together')
-    }
-
-    if (parameters.remote && parameters.repository) {
-      throw new Error('Cannot specify both remote and repository together')
-    }
-  }
-
   override async refresh(parameters: Partial<GitCloneConfig>): Promise<Partial<GitCloneConfig> | null> {
     const repositoryUrl = parameters.repository?? parameters.remote!;
 

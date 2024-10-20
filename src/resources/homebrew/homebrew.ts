@@ -48,6 +48,8 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
       result.directory = this.getCurrentLocation(homebrewInfo.data);
     }
 
+    throw new Error('THis is an error');
+
     return result;
   }
 
