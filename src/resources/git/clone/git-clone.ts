@@ -1,4 +1,4 @@
-import { CreatePlan, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
@@ -12,8 +12,7 @@ export interface GitCloneConfig extends ResourceConfig {
   autoVerifySSH: boolean
   directory?: string,
   parentDirectory?: string,
-  remote?: string,
-  repository?: string,
+  repository: string,
 }
 
 export class GitCloneResource extends Resource<GitCloneConfig> {
@@ -22,23 +21,24 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       id: 'git-clone',
       schema: Schema,
       parameterSettings: {
-        autoVerifySSH: { default: true },
+        parentDirectory: { type: 'directory' },
+        directory: { type: 'directory' },
+        autoVerifySSH: { type: 'setting', default: true },
       },
+      import: {
+        requiredParameters: ['directory']
+      }
     }
   }
 
   override async refresh(parameters: Partial<GitCloneConfig>): Promise<Partial<GitCloneConfig> | null> {
-    const repositoryUrl = parameters.repository?? parameters.remote!;
-
     if (parameters.parentDirectory) {
-      const parentDirectory = path.resolve(untildify(parameters.parentDirectory));
-
-      const folderName = this.extractBasename(repositoryUrl);
+      const folderName = this.extractBasename(parameters.repository!);
       if (!folderName) {
         throw new Error('Invalid git repository or remote name. Un-able to parse');
       }
 
-      const fullPath = path.join(parentDirectory, folderName);
+      const fullPath = path.join(parameters.parentDirectory, folderName);
 
       const exists = await FileUtils.checkDirExistsOrThrowIfFile(fullPath);
       if (!exists) {
@@ -46,31 +46,27 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       }
 
       const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: fullPath });
-      if (this.extractBasename(url) !== folderName) {
-        console.log(this.extractBasename(url))
-        console.log(folderName)
-        throw new Error(`Folder found at location: '${fullPath}'. However the remote url '${url}' repo does not match desired repo '${repositoryUrl}'`);
-      }
 
-      return parameters;
+      return {
+        parentDirectory: parameters.parentDirectory,
+        repository: url.trim(),
+        autoVerifySSH: parameters.autoVerifySSH,
+      }
     }
 
     if (parameters.directory) {
-      const directory = path.resolve(untildify(parameters.directory));
-
-      const exists = await FileUtils.checkDirExistsOrThrowIfFile(directory);
+      const exists = await FileUtils.checkDirExistsOrThrowIfFile(parameters.directory);
       if (!exists) {
         return null;
       }
 
-      const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: directory });
-      if (this.extractBasename(url) !== this.extractBasename(repositoryUrl)) {
-        console.log(this.extractBasename(url))
-        console.log(this.extractBasename(url))
-        throw new Error(`Folder found at location: '${directory}'. However the remote url '${url}' does not match desired url '${repositoryUrl}'`);
-      }
+      const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: parameters.directory });
 
-      return parameters;
+      return {
+        directory: parameters.directory,
+        repository: url.trim(),
+        autoVerifySSH: parameters.autoVerifySSH,
+      }
     }
 
     throw new Error('Either directory or parent directory must be supplied');
@@ -79,24 +75,25 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
 
   override async create(plan: CreatePlan<GitCloneConfig>): Promise<void> {
     const config = plan.desiredConfig;
-    const repositoryUrl = config.repository ?? config.remote!;
 
     if (plan.desiredConfig.autoVerifySSH) {
-      await this.autoVerifySSHForFirstAttempt(repositoryUrl)
+      await this.autoVerifySSHForFirstAttempt(config.repository)
     }
 
     if (config.parentDirectory) {
       const parentDirectory = path.resolve(untildify(config.parentDirectory));
       await FileUtils.createDirIfNotExists(parentDirectory);
-      await codifySpawn(`git clone --progress ${repositoryUrl}`, { cwd: parentDirectory });
+      await codifySpawn(`git clone --progress ${config.repository}`, { cwd: parentDirectory });
     } else {
       const directory = path.resolve(untildify(config.directory!));
-      await codifySpawn(`git clone --progress ${repositoryUrl} ${directory}`);
+      await codifySpawn(`git clone --progress ${config.repository} ${directory}`);
     }
   }
 
-  override async destroy(): Promise<void> {
+  override async destroy(plan: DestroyPlan<GitCloneConfig>): Promise<void> {
     // Do nothing here. We don't want to destroy a user's repository.
+    throw new Error(`The git-clone resource is not designed to delete folders. 
+Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.parentDirectory! + this.extractBasename(plan.currentConfig.repository))} manually and re-apply`);
   }
 
   // Converts https://github.com/kevinwang5658/codify-homebrew-plugin.git => codify-homebrew-plugin

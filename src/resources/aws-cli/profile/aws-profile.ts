@@ -32,7 +32,10 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
         output: { default: 'json' },
         profile: { default: 'default' },
       },
-      inputTransformation: CSVCredentialsParameter.transform
+      inputTransformation: CSVCredentialsParameter.transform,
+      import: {
+        requiredParameters: ['profile']
+      }
     };
   }
 

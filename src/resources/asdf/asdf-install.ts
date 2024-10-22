@@ -4,9 +4,9 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
+import { FileUtils } from '../../utils/file-utils.js';
 import AsdfInstallSchema from './asdf-install-schema.json';
 import { AsdfPluginVersionsParameter } from './version-parameter.js';
-import { FileUtils } from '../../utils/file-utils.js';
 
 export interface AsdfInstallConfig extends ResourceConfig {
   plugin?: string;
@@ -28,6 +28,10 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
         directory: { type: 'directory', inputTransformation: (input) => untildify(input) },
         versions: { type: 'stateful', definition: new AsdfPluginVersionsParameter() }
       },
+      import: {
+        requiredParameters: ['directory'],
+        refreshParameters: ['directory']
+      }
     }
   }
 

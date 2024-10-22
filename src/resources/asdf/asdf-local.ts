@@ -36,6 +36,10 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
         version: {
           canModify: true,
         }
+      },
+      import: {
+        requiredParameters: ['plugin', 'directory'],
+        refreshParameters: ['plugin', 'version', 'directory'],
       }
     }
   }
@@ -85,6 +89,7 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
     
     if (parameters.directory) {
       const { status, data } = await codifySpawn(`asdf current ${parameters.plugin}`, { throws: false, cwd: parameters.directory });
+
       if (status === SpawnStatus.ERROR || data.trim() === '') {
         return null;
       }
