@@ -4,13 +4,9 @@
   "title": "Git-clone resource",
   "type": "object",
   "properties": {
-    "remote": {
-      "type": "string",
-      "description": "Remote tracking url to clone repo from. Equivalent to repository and only one should be specified"
-    },
     "repository": {
       "type": "string",
-      "description": "Remote repository to clone repo from. Equivalent to remote and only one should be specified"
+      "description": "Remote repository to clone repo from."
     },
     "parentDirectory": {
       "type": "string",
@@ -25,5 +21,9 @@
       "description": "Automatically verifies the ssh connection for ssh git clones. Defaults to true."
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "oneOf": [
+    { "required": ["repository", "directory"] },
+    { "required": ["repository", "parentDirectory"] }
+  ]
 }

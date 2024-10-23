@@ -18,6 +18,13 @@ export class AsdfGlobalResource extends Resource<AsdfGlobalConfig> {
       id: 'asdf-global',
       dependencies: ['asdf', 'asdf-plugin'],
       schema: AsdfGlobalSchema,
+      import: {
+        requiredParameters: ['plugin'],
+        refreshKeys: ['plugin', 'version'],
+        defaultRefreshValues: {
+          version: 'latest'
+        }
+      }
     }
   }
 

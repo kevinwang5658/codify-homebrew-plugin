@@ -14,6 +14,6 @@
       "description": "The alias value"
     }
   },
-  "required": ["alias", "value"],
+  "required": ["alias"],
   "additionalProperties": false
 }

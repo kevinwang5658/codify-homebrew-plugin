@@ -22,6 +22,12 @@ export class PathResource extends Resource<PathConfig> {
         paths: { canModify: true, type: 'array' },
         prepend: { default: false }
       },
+      import: {
+        refreshKeys: ['paths'],
+        defaultRefreshValues: {
+          paths: []
+        }
+      }
     }
   }
 
@@ -35,18 +41,16 @@ export class PathResource extends Resource<PathConfig> {
     const { data: path } = await codifySpawn('echo $PATH')
 
     if (parameters.path && (path.includes(parameters.path) || path.includes(untildify(parameters.path)))) {
-        return parameters;
+      return parameters;
     }
 
-    if (parameters.paths && parameters.paths.some((desired) => path.includes(desired))) {
+    if (parameters.paths) {
       const result = { paths: [] as string[], prepend: parameters.prepend }
 
       // Only add the paths that are found on the system
-      for (const desiredPath of parameters.paths) {
-        if ((path.includes(desiredPath)) || path.includes(untildify(desiredPath))) {
-          result.paths.push(desiredPath)
-        }
-      }
+      result.paths = path.split(':')
+        .filter(Boolean)
+        .map((l) => l.trim())
 
       return result;
     }

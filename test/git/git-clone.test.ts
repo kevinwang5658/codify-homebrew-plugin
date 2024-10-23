@@ -14,7 +14,7 @@ describe('Git clone integration tests', async () => {
       {
         type: 'git-clone',
         parentDirectory: '~/projects/test',
-        remote: 'https://github.com/kevinwang5658/codify-homebrew-plugin.git'
+        repository: 'https://github.com/kevinwang5658/codify-homebrew-plugin.git'
       }
     ], true);
   })
