@@ -43,11 +43,11 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
           return null;
         }
 
-        console.log(matches);
-
         const [original, name, gitUrl] = matches;
         return [name, gitUrl] as const;
       }).filter(Boolean)
+      .map((l) => l!);
+
 
     const installedPlugin = installedVersions.find(([name]) => name === parameters.plugin);
     if (!installedPlugin) {

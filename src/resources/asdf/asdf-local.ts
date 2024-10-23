@@ -31,7 +31,7 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
         directories: {
           type: 'array',
           canModify: true,
-          inputTransformation: (input) => input.map((i) => untildify(i)),
+          inputTransformation: (input) => input.map((i: any) => untildify(i)),
         },
         version: {
           canModify: true,
