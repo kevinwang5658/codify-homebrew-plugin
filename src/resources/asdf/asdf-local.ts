@@ -39,7 +39,10 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
       },
       import: {
         requiredParameters: ['plugin', 'directory'],
-        refreshParameters: ['plugin', 'version', 'directory'],
+        refreshKeys: ['plugin', 'version', 'directory'],
+        defaultRefreshValues: {
+          version: 'latest',
+        }
       }
     }
   }

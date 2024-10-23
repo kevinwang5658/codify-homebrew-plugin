@@ -30,7 +30,7 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       },
       import: {
         requiredParameters: ['directory'],
-        refreshParameters: ['directory']
+        refreshKeys: ['directory']
       }
     }
   }

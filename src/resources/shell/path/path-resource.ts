@@ -22,6 +22,10 @@ export class PathResource extends Resource<PathConfig> {
         paths: { canModify: true, type: 'array' },
         prepend: { default: false }
       },
+      import: {
+        requiredParameters: ['path'],
+        refreshKeys: ['path'],
+      }
     }
   }
 

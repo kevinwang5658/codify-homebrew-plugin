@@ -18,16 +18,13 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
      *   17.0.11
      *   openjdk64-17.0.11
      */
-    const versions = new Set(
+    return [...new Set(
       data
         .split(/\n/)
         // Regex to split out the version part
         .map((v) => this.getFirstRegexGroup(/^[ *] ([\d.A-Za-z-]+)[ \\n]?/g, v))
-    );
-
-    return desired
-      ?.filter((v) => versions.has(v))
-      ?.filter(Boolean) ?? null;
+        .filter(Boolean) as string[]
+    )]
   }
 
   override async addItem(param: string): Promise<void> {

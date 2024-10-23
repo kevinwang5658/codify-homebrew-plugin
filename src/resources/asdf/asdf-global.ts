@@ -20,6 +20,10 @@ export class AsdfGlobalResource extends Resource<AsdfGlobalConfig> {
       schema: AsdfGlobalSchema,
       import: {
         requiredParameters: ['plugin'],
+        refreshKeys: ['plugin', 'version'],
+        defaultRefreshValues: {
+          version: 'latest'
+        }
       }
     }
   }
