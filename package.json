@@ -11,7 +11,8 @@
     "test:integration:dev": "tsx scripts/run-tests.ts",
     "test:integration": "vitest test/**/*.test.ts",
     "test": "vitest",
-    "rollup": "rollup -c"
+    "rollup": "rollup -c",
+    "build": "tsx ./scripts/build.ts"
   },
   "keywords": [],
   "author": "",
@@ -57,7 +58,10 @@
     "tsc-watch": "^6.0.4",
     "typescript": "^5",
     "eslint-config-prettier": "^9.0.0",
-    "tsx": "^4.7.2"
+    "tsx": "^4.7.2",
+    "@fastify/merge-json-schemas": "^0.2.0",
+    "@apidevtools/json-schema-ref-parser": "^11.7.2",
+    "merge-json-schemas": "^1.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
