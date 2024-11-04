@@ -18,6 +18,7 @@ import { PgcliResource } from './resources/pgcli/pgcli.js';
 import { PyenvResource } from './resources/python/pyenv/pyenv.js';
 import { AliasResource } from './resources/shell/alias/alias-resource.js';
 import { PathResource } from './resources/shell/path/path-resource.js';
+import { SshAddKeyResource } from './resources/ssh/ssh-add-key.js';
 import { SshConfigFileResource } from './resources/ssh/ssh-config.js';
 import { SshKeyResource } from './resources/ssh/ssh-key.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
@@ -50,5 +51,6 @@ runPlugin(Plugin.create(
     new AsdfInstallResource(),
     new SshKeyResource(),
     new SshConfigFileResource(),
+    new SshAddKeyResource()
   ])
 )

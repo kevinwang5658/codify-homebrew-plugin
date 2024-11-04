@@ -69,7 +69,8 @@ export class SshConfigFileResource extends Resource<SshConfig> {
           return {
             hosts: remappedOptionNames,
           };
-        }
+        },
+        dependencies: ['ssh-key']
       }
     }
 
@@ -95,10 +96,12 @@ export class SshConfigFileResource extends Resource<SshConfig> {
 
       if (!(await FileUtils.dirExists(folderPath))) {
         await codifySpawn('mkdir .ssh', { cwd: os.homedir() })
+        await codifySpawn('chmod 700 .ssh', { cwd: os.homedir() })
       }
 
       if (!(await FileUtils.fileExists(filePath))) {
         await codifySpawn('touch config', { cwd: folderPath })
+        await codifySpawn('chmod 600 config', { cwd: folderPath })
       }
 
       const formattedConfigs = plan.desiredConfig.hosts
@@ -107,11 +110,11 @@ export class SshConfigFileResource extends Resource<SshConfig> {
       await fs.writeFile(filePath, formattedConfigs.join('\n\n'), { encoding: 'utf8' });
     }
 
-    async destroy(plan: DestroyPlan<SshConfig>): Promise<void> {
+    async destroy(): Promise<void> {
       // Prevent destroying config file for now
     }
 
-    async modify(pc: ParameterChange<SshConfig>, plan: ModifyPlan<SshConfig>): Promise<void> {
+    async modify(pc: ParameterChange<SshConfig>): Promise<void> {
       if (pc.name !== 'hosts') {
         return;
       }
