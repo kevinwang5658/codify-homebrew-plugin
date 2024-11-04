@@ -63,6 +63,10 @@ Host github.com
             AddKeysToAgent: true,
             UseKeychain: true,
           },
+          {
+            Match: 'User bob,joe,phil',
+            PasswordAuthentication: true,
+          }
         ],
       }
     ], true)
@@ -76,6 +80,9 @@ Host github.com
 Host new.com
   AddKeysToAgent yes
   IdentityFile id_ed25519
+
+Match User bob,joe,phil
+  PasswordAuthentication yes
 
 Host github.com
   AddKeysToAgent yes

@@ -18,6 +18,7 @@ import Schema from './ssh-config-schema.json';
 
 export interface SshConfigOptions {
   Host: string;
+  Match: string;
   HostName: string;
   User: string;
   Port: number;
@@ -28,6 +29,7 @@ export interface SshConfigOptions {
   AddKeysToAgent: boolean;
   UseKeychain: boolean;
   IgnoreUnknown: string;
+  PasswordAuthentication: boolean;
 }
 
 export interface SshConfig extends StringIndexedObject {
@@ -35,7 +37,7 @@ export interface SshConfig extends StringIndexedObject {
 }
 
 const SSH_CONFIG_REGEX = /(?=Host\s)|(?=Match\s)/
-const SSH_CONFIG_OPTION_REGEX = /(.*) (.*)/
+const SSH_CONFIG_OPTION_REGEX = /(\S*)\s+(.*)/
 
 export class SshConfigFileResource extends Resource<SshConfig> {
 
@@ -49,7 +51,7 @@ export class SshConfigFileResource extends Resource<SshConfig> {
             isElementEqual: 'object',
             canModify: true,
             filterInStatelessMode(desired, current) {
-              return current.filter((c) => desired.some((d) => c.Host === d.Host))
+              return current.filter((c) => desired.some((d) => SshConfigFileResource.isHostObjectSame(c, d)))
             },
           }
         },
@@ -58,7 +60,7 @@ export class SshConfigFileResource extends Resource<SshConfig> {
               Object.entries(host)
                 .map(([k, v]) => [
                   k,
-                  k === 'Compression' || k === 'AddKeysToAgent' || k === 'UseKeychain'
+                  typeof v === 'boolean'
                     ? (v ? 'yes' : 'no') // The file takes 'yes' or 'no' instead of booleans
                     : v,
                 ])
@@ -81,9 +83,6 @@ export class SshConfigFileResource extends Resource<SshConfig> {
       const sshConfigFile = await fs.readFile(filePath, 'utf8');
       const hostBlocks = this.parseHostBlocks(sshConfigFile);
       const hostObjects = this.parseHostObjects(hostBlocks);
-
-      console.log('Refresh: ')
-      console.log(JSON.stringify(hostObjects, null, 2));
 
       return {
         hosts: hostObjects,
@@ -117,37 +116,33 @@ export class SshConfigFileResource extends Resource<SshConfig> {
         return;
       }
 
-      console.log('Modify: pc:')
-      console.log(JSON.stringify(pc, null, 2));
-
       const filePath = path.resolve(os.homedir(), '.ssh', 'config');
 
       const valuesToAdd: Array<Partial<SshConfigOptions>> = pc.newValue.filter((v1) =>
-        !pc.previousValue.some((v2) => v1.Host === v2.Host)
+        !pc.previousValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2))
       );
 
       const valuesToRemove: Array<Partial<SshConfigOptions>> = pc.previousValue.filter((v1) =>
-        !pc.newValue.some((v2) => v1.Host === v2.Host)
+        !pc.newValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2))
       );
 
       valuesToRemove.push(...pc.previousValue.filter((v1) =>
-        pc.newValue.some((v2) => v1.Host === v2.Host && !isEqual(v1, v2))
+        pc.newValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2) && !isEqual(v1, v2))
       ));
 
       valuesToAdd.push(...pc.newValue.filter((v1) =>
-        pc.previousValue.some((v2) => v1.Host === v2.Host && !isEqual(v1, v2))
+        pc.previousValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2) && !isEqual(v1, v2))
       ));
 
-      console.log('ValuesToAdd')
-      console.log(JSON.stringify(valuesToAdd, null, 2));
-      console.log('ValuesToRemove')
-      console.log(JSON.stringify(valuesToRemove, null, 2));
 
       const sshConfigFile = await fs.readFile(filePath, 'utf8');
       const hostBlocks = this.parseHostBlocks(sshConfigFile);
 
       for (const value of valuesToRemove) {
-        const index = hostBlocks.findIndex((b) => (new RegExp('Host[\\s]*' + value.Host)).test(b))
+        const index = hostBlocks.findIndex((b) => value.Host
+            ? new RegExp('Host\\s*\\b' + value.Host + '\\b').test(b)
+            : new RegExp('Match\\s*\\b' + value.Match + '\\b').test(b))
+
         if (index === -1) {
           continue;
         }
@@ -159,17 +154,12 @@ export class SshConfigFileResource extends Resource<SshConfig> {
         hostBlocks.push('\n\n' + this.hostObjectToString(value));
       }
 
-      console.log('HostBlocks:');
-      console.log(JSON.stringify(hostBlocks, null, 2));
-
       await fs.writeFile(filePath, hostBlocks
           .filter(Boolean)
           .map((l) => l.trimEnd())
           .join(''),
         { encoding: 'utf8' }
       );
-
-      console.log(await fs.readFile(filePath, 'utf8'));
     }
 
     private parseHostBlocks(sshConfigFile: string): string[] {
@@ -199,14 +189,28 @@ export class SshConfigFileResource extends Resource<SshConfig> {
     private hostObjectToString(h: Partial<SshConfigOptions>): string {
       const result = [];
 
-      // Push host first. Host is guaranteed to exist
-      result.push(`Host ${h.Host}`);
+      // Push host or match first. Either host or match is guaranteed to exist
+      h.Host
+        ? result.push(`Host ${h.Host}`)
+        : result.push(`Match ${h.Match}`);
 
-      const data = { ...h, Host: undefined };
+      const data = { ...h, Host: undefined, Match: undefined };
       Object.entries(data)
         .filter(([k, v]) => v !== undefined && v !== null)
         .forEach(([k, v]) => result.push(`  ${k} ${v}`))
 
       return result.join('\n');
+    }
+
+    static isHostObjectSame(h1: Partial<SshConfigOptions>, h2: Partial<SshConfigOptions>): boolean {
+      if (h1.Host && h2.Host) {
+        return h1.Host === h2.Host;
+      }
+
+      if (h1.Match && h2.Match) {
+        return h1.Match === h2.Match;
+      }
+
+      return false;
     }
 }

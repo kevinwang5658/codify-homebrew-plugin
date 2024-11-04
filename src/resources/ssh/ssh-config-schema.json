@@ -54,9 +54,20 @@
           "PreferredAuthentications": {
             "type": "string",
             "description": "Specifies the order in which the client should try authentication methods."
+          },
+          "PasswordAuthentication": {
+            "type": "boolean",
+            "description": "Specifies whether to use password authentication."
           }
         },
-        "required": ["Host"]
+        "oneOf": [
+          {
+            "required": ["Host"]
+          },
+          {
+            "required": ["Match"]
+          }
+        ]
       }
     }
   },
