@@ -121,20 +121,20 @@ export class SshConfigFileResource extends Resource<SshConfig> {
 
       const filePath = path.resolve(os.homedir(), '.ssh', 'config');
 
-      const valuesToAdd: Array<Partial<SshConfigOptions>> = pc.newValue.filter((v1) =>
-        !pc.previousValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2))
+      const valuesToAdd: Array<Partial<SshConfigOptions>> = pc.newValue.filter((v1: Partial<SshConfigOptions>) =>
+        !pc.previousValue.some((v2: Partial<SshConfigOptions>) => SshConfigFileResource.isHostObjectSame(v1, v2))
       );
 
-      const valuesToRemove: Array<Partial<SshConfigOptions>> = pc.previousValue.filter((v1) =>
-        !pc.newValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2))
+      const valuesToRemove: Array<Partial<SshConfigOptions>> = pc.previousValue.filter((v1: Partial<SshConfigOptions>) =>
+        !pc.newValue.some((v2: Partial<SshConfigOptions>) => SshConfigFileResource.isHostObjectSame(v1, v2))
       );
 
-      valuesToRemove.push(...pc.previousValue.filter((v1) =>
-        pc.newValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2) && !isEqual(v1, v2))
+      valuesToRemove.push(...pc.previousValue.filter((v1: Partial<SshConfigOptions>) =>
+        pc.newValue.some((v2: Partial<SshConfigOptions>) => SshConfigFileResource.isHostObjectSame(v1, v2) && !isEqual(v1, v2))
       ));
 
-      valuesToAdd.push(...pc.newValue.filter((v1) =>
-        pc.previousValue.some((v2) => SshConfigFileResource.isHostObjectSame(v1, v2) && !isEqual(v1, v2))
+      valuesToAdd.push(...pc.newValue.filter((v1: Partial<SshConfigOptions>) =>
+        pc.previousValue.some((v2: Partial<SshConfigOptions>) => SshConfigFileResource.isHostObjectSame(v1, v2) && !isEqual(v1, v2))
       ));
 
 
