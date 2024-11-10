@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
-import Schema from './ssh-add-key-schema.json'
+import Schema from './ssh-add-schema.json'
 
 export interface SshAddConfig extends StringIndexedObject {
   path: string;
@@ -13,10 +13,10 @@ export interface SshAddConfig extends StringIndexedObject {
 
 const APPLE_KEYCHAIN_REGEX = /Identity added: (.*) \((.*)\)/;
 
-export class SshAddKeyResource extends Resource<SshAddConfig> {
+export class SshAddResource extends Resource<SshAddConfig> {
   getSettings(): ResourceSettings<SshAddConfig> {
     return {
-      id: 'ssh-add-key',
+      id: 'ssh-add',
       schema: Schema,
       parameterSettings: {
         path: {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
 
-describe('Ssh Add Key tests', () => {
+describe('Ssh Add tests', () => {
   let plugin: PluginTester;
 
   beforeEach(() => {

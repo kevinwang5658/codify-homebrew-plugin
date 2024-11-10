@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://www.codifycli.com/ssh-key.json",
-  "title": "Ssh key resource",
+  "$id": "https://www.codifycli.com/ssh-add.json",
+  "title": "Ssh add resource",
   "type": "object",
   "properties": {
     "path": {
       "type": "string",
-      "description": "The path to the ssh-key to add"
+      "description": "The path to the ssh key to add"
     },
     "appleUseKeychain": {
       "type": "boolean",
