@@ -1,5 +1,6 @@
 import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import os from 'node:os';
 import path from 'node:path';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
@@ -85,6 +86,13 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
   }
 
   override async create(plan: CreatePlan<SshKeyConfig>): Promise<void> {
+    const folderPath = path.resolve(os.homedir(), '.ssh')
+
+    if (!(await FileUtils.dirExists(folderPath))) {
+      await codifySpawn('mkdir .ssh', { cwd: os.homedir() })
+      await codifySpawn('chmod 700 .ssh', { cwd: os.homedir() })
+    }
+
     const command = [
       'ssh-keygen',
       `-f "${plan.desiredConfig.fileName}"`,
@@ -106,7 +114,7 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
   override async modify(pc: ParameterChange<SshKeyConfig>, plan: ModifyPlan<SshKeyConfig>): Promise<void> {
     if (pc.name === 'comment') {
       await codifySpawn(`ssh-keygen -f ${plan.desiredConfig.fileName} -c -C "${pc.newValue}"`, { cwd: plan.desiredConfig.folder! })
-      return;
+      
     }
   }
 

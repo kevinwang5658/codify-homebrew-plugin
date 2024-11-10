@@ -78,7 +78,7 @@ export class SshAddKeyResource extends Resource<SshAddConfig> {
     const { appleUseKeychain, path } = plan.desiredConfig;
 
     await codifySpawn('eval "$(ssh-agent -s)"')
-    await codifySpawn(`ssh-add ${appleUseKeychain ? '--apple-use-keychain ' : ''}${path}`)
+    await codifySpawn(`ssh-add ${appleUseKeychain ? '--apple-use-keychain ' : ''}${path}`, { requestsTTY: true })
   }
 
   async destroy(plan: DestroyPlan<SshAddConfig>): Promise<void> {
