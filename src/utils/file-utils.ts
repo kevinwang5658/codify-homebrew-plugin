@@ -57,6 +57,26 @@ ${lines.join('\n')}`)
     await codifySpawn(`echo "path+=('${escapedPath}')\\n" >> $HOME/.zshrc`)
   },
 
+  async dirExists(path: string): Promise<boolean> {
+    let stat;
+    try {
+      stat = await fs.stat(path);
+      return stat.isDirectory();
+    } catch {
+      return false;
+    }
+  },
+
+  async fileExists(path: string): Promise<boolean> {
+    let stat;
+    try {
+      stat = await fs.stat(path);
+      return stat.isFile();
+    } catch {
+      return false;
+    }
+  },
+
   async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
     let stat;
     try {

@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://www.codifycli.com/ssh-key.json",
+  "title": "Ssh key resource",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "The path to the ssh-key to add"
+    },
+    "appleUseKeychain": {
+      "type": "boolean",
+      "description": "Corresponds to the --apple-use-keychain parameter. Controls whether the key should be loaded into the apple keychain. Only keys with a passphrase can be loaded"
+    }
+  },
+  "required": ["path"],
+  "additionalProperties": false
+}

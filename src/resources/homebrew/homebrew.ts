@@ -58,7 +58,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
       return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }
 
-    await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
+    await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`, { requestsTTY: true })
     await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshrc'); // TODO: may need to support non zsh shells here
 
     // TODO: Add a check here to see if homebrew is writable
@@ -72,7 +72,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     if (homebrewDirectory === '/opt/homebrew') {
       await codifySpawn(
         `SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"`,
-        { throws: false }
+        { throws: false, requestsTTY: true }
       )
     }
 

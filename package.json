@@ -22,11 +22,12 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "semver": "^7.6.0",
-    "codify-plugin-lib": "1.0.100",
+    "codify-plugin-lib": "1.0.106",
     "codify-schemas": "1.0.52",
     "chalk": "^5.3.0",
     "debug": "^4.3.4",
-    "plist": "^3.1.0"
+    "plist": "^3.1.0",
+    "lodash.isequal": "^4.5.0"
   },
   "devDependencies": {
     "rollup": "^4.12.0",
@@ -44,7 +45,8 @@
     "@types/commander": "^2.12.2",
     "@types/debug": "4.1.12",
     "@types/plist": "^3.0.5",
-    "codify-plugin-test": "0.0.13",
+    "@types/lodash.isequal": "^4.5.8",
+    "codify-plugin-test": "0.0.12",
     "commander": "^12.1.0",
     "eslint": "^8.51.0",
     "eslint-config-oclif": "^5",

@@ -43,7 +43,7 @@ const plugin = fork(
     // Use default true to test plugins in secure mode (un-able to request sudo directly)
     detached: true,
     env: { ...process.env },
-    execArgv: ['--import', 'tsx/esm', '--inspect=9221'],
+    execArgv: ['--import', 'tsx/esm'],
   },
 )
 

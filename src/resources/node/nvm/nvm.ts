@@ -10,7 +10,6 @@ import Schema from './nvm-schema.json';
 export interface NvmConfig extends ResourceConfig {
   global?: string,
   nodeVersions?: string[],
-  // TODO: Add option here to use homebrew to install instead. Default to true. Maybe add option to set default values to resource config.
 }
 
 export class NvmResource extends Resource<NvmConfig> {

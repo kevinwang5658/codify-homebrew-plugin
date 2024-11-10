@@ -27,7 +27,12 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       },
       import: {
         requiredParameters: ['directory']
-      }
+      },
+      dependencies: [
+        'ssh-key',
+        'ssh-add-key',
+        'ssh-config'
+      ]
     }
   }
 
