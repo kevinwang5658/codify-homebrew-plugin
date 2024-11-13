@@ -8,15 +8,6 @@ import { Utils } from './index.js';
 import { untildify } from './untildify.js';
 
 export const FileUtils = {
-  async addAliasToZshrc(alias: string, value?: string): Promise<void> {
-    if (!value) {
-      return;
-    }
-
-    const escapedValue = Utils.shellEscape(value);
-    await codifySpawn(`echo "alias ${alias}=${escapedValue}" >> $HOME/.zshrc`)
-  },
-
   async addToStartupFile(line: string): Promise<void> {
     const lineToInsert = addLeadingSpacer(
       addTrailingSpacer(line)

@@ -31,24 +31,19 @@ export class SshAddResource extends Resource<SshAddConfig> {
   }
 
   async refresh(parameters: Partial<SshAddConfig>): Promise<Partial<SshAddConfig> | null> {
-    const { data } = await codifySpawn('which ssh-add');
-    if (data.trim() !== '/usr/bin/ssh-add') {
-      throw new Error('Not using the default macOS ssh-add.')
-    }
-
-    const path = parameters.path!;
-    if (!(await FileUtils.fileExists(path))) {
+    const sshPath = parameters.path!;
+    if (!(await FileUtils.fileExists(sshPath))) {
       return null;
     }
 
     await codifySpawn('eval "$(ssh-agent -s)"')
 
-    const { data: keyFingerprint, status: keygenStatus } = await codifySpawn(`ssh-keygen -lf ${path}`, {  throws: false });
+    const { data: keyFingerprint, status: keygenStatus } = await codifySpawn(`ssh-keygen -lf ${sshPath}`, {  throws: false });
     if (keygenStatus === SpawnStatus.ERROR) {
       return null;
     }
 
-    const { data: loadedSshKeys, status: sshAddStatus } = await codifySpawn('ssh-add -l', { throws: false });
+    const { data: loadedSshKeys, status: sshAddStatus } = await codifySpawn('/usr/bin/ssh-add -l', { throws: false });
     if (sshAddStatus === SpawnStatus.ERROR) {
       return null;
     }
@@ -65,11 +60,11 @@ export class SshAddResource extends Resource<SshAddConfig> {
     
     let appleUseKeychain: boolean | undefined;
     if (parameters.appleUseKeychain) {
-      appleUseKeychain = await this.isKeyLoadedInKeychain(path);
+      appleUseKeychain = await this.isKeyLoadedInKeychain(sshPath);
     }
 
     return {
-      path,
+      path: sshPath,
       appleUseKeychain,
     };
   }
@@ -78,18 +73,18 @@ export class SshAddResource extends Resource<SshAddConfig> {
     const { appleUseKeychain, path } = plan.desiredConfig;
 
     await codifySpawn('eval "$(ssh-agent -s)"')
-    await codifySpawn(`ssh-add ${appleUseKeychain ? '--apple-use-keychain ' : ''}${path}`, { requestsTTY: true })
+    await codifySpawn(`/usr/bin/ssh-add ${appleUseKeychain ? '--apple-use-keychain ' : ''}${path}`, { requestsTTY: true })
   }
 
   async destroy(plan: DestroyPlan<SshAddConfig>): Promise<void> {
     const { path } = plan.currentConfig;
 
     await codifySpawn('eval "$(ssh-agent -s)"')
-    await codifySpawn(`ssh-add -d ${path}`)
+    await codifySpawn(`/usr/bin/ssh-add -d ${path}`)
   }
 
   private async isKeyLoadedInKeychain(keyPath: string): Promise<boolean> {
-    const { data: keychainKeys, status } = await codifySpawn('ssh-add --apple-load-keychain', { throws: false });
+    const { data: keychainKeys, status } = await codifySpawn('/usr/bin/ssh-add --apple-load-keychain', { throws: false });
     if (status === SpawnStatus.ERROR) {
       return false;
     }

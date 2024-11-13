@@ -1,8 +1,12 @@
-import { CreatePlan, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
+import { Utils } from '../../../utils/index.js';
 import Schema from './alias-schema.json';
 
 export interface AliasConfig extends StringIndexedObject {
@@ -16,7 +20,7 @@ export class AliasResource extends Resource<AliasConfig> {
       id: 'alias',
       schema: Schema,
       parameterSettings: {
-        value: { canModify: true }
+        value: { canModify: true, inputTransformation: (input) => Utils.shellEscape(input) }
       },
     }
   }
@@ -42,24 +46,103 @@ export class AliasResource extends Resource<AliasConfig> {
 
     const [name, value] = matchedAlias.split('=');
 
+    let processedValue = value.trim()
+    if ((processedValue.startsWith('\'') && processedValue.endsWith('\'')) || (processedValue.startsWith('"') && processedValue.endsWith('"'))) {
+      processedValue = processedValue.slice(1, -1)
+    }
+
     return {
       alias: name,
-      value,
+      value: processedValue,
     }
   }
 
   override async create(plan: CreatePlan<AliasConfig>): Promise<void> {
+    const zshrcPath = path.join(os.homedir(), '.zshrc');
+
+    if (!(await FileUtils.fileExists(zshrcPath))) {
+      await fs.writeFile(zshrcPath, '', { encoding: 'utf8' });
+    }
+
     const { alias, value } = plan.desiredConfig;
-
-    await FileUtils.addAliasToZshrc(alias, value);
+    const aliasString = this.aliasString(alias, value);
+    await fs.appendFile(zshrcPath, '\n\n' + aliasString, { encoding: 'utf8' });
   }
 
-  // TODO: Implement updating an alias
-  override async modify(): Promise<void> {
-    throw new Error('Unsupported for now. Un-able to update an alias value for now')
+  async modify(pc: ParameterChange<AliasConfig>, plan: ModifyPlan<AliasConfig>): Promise<void> {
+    if (pc.name !== 'value') {
+      return;
+    }
+
+    const { alias, value } = plan.currentConfig;
+    const aliasInfo = await this.findAlias(alias, value);
+    if (!aliasInfo) {
+      throw new Error(`Unable to find alias: ${alias} on the system. Codify isn't able to search all locations on the system. Please delete the alias manually and re-run Codify.`);
+    }
+
+    const aliasString = this.aliasString(alias, value);
+    const aliasStringShort = this.aliasStringShort(alias, value);
+
+    const lines = aliasInfo.contents
+      .split(/\n/)
+
+    const aliasLineNum = lines
+      .findIndex((l) => l.trim() === aliasStringShort || l.trim() === aliasString);
+    if (!aliasLineNum) {
+      throw new Error(`Unable to modify Alias. Cannot find line ${aliasString} in ${aliasInfo.path}. Please delete the alias manually and re-run Codify.`);
+    }
+    
+    const newAlias = this.aliasString(plan.desiredConfig.alias, plan.desiredConfig.value);
+    lines.splice(aliasLineNum, 1, newAlias);
+    
+    await fs.writeFile(lines.join('\n'), 'utf8');
   }
 
-  // TODO: Implement destroy some time in the future
-  override async destroy(): Promise<void> {}
+  async destroy(plan: DestroyPlan<AliasConfig>): Promise<void> {
+    const { alias, value } = plan.currentConfig;
+    const aliasInfo = await this.findAlias(alias, value);
+    if (!aliasInfo) {
+      throw new Error(`Unable to find alias: ${alias} on the system. Codify isn't able to search all locations on the system. Please delete the alias manually and re-run Codify.`);
+    }
 
+    const aliasString = this.aliasString(alias, value);
+    const aliasStringShort = this.aliasStringShort(alias, value);
+    
+    await FileUtils.removeLineFromFile(aliasInfo.path, aliasString);
+    await FileUtils.removeLineFromFile(aliasInfo.path, aliasStringShort);
+  }
+
+  private async findAlias(alias: string, value: string): Promise<{ path: string; contents: string; } | null> {
+    const paths = [
+      path.join(os.homedir(), '.zshrc'),
+      path.join(os.homedir(), '.zprofile'),
+      path.join(os.homedir(), '.zshenv'),
+    ];
+
+    const aliasString = this.aliasString(alias, value);
+    const aliasStringShort = this.aliasStringShort(alias, value);
+
+    for (const path of paths) {
+      if (await FileUtils.fileExists(path)) {
+        const fileContents = await fs.readFile(path, 'utf8');
+
+        if (fileContents.includes(aliasString) || fileContents.includes(aliasStringShort)) {
+          return {
+            path,
+            contents: fileContents,
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private aliasString(alias: string, value: string): string {
+    return `alias ${alias}='${value}'`
+  }
+
+  private aliasStringShort(alias: string, value: string): string {
+    return `alias ${alias}=${value}`
+  }
 }
