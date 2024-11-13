@@ -3,6 +3,7 @@ import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import Schema from './git-lfs-schema.json';
+import os from 'node:os';
 
 export interface GitLfsConfig extends ResourceConfig {
   // TODO: Add --system option for installing.
@@ -24,10 +25,9 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
       return null;
     }
 
-    // TODO: Move this to a separate resource in the future to initialize git-lfs for a dir
-    // if (!await this.checkIfGitLfsIsInstalled()) {
-    //   return null;
-    // }
+    if (!await this.checkIfGitLfsIsInstalled()) {
+      return null;
+    }
 
     return {}
   }
@@ -41,13 +41,13 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
       await codifySpawn('brew install git-lfs');
     }
 
-    // await codifySpawn('git lfs install');
+    await codifySpawn('git lfs install', { cwd: os.homedir() });
   }
 
   override async destroy(): Promise<void> {
     await this.assertBrewInstalled();
 
-    // await codifySpawn('git lfs uninstall');
+    await codifySpawn('git lfs uninstall', { cwd: os.homedir() });
     await codifySpawn('brew uninstall git-lfs');
   }
 
