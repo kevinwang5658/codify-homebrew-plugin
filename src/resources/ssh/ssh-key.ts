@@ -30,6 +30,12 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
         passphrase: { canModify: true },
         folder: { type: 'directory', default: '~/.ssh', canModify: true }
       },
+      import: {
+        requiredParameters: ['fileName'],
+        defaultRefreshValues: {
+          passphrase: '',
+        }
+      },
       inputTransformation(input) {
         if (!input.keyType) {
           input.keyType = 'ed25519';

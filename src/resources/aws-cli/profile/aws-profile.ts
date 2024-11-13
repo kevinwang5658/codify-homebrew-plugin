@@ -34,6 +34,7 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       },
       inputTransformation: CSVCredentialsParameter.transform,
       import: {
+        refreshKeys: ['output', 'profile', 'awsAccessKeyId', 'awsSecretAccessKey', 'region'],
         requiredParameters: ['profile']
       }
     };

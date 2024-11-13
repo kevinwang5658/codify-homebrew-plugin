@@ -55,8 +55,13 @@ export class SshConfigFileResource extends Resource<SshConfig> {
             },
           }
         },
+        import: {
+          refreshKeys: ['hosts'],
+          defaultRefreshValues: { hosts: [] },
+          requiredParameters: []
+        },
         inputTransformation(input) {
-          const remappedOptionNames = input.hosts!.map((host) => Object.fromEntries(
+          const remappedOptionNames = input.hosts?.map((host) => Object.fromEntries(
               Object.entries(host)
                 .map(([k, v]) => [
                   k,
@@ -67,7 +72,7 @@ export class SshConfigFileResource extends Resource<SshConfig> {
             ))
 
           return {
-            hosts: remappedOptionNames,
+            hosts: remappedOptionNames ?? [],
           };
         },
         dependencies: ['ssh-key']
