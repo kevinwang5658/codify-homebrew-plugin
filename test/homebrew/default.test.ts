@@ -17,7 +17,9 @@ describe('Homebrew main resource integration tests', () => {
         'glib',
         'gettext'
       ]
-    }], true);
+    }], {
+      skipUninstall: true,
+    });
   });
 
   it ('Can install additional casks and formulas', { timeout: 300000 }, async () => {
@@ -28,7 +30,9 @@ describe('Homebrew main resource integration tests', () => {
         'gettext',
         'jenv',
       ],
-    }], true)
+    }], {
+      skipUninstall: true,
+    })
   })
 
   it ('Can handle fully qualified formula names (tap + formula)', { timeout: 300000 }, async () => {

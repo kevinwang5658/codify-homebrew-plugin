@@ -20,7 +20,9 @@ describe('Aws profile tests', async () => {
         region: 'us-west-2',
         output: 'json'
       }
-    ], true);
+    ], {
+      skipUninstall: true,
+    });
   })
 
   it('Can add custom profiles', { timeout: 300000 }, async () => {

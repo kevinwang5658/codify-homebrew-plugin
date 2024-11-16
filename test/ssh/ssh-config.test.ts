@@ -31,7 +31,9 @@ describe('Ssh config tests', () => {
           }
         ]
       }
-    ], true)
+    ], {
+      skipUninstall: true,
+    })
 
     const fileAfter = await fs.readFile(path.resolve(os.homedir(), '.ssh', 'config'), 'utf-8')
     console.log(fileAfter);
@@ -69,7 +71,9 @@ Host github.com
           }
         ],
       }
-    ], true)
+    ], {
+      skipUninstall: true,
+    })
 
     const file = await fs.readFile(path.resolve(os.homedir(), '.ssh', 'config'), 'utf-8')
     expect(file).toMatch(

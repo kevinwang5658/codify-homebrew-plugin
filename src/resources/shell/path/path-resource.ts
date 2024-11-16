@@ -1,10 +1,14 @@
-import { CreatePlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { untildify } from '../../../utils/untildify.js';
 import Schema from './path-schema.json';
+import { Utils } from '../../../utils/index.js';
 
 export interface PathConfig extends StringIndexedObject {
   path: string;
@@ -18,8 +22,24 @@ export class PathResource extends Resource<PathConfig> {
       id: 'path',
       schema: Schema,
       parameterSettings: {
-        path: { canModify: true },
-        paths: { canModify: true, type: 'array' },
+        path: {
+          type: 'directory',
+          inputTransformation: (value) => {
+            const escapedPath = untildify(value);
+            return path.resolve(escapedPath)
+          }
+        },
+        paths: {
+          canModify: true,
+          type: 'array',
+          isElementEqual: 'directory',
+          inputTransformation: (values) =>
+            values.map((value: string) => {
+              const escapedPath = untildify(value);
+              return path.resolve(escapedPath)
+            }
+          )
+        },
         prepend: { default: false }
       },
       import: {
@@ -38,21 +58,25 @@ export class PathResource extends Resource<PathConfig> {
   }
 
   override async refresh(parameters: Partial<PathConfig>): Promise<Partial<PathConfig> | null> {
-    const { data: path } = await codifySpawn('echo $PATH')
+    const { data: existingPaths } = await codifySpawn('echo $PATH')
 
-    if (parameters.path && (path.includes(parameters.path) || path.includes(untildify(parameters.path)))) {
+    if (parameters.path && (existingPaths.includes(parameters.path) || existingPaths.includes(untildify(parameters.path)))) {
       return parameters;
     }
 
     if (parameters.paths) {
-      const result = { paths: [] as string[], prepend: parameters.prepend }
 
       // Only add the paths that are found on the system
-      result.paths = path.split(':')
+      const existingPathsSplit = new Set(existingPaths.split(':')
         .filter(Boolean)
-        .map((l) => l.trim())
+        .map((l) => path.resolve(l.trim())))
 
-      return result;
+      const foundPaths = parameters.paths.filter((p) => existingPathsSplit.has(p));
+      if (foundPaths.length === 0) {
+        return null;
+      }
+
+      return { paths: foundPaths, prepend: parameters.prepend };
     }
 
     return null;
@@ -62,15 +86,12 @@ export class PathResource extends Resource<PathConfig> {
     const { path, paths, prepend } = plan.desiredConfig;
 
     if (path) {
-      // Escaping is done within file utils
-      await FileUtils.addPathToZshrc(path, prepend);
-      return;
+      return this.addPath(path, prepend);
     }
 
     if (paths) {
       for (const path of paths) {
-        // Escaping is done within file utils
-        await FileUtils.addPathToZshrc(path, prepend);
+        await this.addPath(path, prepend);
       }
 
     }
@@ -80,19 +101,100 @@ export class PathResource extends Resource<PathConfig> {
     if (pc.name !== 'paths') {
       return;
     }
-
+    
     const pathsToAdd = pc.newValue.filter((p: string) => !pc.previousValue.includes(p));
-
-    // No deletes for now
-    // const pathsToRemove = pc.previousValue.filter((p: string) => !pc.newValue.includes(p));
+    const pathsToRemove = pc.previousValue.filter((p: string) => !pc.newValue.includes(p));
 
     for (const path of pathsToAdd) {
-      // Escaping is done within file utils
-      await FileUtils.addPathToZshrc(path, plan.desiredConfig.prepend);
+      await this.addPath(path, plan.desiredConfig.prepend)
+    }
+      
+    for (const value of pathsToRemove) {
+      await this.removePath(value);
     }
   }
 
-  // TODO: Implement destroy some time in the future
-  override async destroy(): Promise<void> {}
+  async destroy(plan: DestroyPlan<PathConfig>): Promise<void> {
+    if (plan.currentConfig.path) {
+      return this.removePath(plan.currentConfig.path);
+    }
 
+    if (plan.currentConfig.paths) {
+      const { paths } = plan.currentConfig;
+      for (const value of paths) {
+        await this.removePath(value);
+      }
+    }
+  }
+
+  private async addPath(path: string, prepend = false): Promise<void> {
+    // Escaping is done within file utils
+    await FileUtils.addPathToZshrc(path, prepend);
+  }
+  
+  private async removePath(pathValue: string): Promise<void> {
+    const fileInfo = await this.findPathDeclaration(pathValue);
+    if (!fileInfo) {
+      throw new Error(`Could not find path declaration: ${pathValue}. Please manually remove the path and then re-run Codify`);
+    }
+
+    const { content, pathsFound, filePath } = fileInfo;
+
+    const fileLines = content
+      .split(/\n/);
+
+    for (const pathFound of pathsFound) {
+      const line = fileLines
+        .findIndex((l) => l.includes(pathFound));
+
+      if (line === -1) {
+        throw new Error(`Could not find path declaration: ${pathValue}. Please manually remove the path and then re-run Codify`);
+      }
+
+      fileLines.splice(line, 1);
+    }
+
+    console.log(`Removing path: ${pathValue} from ${filePath}`)
+    await fs.writeFile(filePath, fileLines.join('\n'), { encoding: 'utf8' });
+  }
+
+  private async findPathDeclaration(value: string): Promise<PathDeclaration | null> {
+    const filePaths = [
+      path.join(os.homedir(), '.zshrc'),
+      path.join(os.homedir(), '.zprofile'),
+      path.join(os.homedir(), '.zshenv'),
+    ];
+
+    const searchTerms = [
+      `export PATH=${value}:$PATH`,
+      `export PATH=$PATH:${value}`,
+      `path+=('${value}')`,
+      `path+=(${value})`,
+      `path=('${value}' $path)`,
+      `path=(${value} $path)`
+    ]
+
+    for (const filePath of filePaths) {
+      if (await FileUtils.fileExists(filePath)) {
+        const fileContents = await fs.readFile(filePath, 'utf8');
+
+        const pathsFound = searchTerms.filter((st) => fileContents.includes(st));
+        if (pathsFound.length > 0) {
+          return {
+            filePath,
+            content: fileContents,
+            pathsFound,
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+}
+
+interface PathDeclaration {
+  filePath: string;
+  content: string;
+  pathsFound: string[];
 }

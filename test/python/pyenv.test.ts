@@ -15,7 +15,9 @@ describe('Pyenv resource integration tests', () => {
         type: 'pyenv',
         pythonVersions: ['3.11']
       }
-    ], true);
+    ], {
+      skipUninstall: true,
+    });
   });
 
   it ('Can install additional python versions. (this installs after openSSL and readline have been installed)', { timeout: 700000 }, async () => {

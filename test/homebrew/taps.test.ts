@@ -14,7 +14,9 @@ describe('Homebrew taps tests', () => {
     await plugin.fullTest([{
       type: 'homebrew',
       taps: ['cirruslabs/cli'],
-    }], true);
+    }], {
+      skipUninstall: true,
+    });
   });
 
   it ('Can install additional taps', { timeout: 300000 }, async () => {

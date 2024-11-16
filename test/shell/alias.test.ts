@@ -26,7 +26,7 @@ describe('Alias resource integration tests', async () => {
         alias: 'test$$$',
         value: 'ls'
       }
-    ], true)).rejects.toThrowError();
+    ])).rejects.toThrowError();
   })
 
   afterEach(() => {

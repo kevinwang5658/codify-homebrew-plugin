@@ -37,15 +37,16 @@ ${lines.join('\n')}`)
     await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), formattedLines)
   },
 
-  async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
-    const escapedPath = Utils.shellEscape(untildify(path))
+  async addPathToZshrc(value: string, prepend: boolean): Promise<void> {
+    const zshFile = path.join(os.homedir(), '.zshrc');
+    console.log(`Saving path: ${value} to $HOME/.zshrc`);
 
     if (prepend) {
-      await codifySpawn(`echo "path=(${escapedPath} \\$path)\\n" >> $HOME/.zshrc`)
+      await fs.appendFile(zshFile, `\nexport PATH=$PATH:${value};`, { encoding: 'utf8' });
       return;
     }
 
-    await codifySpawn(`echo "path+=('${escapedPath}')\\n" >> $HOME/.zshrc`)
+    await fs.appendFile(zshFile, `\nexport PATH=${value}:$PATH;`, { encoding: 'utf8' });
   },
 
   async dirExists(path: string): Promise<boolean> {

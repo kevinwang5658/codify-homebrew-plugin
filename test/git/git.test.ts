@@ -16,7 +16,9 @@ describe('Git integration tests', async () => {
         username: 'test',
         email: 'test@test.com'
       }
-    ], true);
+    ], {
+      skipUninstall: true,
+    });
   })
 
   it('Can modify git user name and email', { timeout: 300000 }, async () => {
@@ -26,7 +28,9 @@ describe('Git integration tests', async () => {
         username: 'test2',
         email: 'test2@test.com'
       }
-    ], true); // Set true here because git resource cannot be destroyed right now
+    ], {
+      skipUninstall: true,
+    }); // Set true here because git resource cannot be destroyed right now
   })
 
   afterEach(() => {

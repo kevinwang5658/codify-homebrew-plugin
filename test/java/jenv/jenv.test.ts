@@ -17,7 +17,9 @@ describe('Jenv resource integration tests', () => {
         global: '17',
         add: ['17']
       }
-    ], true);
+    ], {
+      skipUninstall: true,
+    });
   });
 
   it ('Can install additional java versions', { timeout: 500000 }, async () => {

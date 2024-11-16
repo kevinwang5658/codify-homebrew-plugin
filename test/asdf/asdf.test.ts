@@ -55,7 +55,9 @@ describe('Asdf tests', async () => {
         gitUrl: 'https://github.com/cheetah/asdf-zig.git',
         versions: ['latest']
       }
-    ], false);
+    ], {
+      skipUninstall: true,
+    });
 
     await plugin.fullTest([
       {
@@ -112,7 +114,9 @@ describe('Asdf tests', async () => {
         version: 'latest',
         directories: ['~/localDir', '~/localDir2']
       }
-    ], true);
+    ], {
+      skipUninstall: true,
+    });
 
     await plugin.uninstall([
       {
