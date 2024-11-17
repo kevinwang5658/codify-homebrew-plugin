@@ -3,6 +3,7 @@ import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
+import * as cp from 'child_process'
 import { PlanRequestDataSchema, PlanResponseDataSchema } from 'codify-schemas';
 
 describe('Asdf tests', async () => {
@@ -28,7 +29,16 @@ describe('Asdf tests', async () => {
         plugin: 'nodejs',
         version: 'latest',
       }
-    ]);
+    ], {
+      validateApply: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+      },
+      validateDestroy: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+      }
+    });
   })
 
   it('Support plugins resource', { timeout: 300000 }, async () => {
@@ -41,7 +51,16 @@ describe('Asdf tests', async () => {
         plugin: 'nodejs',
         versions: ['latest']
       }
-    ]);
+    ], {
+      validateApply: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+      },
+      validateDestroy: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+      }
+    });
   })
 
   it('Can install custom gitUrls', { timeout: 300000 }, async () => {
@@ -69,7 +88,18 @@ describe('Asdf tests', async () => {
         gitUrl: 'https://github.com/asdf-vm/asdf-nodejs.git',
         versions: ['latest']
       }
-    ]);
+    ], {
+      validateApply: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which zig;')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+      },
+      validateDestroy: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which zig;')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+      }
+    });
   })
 
   it('Can install a local version', { timeout: 300000 }, async () => {
