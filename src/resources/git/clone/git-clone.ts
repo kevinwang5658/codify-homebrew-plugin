@@ -86,12 +86,12 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     }
 
     if (config.parentDirectory) {
-      const parentDirectory = path.resolve(untildify(config.parentDirectory));
+      const parentDirectory = path.resolve(config.parentDirectory);
       await FileUtils.createDirIfNotExists(parentDirectory);
-      await codifySpawn(`git clone --progress ${config.repository}`, { cwd: parentDirectory });
+      await codifySpawn(`git clone ${config.repository}`, { cwd: parentDirectory });
     } else {
-      const directory = path.resolve(untildify(config.directory!));
-      await codifySpawn(`git clone --progress ${config.repository} ${directory}`);
+      const directory = path.resolve(config.directory!);
+      await codifySpawn(`git clone ${config.repository} ${directory}`);
     }
   }
 

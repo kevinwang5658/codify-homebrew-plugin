@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
+import { execSync } from 'child_process';
 
 describe('Homebrew main resource integration tests', () => {
   let plugin: PluginTester;
@@ -14,11 +15,16 @@ describe('Homebrew main resource integration tests', () => {
     await plugin.fullTest([{
       type: 'homebrew',
       formulae: [
-        'glib',
-        'gettext'
+        'apr',
+        'sshpass'
       ]
     }], {
       skipUninstall: true,
+      validateApply: () => {
+        expect(() => execSync('source ~/.zshrc; which apr')).to.not.throw;
+        expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
+        expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
+      }
     });
   });
 
@@ -26,12 +32,18 @@ describe('Homebrew main resource integration tests', () => {
     await plugin.fullTest([{
       type: 'homebrew',
       formulae: [
-        'glib',
-        'gettext',
+        'libxau',
+        'sshpass',
         'jenv',
       ],
     }], {
       skipUninstall: true,
+      validateApply: () => {
+        expect(() => execSync('source ~/.zshrc; which libxau')).to.not.throw;
+        expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
+        expect(() => execSync('source ~/.zshrc; which jenv')).to.not.throw;
+        expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
+      }
     })
   })
 
@@ -39,9 +51,17 @@ describe('Homebrew main resource integration tests', () => {
     await plugin.fullTest([{
       type: 'homebrew',
       formulae: [
-        'cirruslabs/cli/cirrus',
+        'cirruslabs/cli/softnet',
       ],
-    }])
+    }], {
+      validateApply: () => {
+        expect(() => execSync('source ~/.zshrc; which softnet')).to.not.throw;
+      },
+      validateDestroy: () => {
+        expect(() => execSync('source ~/.zshrc; which softnet')).to.throw;
+        expect(() => execSync('source ~/.zshrc; which brew')).to.throw;
+      }
+    })
   })
 
   afterEach(() => {

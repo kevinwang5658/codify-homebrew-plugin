@@ -1,9 +1,9 @@
 import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
+import * as os from 'node:os';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import Schema from './git-lfs-schema.json';
-import os from 'node:os';
 
 export interface GitLfsConfig extends ResourceConfig {
   // TODO: Add --system option for installing.
@@ -52,10 +52,15 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   }
 
   private async checkIfGitLfsIsInstalled(): Promise<boolean> {
-    const gitLfsStatus = await codifySpawn('git lfs env');
+    const gitLfsStatus = await codifySpawn('git lfs env', { cwd: os.homedir() });
 
     const lines = gitLfsStatus.data.split('\n');
-    const emptyLfsLines = lines.filter((l) => l.includes('git config'))
+
+    // When git lfs exists but git lfs install hasn't been called then git lfs env returns:
+    // git config filter.lfs.process = ""
+    // git config filter.lfs.smudge = ""
+    // git config filter.lfs.clean = ""
+    const emptyLfsLines = lines.filter((l) => l.includes('git config filter.lfs'))
       .map((l) => l.split('=')[1].trim())
       .includes('""');
 

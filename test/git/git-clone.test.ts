@@ -1,6 +1,9 @@
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import { execSync } from 'child_process';
 
 describe('Git clone integration tests', async () => {
   let plugin: PluginTester;
@@ -14,10 +17,21 @@ describe('Git clone integration tests', async () => {
       {
         type: 'git-clone',
         parentDirectory: '~/projects/test',
-        repository: 'https://github.com/kevinwang5658/codify-homebrew-plugin.git'
+        repository: 'https://github.com/kevinwang5658/untitled.git'
       }
     ], {
       skipUninstall: true,
+      validateApply: async () => {
+        const location = path.join(os.homedir(), 'projects', 'test', 'untitled');
+        const lstat = await fs.lstat(location);
+
+        expect(lstat.isDirectory()).to.be.true;
+        console.log(await fs.readdir(location));
+
+        const repoInfo = execSync('git config --get remote.origin.url', { cwd: location }).toString('utf-8').trim();
+        console.log(repoInfo);
+        expect(repoInfo).to.eq('https://github.com/kevinwang5658/untitled.git')
+      }
     });
   })
 
@@ -26,10 +40,19 @@ describe('Git clone integration tests', async () => {
       {
         type: 'git-clone',
         directory: '~/projects/nested/codify-plugin',
-        repository: 'https://github.com/kevinwang5658/codify-homebrew-plugin.git'
+        repository: 'https://github.com/kevinwang5658/untitled.git'
       }
     ], {
       skipUninstall: true,
+      validateApply: async () => {
+        const location = path.join(os.homedir(), 'projects', 'nested', 'codify-plugin');
+        const lstat = await fs.lstat(location);
+
+        expect(lstat.isDirectory()).to.be.true;
+
+        const repoInfo = execSync('git config --get remote.origin.url', { cwd: location }).toString('utf-8').trim();
+        expect(repoInfo).to.eq('https://github.com/kevinwang5658/untitled.git')
+      }
     });
   })
 
