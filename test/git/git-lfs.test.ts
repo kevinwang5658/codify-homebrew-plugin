@@ -21,6 +21,9 @@ describe('Git lfs integration tests', async () => {
 
         expect(envLines.at(-2)).to.contain('git config filter.lfs.smudge');
         expect(envLines.at(-1)).to.contain('git config filter.lfs.clean');
+      },
+      validateDestroy: () => {
+        expect(() => execSync('source ~/.zshrc; which git lfs')).to.throw;
       }
     });
   })

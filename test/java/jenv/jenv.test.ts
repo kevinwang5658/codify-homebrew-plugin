@@ -21,40 +21,33 @@ describe('Jenv resource integration tests', () => {
         add: ['17']
       }
     ], {
-      skipUninstall: true,
       validateApply: async () => {
         expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.not.throw;
         expect(() => execSync('source ~/.zshrc; jenv doctor', { shell: 'zsh' })).to.not.throw;
-
         expect(execSync('source ~/.zshrc; java --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('17')
         expect(execSync('source ~/.zshrc; jenv version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('17')
-      }
-    });
-  });
+      },
+      testModify: {
+        modifiedConfigs: [{
+          type: 'jenv',
+          global: '21',
+          add: ['17', '21']
+        }],
+        validateModify: () => {
+          expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.not.throw;
+          expect(execSync('source ~/.zshrc; java --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('21')
 
-  it ('Can install additional java versions', { timeout: 500000 }, async () => {
-    await plugin.fullTest([
-      { type: 'homebrew' },
-      {
-        type: 'jenv',
-        global: '21',
-        add: ['17', '21']
-      }
-    ], {
-      validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.not.throw;
-        expect(execSync('source ~/.zshrc; java --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('21')
-
-        const jenvVersions = execSync('source ~/.zshrc; jenv versions', { shell: 'zsh' }).toString('utf-8').trim()
-        expect(jenvVersions).to.include('21')
-        expect(jenvVersions).to.include('17')
+          const jenvVersions = execSync('source ~/.zshrc; jenv versions', { shell: 'zsh' }).toString('utf-8').trim()
+          expect(jenvVersions).to.include('21')
+          expect(jenvVersions).to.include('17')
+        }
       },
       validateDestroy: () => {
         expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.throw;
         expect(() => execSync('source ~/.zshrc; which java', { shell: 'zsh' })).to.throw;
       }
-    })
-  })
+    });
+  });
 
   afterEach(() => {
     plugin.kill();

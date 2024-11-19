@@ -10,7 +10,7 @@ describe('Homebrew main resource integration tests', () => {
     plugin = new PluginTester(path.resolve('./src/index.ts'));
   })
 
-  it('Creates brew', { timeout: 300000 }, async () => {
+  it('Creates brew and can install formulas', { timeout: 300000 }, async () => {
     // Plans correctly and detects that brew is not installed
     await plugin.fullTest([{
       type: 'homebrew',
@@ -19,50 +19,38 @@ describe('Homebrew main resource integration tests', () => {
         'sshpass'
       ]
     }], {
-      skipUninstall: true,
       validateApply: () => {
         expect(() => execSync('source ~/.zshrc; which apr')).to.not.throw;
         expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
         expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
-      }
-    });
-  });
-
-  it ('Can install additional casks and formulas', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
-      type: 'homebrew',
-      formulae: [
-        'libxau',
-        'sshpass',
-        'jenv',
-      ],
-    }], {
-      skipUninstall: true,
-      validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which libxau')).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; which jenv')).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
-      }
-    })
-  })
-
-  it ('Can handle fully qualified formula names (tap + formula)', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
-      type: 'homebrew',
-      formulae: [
-        'cirruslabs/cli/softnet',
-      ],
-    }], {
-      validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which softnet')).to.not.throw;
+      },
+      testModify: {
+        modifiedConfigs: [{
+          type: 'homebrew',
+          formulae: [
+            'libxau',
+            'sshpass',
+            'jenv',
+            'cirruslabs/cli/softnet', // Test that it can handle a fully qualified name (tap + name)
+          ],
+        }],
+        validateModify: () => {
+          expect(() => execSync('source ~/.zshrc; which libxau')).to.not.throw;
+          expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
+          expect(() => execSync('source ~/.zshrc; which jenv')).to.not.throw;
+          expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
+          expect(() => execSync('source ~/.zshrc; which softnet')).to.not.throw;
+        }
       },
       validateDestroy: () => {
+        expect(() => execSync('source ~/.zshrc; which libxau')).to.throw;
+        expect(() => execSync('source ~/.zshrc; which sshpass')).to.throw;
+        expect(() => execSync('source ~/.zshrc; which jenv')).to.throw;
         expect(() => execSync('source ~/.zshrc; which softnet')).to.throw;
         expect(() => execSync('source ~/.zshrc; which brew')).to.throw;
       }
-    })
-  })
+    });
+  });
 
   afterEach(() => {
     plugin.kill();

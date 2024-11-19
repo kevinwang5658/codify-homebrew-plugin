@@ -20,7 +20,7 @@ describe('Git clone integration tests', async () => {
         repository: 'https://github.com/kevinwang5658/untitled.git'
       }
     ], {
-      skipUninstall: true,
+      skipUninstall: true, // Can't directly delete repos via codify currently.
       validateApply: async () => {
         const location = path.join(os.homedir(), 'projects', 'test', 'untitled');
         const lstat = await fs.lstat(location);

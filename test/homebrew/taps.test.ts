@@ -16,36 +16,33 @@ describe('Homebrew taps tests', () => {
       type: 'homebrew',
       taps: ['cirruslabs/cli'],
     }], {
-      skipUninstall: true,
       validateApply: () => {
         expect(execSync('source ~/.zshrc; brew tap')
           .toString('utf-8')
           .trim()
           .split(/\n/)
         ).to.includes('cirruslabs/cli')
-      }
-    });
-  });
+      },
+      testModify: {
+        modifiedConfigs: [{
+          type: 'homebrew',
+          taps: ['hashicorp/tap'],
+        }],
+        validateModify: () => {
+          const taps = execSync('source ~/.zshrc; brew tap')
+            .toString('utf-8')
+            .trim()
+            .split(/\n/)
 
-  it ('Can install additional taps', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
-      type: 'homebrew',
-      taps: ['hashicorp/tap'],
-    }], {
-      validateApply: () => {
-        const taps = execSync('source ~/.zshrc; brew tap')
-          .toString('utf-8')
-          .trim()
-          .split(/\n/)
-
-        expect(taps).to.includes('cirruslabs/cli')
-        expect(taps).to.includes('hashicorp/tap')
+          expect(taps).to.includes('cirruslabs/cli')
+          expect(taps).to.includes('hashicorp/tap')
+        },
       },
       validateDestroy: () => {
         expect(() => execSync('source ~/.zshrc; which brew')).to.throw;
       }
-    })
-  })
+    });
+  });
 
   afterEach(() => {
     plugin.kill();
