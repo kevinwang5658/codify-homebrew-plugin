@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import { ParameterOperation, ResourceOperation } from 'codify-schemas';
+import { execSync } from 'child_process';
 
 describe('Path resource integration tests', async () => {
   let plugin: PluginTester;
@@ -20,7 +21,12 @@ describe('Path resource integration tests', async () => {
         path: tempDir1,
       }
     ], {
-      skipUninstall: true,
+      validateApply: () => {
+        expect(execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()).to.include(tempDir1);
+      },
+      validateDestroy: () => {
+        expect(execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()).to.not.include(tempDir1);
+      }
     });
   })
 
@@ -34,7 +40,16 @@ describe('Path resource integration tests', async () => {
         paths: [tempDir1, tempDir2],
       }
     ], {
-      skipUninstall: true,
+      validateApply: () => {
+        const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+        expect(path).to.include(tempDir1);
+        expect(path).to.include(tempDir2);
+      },
+      validateDestroy: () => {
+        const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+        expect(path).to.not.include(tempDir1);
+        expect(path).to.not.include(tempDir2);
+      }
     });
   })
 
@@ -48,12 +63,25 @@ describe('Path resource integration tests', async () => {
         paths: [tempDir1, tempDir2],
         prepend: true,
       }
-    ], {});
+    ], {
+      validateApply: () => {
+        const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+        expect(path).to.include(tempDir1);
+        expect(path).to.include(tempDir2);
+      },
+      validateDestroy: () => {
+        const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+        expect(path).to.not.include(tempDir1);
+        expect(path).to.not.include(tempDir2);
+      }
+    });
   })
 
   it('Can modify an existing path resource to add additional paths to zsh rc', { timeout: 300000 }, async () => {
     const tempDir1 = await fs.mkdtemp(os.tmpdir() + '/');
     const tempDir2 = await fs.mkdtemp(os.tmpdir() + '/');
+    const tempDir3 = await fs.mkdtemp(os.tmpdir() + '/');
+    const tempDir4 = await fs.mkdtemp(os.tmpdir() + '/');
 
     await plugin.fullTest([
       {
@@ -62,29 +90,42 @@ describe('Path resource integration tests', async () => {
         prepend: true,
       }
     ], {
-      skipUninstall: true,
-    });
+      validateApply: () => {
+        const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+        expect(path).to.include(tempDir1);
+        expect(path).to.include(tempDir2);
+      },
+      testModify: {
+        modifiedConfigs: [{
+          type: 'path',
+          paths: [tempDir1, tempDir2, tempDir3, tempDir4],
+          prepend: true,
+        }],
+        validateModify: (plans) => {
+          expect(plans[0]).toMatchObject({
+            operation: ResourceOperation.MODIFY,
+            parameters: expect.arrayContaining([{
+              name: 'paths',
+              previousValue: expect.arrayContaining([tempDir1, tempDir2]),
+              newValue: expect.arrayContaining([tempDir1, tempDir2, tempDir2, tempDir3]),
+              operation: ParameterOperation.MODIFY,
+            }])
+          })
 
-    const tempDir3 = await fs.mkdtemp(os.tmpdir() + '/');
-    const tempDir4 = await fs.mkdtemp(os.tmpdir() + '/');
-
-    await plugin.fullTest([
-      {
-        type: 'path',
-        paths: [tempDir1, tempDir2, tempDir3, tempDir4],
-        prepend: true,
-      }
-    ], {
-      validatePlan: (plans) => {
-        expect(plans[0]).toMatchObject({
-          operation: ResourceOperation.MODIFY,
-          parameters: expect.arrayContaining([{
-            name: 'paths',
-            previousValue: expect.arrayContaining([tempDir1, tempDir2]),
-            newValue: expect.arrayContaining([tempDir1, tempDir2, tempDir2, tempDir3]),
-            operation: ParameterOperation.MODIFY,
-          }])
-        })
+          const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+          expect(path).to.include(tempDir1);
+          expect(path).to.include(tempDir2);
+          expect(path).to.include(tempDir3);
+          expect(path).to.include(tempDir4);
+        }
+      },
+      validateDestroy: () => {
+        const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
+        console.log(path);
+        expect(path).to.not.include(tempDir1);
+        expect(path).to.not.include(tempDir2);
+        expect(path).to.not.include(tempDir3);
+        expect(path).to.not.include(tempDir4);
       }
     });
   })
