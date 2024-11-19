@@ -47,7 +47,6 @@ describe('Pyenv resource integration tests', () => {
       validateDestroy: () => {
         expect(() => execSync('source ~/.zshrc; which pyenv', { shell: 'zsh' })).to.throw();
         expect(() => execSync('source ~/.zshrc; which python', { shell: 'zsh' })).to.throw();
-
       }
     })
   })

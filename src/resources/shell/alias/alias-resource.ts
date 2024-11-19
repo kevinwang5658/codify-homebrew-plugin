@@ -20,7 +20,7 @@ export class AliasResource extends Resource<AliasConfig> {
       id: 'alias',
       schema: Schema,
       parameterSettings: {
-        value: { canModify: true, inputTransformation: (input) => Utils.shellEscape(input) }
+        value: { canModify: true }
       },
     }
   }
@@ -66,7 +66,11 @@ export class AliasResource extends Resource<AliasConfig> {
 
     const { alias, value } = plan.desiredConfig;
     const aliasString = this.aliasString(alias, value);
-    await fs.appendFile(zshrcPath, '\n\n' + aliasString, { encoding: 'utf8' });
+
+    const file = await fs.readFile(zshrcPath, 'utf8');
+    const fileWithAlias = FileUtils.appendToFileWithSpacing(file, aliasString);
+
+    await fs.writeFile(zshrcPath, fileWithAlias, { encoding: 'utf8' });
   }
 
   async modify(pc: ParameterChange<AliasConfig>, plan: ModifyPlan<AliasConfig>): Promise<void> {
@@ -83,19 +87,18 @@ export class AliasResource extends Resource<AliasConfig> {
     const aliasString = this.aliasString(alias, value);
     const aliasStringShort = this.aliasStringShort(alias, value);
 
-    const lines = aliasInfo.contents
-      .split(/\n/)
+    const lines = aliasInfo.contents.trimEnd().split(/\n/)
 
     const aliasLineNum = lines
       .findIndex((l) => l.trim() === aliasStringShort || l.trim() === aliasString);
-    if (!aliasLineNum) {
+    if (aliasLineNum === -1) {
       throw new Error(`Unable to modify Alias. Cannot find line ${aliasString} in ${aliasInfo.path}. Please delete the alias manually and re-run Codify.`);
     }
     
     const newAlias = this.aliasString(plan.desiredConfig.alias, plan.desiredConfig.value);
     lines.splice(aliasLineNum, 1, newAlias);
     
-    await fs.writeFile(lines.join('\n'), 'utf8');
+    await fs.writeFile(aliasInfo.path, lines.join('\n'), 'utf8');
   }
 
   async destroy(plan: DestroyPlan<AliasConfig>): Promise<void> {
