@@ -91,6 +91,7 @@ await codifySpawn('npm run rollup'); // re-run rollup without building for es
 console.log('JSON Schemas for all resources')
 console.log(JSON.stringify(mergedSchemas, null, 2));
 
+// eslint-disable-next-line n/no-process-exit,unicorn/no-process-exit
 process.exit(0)
 
 

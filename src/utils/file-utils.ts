@@ -132,6 +132,7 @@ ${lines.join('\n')}`)
     }
 
     await fs.writeFile(filePath, lines.join('\n'));
+    console.log(`Removed line: ${search} from ${filePath}`)
   }
 
   static async removeLineFromZshrc(search: RegExp | string): Promise<void> {

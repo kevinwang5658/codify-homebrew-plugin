@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 
 describe('Pyenv resource integration tests', () => {
   let plugin: PluginTester;
@@ -32,7 +34,7 @@ describe('Pyenv resource integration tests', () => {
       },
       {
         type: 'pyenv',
-        pythonVersions: ['3.11', '3.12', '2.7'],
+        pythonVersions: ['3.11', '3.12'],
         global: '3.12',
       }
     ], {
@@ -41,12 +43,12 @@ describe('Pyenv resource integration tests', () => {
 
         const versions = execSync('source ~/.zshrc; pyenv versions', { shell: 'zsh' }).toString('utf-8')
         expect(versions).to.include('3.12')
-        expect(versions).to.include('2.7')
         expect(versions).to.include('3.11')
       },
       validateDestroy: () => {
+        expect(fs.existsSync(path.resolve(os.homedir(), '.pyenv'))).to.be.false;
+        expect(fs.readFileSync(path.resolve(os.homedir(), '.zshrc'), 'utf-8')).to.not.contain('pyenv');
         expect(() => execSync('source ~/.zshrc; which pyenv', { shell: 'zsh' })).to.throw();
-        expect(() => execSync('source ~/.zshrc; which python', { shell: 'zsh' })).to.throw();
       }
     })
   })

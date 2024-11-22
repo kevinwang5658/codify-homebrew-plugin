@@ -1,7 +1,8 @@
-import { spawn, SpawnOptions } from 'node:child_process';
-import { IpcMessage, MessageCmd, SudoRequestResponseData, SudoRequestResponseDataSchema } from 'codify-schemas';
 import { Ajv } from 'ajv';
 import { SudoError } from 'codify-plugin-lib';
+import { IpcMessage, MessageCmd, SudoRequestResponseData, SudoRequestResponseDataSchema } from 'codify-schemas';
+import { SpawnOptions, spawn } from 'node:child_process';
+import stripAnsi from 'strip-ansi';
 
 const ajv = new Ajv({
   strict: true,
@@ -23,7 +24,7 @@ type CodifySpawnOptions = {
   throws?: boolean,
   requiresRoot?: boolean
   requestsTTY?: boolean,
-} & Omit<SpawnOptions, 'stdio' | 'shell' | 'detached'>
+} & Omit<SpawnOptions, 'detached' | 'shell' | 'stdio'>
 
 /**
 *
@@ -48,18 +49,15 @@ export async function codifySpawn(
     // TODO: Need to benchmark the effects of using sh vs zsh for shell.
     //  Seems like zsh shells run slower
 
-    let result: SpawnResult;
-    if (!opts?.requiresRoot) {
-      result = await internalSpawn(
-        cmd,
-        opts ?? {},
-      );
-    } else {
-      result = await externalSpawnWithSudo(
+    const result = await (opts?.requiresRoot
+      ? externalSpawnWithSudo(
         cmd,
         opts,
       )
-    }
+      : internalSpawn(
+        cmd,
+        opts ?? {},
+      ));
     
     if (result.status !== SpawnStatus.SUCCESS) {
       throw new Error(result.data);
@@ -90,7 +88,7 @@ export async function codifySpawn(
 
     return {
       status: SpawnStatus.ERROR,
-      data: error + '',
+      data: String(error),
     }
   }
 }
@@ -102,6 +100,10 @@ async function internalSpawn(
   return new Promise((resolve, reject) => {
     const output: string[] = [];
 
+    // If TERM_PROGRAM=Apple_Terminal is set then ANSI escape characters may be included
+    // in the response.
+    const env = { ...process.env, ...opts.env, 'TERM_PROGRAM': 'codify' }
+
     // Source start up shells to emulate a users environment vs. a non-interactive non-login shell script
     // Ignore all stdin
     // If tty is requested then we'll need to sleep 1 to avoid race conditions. This is because if the terminal updates async after the tty message is
@@ -110,6 +112,7 @@ async function internalSpawn(
       ...opts,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: 'zsh',
+      env
     });
     
     const { stdout, stderr, stdin } = _process
@@ -137,7 +140,7 @@ async function internalSpawn(
     _process.on('close', (code) => {
       resolve({
         status: code === 0 ? SpawnStatus.SUCCESS : SpawnStatus.ERROR,
-        data: output.join('\n'),
+        data: stripAnsi(output.join('\n')),
       })
     })
   })
@@ -159,6 +162,7 @@ async function externalSpawnWithSudo(
         resolve(data.data as unknown as SudoRequestResponseData);
       }
     }
+
     process.on('message', listener);
 
     process.send!({
