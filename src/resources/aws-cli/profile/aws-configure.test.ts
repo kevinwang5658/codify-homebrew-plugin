@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { AwsProfileResource } from './aws-profile.js';
+import path from 'node:path';
+import os from 'node:os';
+import fs from 'node:fs/promises';
 
 describe('AWS profile validation tests', () => {
   it('Validates secret key id and secret key', async () => {
@@ -55,4 +58,12 @@ describe('AWS profile validation tests', () => {
       isValid: false,
     })
   });
+
+  it('Can separate a block in the credentials file', async () => {
+    const credentialsPath = path.resolve(os.homedir(), '.aws', 'credentials');
+    const credentialsFile = await fs.readFile(credentialsPath, 'utf8');
+    const blocks = credentialsFile.split(/(?=\[.*\])/);
+
+    console.log(JSON.stringify(blocks, null, 2));
+  })
 })

@@ -3,12 +3,10 @@ import * as fs from 'node:fs/promises';
 import os, { homedir } from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from './codify-spawn.js';
-import { Utils } from './index.js';
-import { untildify } from './untildify.js';
+const SPACE_REGEX = /^\s*$/
 
-export const FileUtils = {
-  async addToStartupFile(line: string): Promise<void> {
+export class FileUtils {
+  static async addToStartupFile(line: string): Promise<void> {
     const lineToInsert = addLeadingSpacer(
       addTrailingSpacer(line)
     );
@@ -26,29 +24,30 @@ export const FileUtils = {
         ? line
         : line + '\n';
     }
-  },
+  }
 
-  async addAllToStartupFile(lines: string[]): Promise<void> {
+  static async addAllToStartupFile(lines: string[]): Promise<void> {
     const formattedLines = '\n' + lines.join('\n') + '\n';
 
     console.log(`Adding to .zshrc:
 ${lines.join('\n')}`)
 
     await fs.appendFile(path.join(FileUtils.homeDir(), '.zshrc'), formattedLines)
-  },
+  }
 
-  async addPathToZshrc(path: string, prepend: boolean): Promise<void> {
-    const escapedPath = Utils.shellEscape(untildify(path))
+  static async addPathToZshrc(value: string, prepend: boolean): Promise<void> {
+    const zshFile = path.join(os.homedir(), '.zshrc');
+    console.log(`Saving path: ${value} to $HOME/.zshrc`);
 
     if (prepend) {
-      await codifySpawn(`echo "path=(${escapedPath} \\$path)\\n" >> $HOME/.zshrc`)
+      await fs.appendFile(zshFile, `\nexport PATH=$PATH:${value};`, { encoding: 'utf8' });
       return;
     }
 
-    await codifySpawn(`echo "path+=('${escapedPath}')\\n" >> $HOME/.zshrc`)
-  },
+    await fs.appendFile(zshFile, `\nexport PATH=${value}:$PATH;`, { encoding: 'utf8' });
+  }
 
-  async dirExists(path: string): Promise<boolean> {
+  static async dirExists(path: string): Promise<boolean> {
     let stat;
     try {
       stat = await fs.stat(path);
@@ -56,9 +55,9 @@ ${lines.join('\n')}`)
     } catch {
       return false;
     }
-  },
+  }
 
-  async fileExists(path: string): Promise<boolean> {
+  static async fileExists(path: string): Promise<boolean> {
     let stat;
     try {
       stat = await fs.stat(path);
@@ -66,9 +65,18 @@ ${lines.join('\n')}`)
     } catch {
       return false;
     }
-  },
+  }
 
-  async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
+  static async exists(path: string): Promise<boolean> {
+    try {
+      await fs.stat(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
     let stat;
     try {
       stat = await fs.stat(path);
@@ -81,19 +89,19 @@ ${lines.join('\n')}`)
     }
  
     throw new Error(`Directory ${path} already exists and is a file`);
-  },
+  }
 
-  async createDirIfNotExists(path: string): Promise<void> {
+  static async createDirIfNotExists(path: string): Promise<void> {
     if (!fsSync.existsSync(path)){
       await fs.mkdir(path, { recursive: true });
     }
-  },
+  }
 
-  homeDir(): string {
+  static homeDir(): string {
     return os.homedir()
-  },
+  }
 
-  async removeLineFromFile(filePath: string, search: RegExp | string): Promise<void> {
+  static async removeLineFromFile(filePath: string, search: RegExp | string): Promise<void> {
     const file = await fs.readFile(filePath, 'utf8')
     const lines = file.split('\n');
 
@@ -133,9 +141,52 @@ ${lines.join('\n')}`)
     }
 
     await fs.writeFile(filePath, lines.join('\n'));
-  },
+    console.log(`Removed line: ${search} from ${filePath}`)
+  }
 
-  async removeLineFromZshrc(search: RegExp | string): Promise<void> {
+  static async removeLineFromZshrc(search: RegExp | string): Promise<void> {
     return FileUtils.removeLineFromFile(path.join(homedir(), '.zshrc'), search);
-  },
-};
+  }
+
+  // Append the string to the end of a file ensuring at least 1 lines of space between.
+  // Ex result:
+  // something something;
+  //
+  // newline;
+  static appendToFileWithSpacing(file: string, textToInsert: string): string {
+    const lines = file.trimEnd().split(/\n/);
+    if (lines.length === 0) {
+      return textToInsert;
+    }
+
+    const endingNewLines = FileUtils.calculateEndingNewLines(lines);
+    const numNewLines = endingNewLines === -1
+      ? 0
+      : Math.max(0, 2 - endingNewLines);
+    return lines.join('\n') + '\n'.repeat(numNewLines) + textToInsert
+  }
+
+  // This is overly complicated but it can be used to insert into any
+  // position in the future
+  private static calculateEndingNewLines(lines: string[]): number {
+    let counter = 0;
+    while(true) {
+      const line = lines.at(-counter - 1);
+
+      if (!line) {
+        return -1
+      }
+
+      if (!SPACE_REGEX.test(line)) {
+        return counter;
+      }
+
+      counter++;
+
+      // Short circuit here because we don't need to check over 2;
+      if (counter > 2) {
+        return counter;
+      }
+    }
+  }
+}

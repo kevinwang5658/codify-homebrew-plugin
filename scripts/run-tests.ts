@@ -45,7 +45,7 @@ async function launchSingleTest(test: string, debug: boolean) {
 async function run(cmd: string, debug: boolean, simple = true) {
   const messageBuffer: string[] = [];
 
-  cmd += (debug ? ' -e DEBUG="--inspect=9229"' : '');
+  cmd += (debug ? ' -e DEBUG="--inspect-brk=9229"' : '');
   const cp = spawn(
     'source ~/.zshrc; ' + cmd,
     [],

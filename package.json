@@ -22,12 +22,13 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "semver": "^7.6.0",
-    "codify-plugin-lib": "1.0.106",
+    "codify-plugin-lib": "1.0.107",
     "codify-schemas": "1.0.52",
     "chalk": "^5.3.0",
     "debug": "^4.3.4",
     "plist": "^3.1.0",
-    "lodash.isequal": "^4.5.0"
+    "lodash.isequal": "^4.5.0",
+    "strip-ansi": "^7.1.0"
   },
   "devDependencies": {
     "rollup": "^4.12.0",
@@ -46,7 +47,7 @@
     "@types/debug": "4.1.12",
     "@types/plist": "^3.0.5",
     "@types/lodash.isequal": "^4.5.8",
-    "codify-plugin-test": "0.0.12",
+    "codify-plugin-test": "0.0.26",
     "commander": "^12.1.0",
     "eslint": "^8.51.0",
     "eslint-config-oclif": "^5",
@@ -57,7 +58,6 @@
     "shx": "^0.3.3",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
-    "tsc-watch": "^6.0.4",
     "typescript": "^5",
     "eslint-config-prettier": "^9.0.0",
     "tsx": "^4.7.2",

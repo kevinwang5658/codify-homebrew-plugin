@@ -1,8 +1,9 @@
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import cp from 'child_process';
 
 describe('Asdf install tests', async () => {
   let plugin: PluginTester;
@@ -27,7 +28,19 @@ describe('Asdf install tests', async () => {
         type: 'asdf-install',
         directory: '~/toolDir',
       },
-    ]);
+    ], {
+      validateApply: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which golang')).to.not.throw;
+
+      },
+      validateDestroy: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which golang')).to.throw;
+      }
+    });
   })
 
   it('Can install a plugin and then a version', { timeout: 300000 }, async () => {
@@ -41,7 +54,16 @@ describe('Asdf install tests', async () => {
         plugin: 'nodejs',
         versions: ['20.18.0']
       },
-    ]);
+    ], {
+      validateApply: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+      },
+      validateDestroy: async () => {
+        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
+        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+      }
+    });
   })
 
   afterEach(() => {

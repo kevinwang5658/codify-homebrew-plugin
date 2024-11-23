@@ -1,5 +1,6 @@
 import { Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
+import * as os from 'node:os';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
@@ -57,7 +58,7 @@ export class NvmResource extends Resource<NvmConfig> {
     // eslint-disable-next-line no-template-curly-in-string
     const { data: nvmDir } = await codifySpawn('echo "${NVM_DIR:-~/.nvm}"');
     await codifySpawn('nvm unload');
-    await codifySpawn(`rm -rf ${nvmDir.trim()}`);
+    await codifySpawn(`rm -rf ${nvmDir.trim()}`, { cwd: os.homedir() });
 
     await FileUtils.removeLineFromZshrc('export NVM_DIR="$HOME/.nvm"')
     await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"  # This loads nvm')

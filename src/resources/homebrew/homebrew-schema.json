@@ -24,6 +24,10 @@
     },
     "directory": {
       "type": "string"
+    },
+    "skipAlreadyInstalledCasks": {
+      "type": "boolean",
+      "description": "Skips installing an casks which has already been installed externally. This prevents homebrew from conflicting with the existing install. Defaults to true."
     }
   },
   "additionalProperties": false

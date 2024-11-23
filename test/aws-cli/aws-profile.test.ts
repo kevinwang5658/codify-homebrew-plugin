@@ -1,6 +1,8 @@
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs/promises';
 
 describe('Aws profile tests', async () => {
   let plugin: PluginTester;
@@ -20,24 +22,116 @@ describe('Aws profile tests', async () => {
         region: 'us-west-2',
         output: 'json'
       }
-    ], true);
+    ], {
+      skipUninstall: true,
+      validateApply: async () => {
+        validateProfile({
+          name: 'default',
+          region: 'us-west-2',
+          output: 'json',
+          accessKeyId: 'keyId',
+          secretAccessKey: 'secretAccessKey'
+        })
+      }
+    });
   })
 
-  it('Can add custom profiles', { timeout: 300000 }, async () => {
+  it('Always defaults output to json + can modify a previous profile', { timeout: 300000 }, async () => {
     await plugin.fullTest([
-      { type: 'homebrew' },
-      { type: 'aws-cli' },
       {
         type: 'aws-profile',
-        profile: 'codify',
+        profile: 'default',
+        output: 'text',
+        awsAccessKeyId: 'keyId2',
+        awsSecretAccessKey: 'secretAccessKey2',
+        region: 'us-east-2',
+      },
+      {
+        type: 'aws-profile',
+        profile: 'codify2',
+        region: 'us-east-1',
         awsAccessKeyId: 'keyId',
         awsSecretAccessKey: 'secretAccessKey',
-        region: 'us-west-2',
       }
-    ]);
+    ], {
+      skipUninstall: true,
+      validateApply: async () => {
+        validateProfile({
+          name: 'default',
+          region: 'us-east-2',
+          output: 'text',
+          accessKeyId: 'keyId2',
+          secretAccessKey: 'secretAccessKey2'
+        })
+        validateProfile({
+          name: 'codify2',
+          region: 'us-east-1',
+          output: 'json',
+          accessKeyId: 'keyId',
+          secretAccessKey: 'secretAccessKey'
+        })
+      }
+    });
+  })
+
+  it('Supports csv files + can be destroyed', { timeout: 300000 }, async () => {
+    const csvFilePath = path.resolve('csv_credentials');
+    await fs.writeFile(
+      csvFilePath,
+`Access key ID,Secret access key
+AKIA,zhKpjk
+`, 'utf-8');
+
+    await plugin.fullTest([
+      {
+        type: 'aws-profile',
+        profile: 'codify3',
+        region: 'us-east-1',
+        csvCredentials: csvFilePath,
+      }
+    ], {
+      validateApply: async () => {
+        validateProfile({
+          name: 'codify3',
+          region: 'us-east-1',
+          output: 'json',
+          accessKeyId: 'AKIA',
+          secretAccessKey: 'zhKpjk'
+        })
+      },
+      validateDestroy: async () => {
+        const profiles = execSync('source ~/.zshrc; aws configure list-profiles')
+        const profileList = profiles.toString('utf-8').trim().split(/\n/);
+        expect(profileList).to.not.include('codify3');
+      }
+    });
   })
 
   afterEach(() => {
     plugin.kill();
   })
+
+  function validateProfile(profile: {
+    name: string;
+    region: string;
+    output: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+  }) {
+    const profiles = execSync('source ~/.zshrc; aws configure list-profiles')
+    expect(profiles.toString('utf-8')).to.include(profile.name);
+
+    const region = execSync(`source ~/.zshrc; aws configure get region --profile ${profile.name}`);
+    expect(region.toString('utf-8').trim()).to.equal(profile.region);
+
+    const output = execSync(`source ~/.zshrc; aws configure get output --profile ${profile.name}`);
+    expect(output.toString('utf-8').trim()).to.equal(profile.output);
+
+    const accessKeyId = execSync(`source ~/.zshrc; aws configure get aws_access_key_id --profile ${profile.name}`);
+    expect(accessKeyId.toString('utf-8').trim()).to.equal(profile.accessKeyId);
+
+    const secretAccessKey = execSync(`source ~/.zshrc; aws configure get aws_secret_access_key --profile ${profile.name}`);
+    expect(secretAccessKey.toString('utf-8').trim()).to.equal(profile.secretAccessKey);
+  }
+
 })

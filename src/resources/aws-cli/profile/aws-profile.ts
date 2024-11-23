@@ -29,8 +29,10 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       parameterSettings: {
         awsAccessKeyId: { canModify: true },
         awsSecretAccessKey: { canModify: true },
-        output: { default: 'json' },
-        profile: { default: 'default' },
+        output: { default: 'json', canModify: true },
+        profile: { default: 'default', canModify: true },
+        metadataServiceNumAttempts: { canModify: true },
+        metadataServiceTimeout: { canModify: true },
       },
       inputTransformation: CSVCredentialsParameter.transform,
       import: {
@@ -80,11 +82,17 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
     }
 
     if (parameters.metadataServiceTimeout) {
-      result.region = await this.getAwsConfigureValueOrNull('metadata_service_timeout', profile);
+      const metadataServiceTimeout = await this.getAwsConfigureValueOrNull('metadata_service_timeout', profile);
+      if (metadataServiceTimeout) {
+        result.metadataServiceTimeout = Number.parseInt(metadataServiceTimeout, 10);
+      }
     }
 
     if (parameters.metadataServiceNumAttempts) {
-      result.output = await this.getAwsConfigureValueOrNull('metadata_service_num_attempts', profile);
+      const metadataServiceNumAttempts = await this.getAwsConfigureValueOrNull('metadata_service_num_attempts', profile);
+      if (metadataServiceNumAttempts) {
+        result.metadataServiceNumAttempts = Number.parseInt(metadataServiceNumAttempts, 10);
+      }
     }
 
     return result;
@@ -106,14 +114,8 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
 
     await this.setAwsConfigureValue('aws_access_key_id', awsAccessKeyId, profile);
     await this.setAwsConfigureValue('aws_secret_access_key', awsSecretAccessKey, profile);
-
-    if (region) {
-      await this.setAwsConfigureValue('region', region, profile);
-    }
-
-    if (output) {
-      await this.setAwsConfigureValue('output', output, profile);
-    }
+    await this.setAwsConfigureValue('region', region, profile);
+    await this.setAwsConfigureValue('output', output!, profile);
 
     if (metadataServiceTimeout) {
       await this.setAwsConfigureValue('metadata_service_timeout', metadataServiceTimeout, profile);
@@ -128,52 +130,33 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
     pc: ParameterChange<AwsProfileConfig>,
     plan: ModifyPlan<AwsProfileConfig>
   ): Promise<void> {
-    if (pc.name === 'awsAccessKeyId') {
-      await this.setAwsConfigureValue('aws_access_key_id', pc.newValue, plan.desiredConfig.profile);
-    }
-
-    if (pc.name === 'awsSecretAccessKey') {
-      await this.setAwsConfigureValue('aws_secret_access_key', pc.newValue, plan.desiredConfig.profile);
-    }
+    await this.setAwsConfigureValue(pc.name, pc.newValue, plan.desiredConfig.profile);
   }
 
   override async destroy(plan: DestroyPlan<AwsProfileConfig>): Promise<void> {
-    const regex = /^\[.*]$/g;
     const { profile } = plan.currentConfig;
 
-    const credentialsPath = path.resolve(os.homedir(), '.aws/credentials');
+    const credentialsPath = path.resolve(os.homedir(), '.aws', 'credentials');
     const credentialsFile = await fs.readFile(credentialsPath, 'utf8');
-    const lines = credentialsFile.split('\n');
 
-    const index = lines.indexOf(`[${profile}]`)
-    if (index === -1) {
-      console.log(`Unable to find profile ${profile} in .aws/credentials. Skipping...`)
-      return;
+    // Split using header [PROFILE_NAME]. Using a negative lookup so header remains after split
+    const credentialsBlocks = credentialsFile.split(/(?=\[.*\])/)
+    const credentialsPrefilterLength = credentialsBlocks.length;
+
+    const filteredCredentialsBlocks = credentialsBlocks.filter((b) => b.includes(`[${profile}])`))
+    if (filteredCredentialsBlocks.length === credentialsPrefilterLength) {
+      throw new Error(`Unable to find profile ${profile} in .aws/credentials. Please remove the profile and re-run Codify`);
     }
 
-    findAndDelete(lines, index + 1, 'aws_access_key_id');
-    findAndDelete(lines, index + 1, 'aws_secret_access_key');
+    await fs.writeFile(credentialsPath, filteredCredentialsBlocks.join('\n'), 'utf8');
 
-    await fs.writeFile(credentialsFile, lines.join('\n'));
+    const configPath = path.resolve(os.homedir(), '.aws', 'config');
+    const configFile = await fs.readFile(configPath, 'utf8');
 
-    function findAndDelete(file: string[], startIdx: number, key: string) {
-      let searchIdx = startIdx;
+    const configBlocks = configFile.split(/(?=\[.*\])/) // Split using header [PROFILE_NAME]. Using a negative lookup so header remains after split
+    const filteredConfigBlocks = configBlocks.filter((b) => b.includes(`[profile ${profile}])`) || b.includes(`[${profile}]`))
 
-      while(searchIdx < file.length) {
-        const line = file[searchIdx];
-        if (line.includes(key)) {
-          file.splice(searchIdx, 1);
-          return;
-        }
-
-        if (regex.test(line)) {
-          return;
-        }
-
-        searchIdx++;
-      }
-    }
-
+    await fs.writeFile(configPath, filteredConfigBlocks.join('\n'), 'utf8');
   }
 
   private async getAwsConfigureValueOrNull(key: string, profile: string): Promise<string | undefined> {

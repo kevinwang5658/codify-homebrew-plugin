@@ -28,7 +28,7 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
       parameterSettings: {
         comment: { canModify: true },
         passphrase: { canModify: true },
-        folder: { type: 'directory', default: '~/.ssh', canModify: true }
+        folder: { type: 'directory', default: '~/.ssh' }
       },
       import: {
         requiredParameters: ['fileName'],
@@ -120,7 +120,13 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
   override async modify(pc: ParameterChange<SshKeyConfig>, plan: ModifyPlan<SshKeyConfig>): Promise<void> {
     if (pc.name === 'comment') {
       await codifySpawn(`ssh-keygen -f ${plan.desiredConfig.fileName} -c -C "${pc.newValue}"`, { cwd: plan.desiredConfig.folder! })
-      
+      return;
+    }
+
+    // Passphrase can't be called in stateless mode because we don't know what the previous password is
+    if (pc.name === 'passphrase') {
+      await codifySpawn(`ssh-keygen -f ${plan.desiredConfig.fileName} -N ${pc.newValue} -P ${pc.previousValue} -p`)
+      return;
     }
   }
 

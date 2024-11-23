@@ -6,9 +6,9 @@ import { GitConfig } from './git-resource.js';
 export class GitNameParameter extends StatefulParameter<GitConfig, string> {
 
   async refresh(): Promise<null | string> {
-    const { data: email, status } = await codifySpawn('git config --global user.name', { throws: false })
+    const { data: name, status } = await codifySpawn('git config --global user.name', { throws: false })
 
-    return status === SpawnStatus.ERROR ? null : email.trim()
+    return status === SpawnStatus.ERROR ? null : name.trim()
   }
 
   async add(valueToAdd: string): Promise<void> {
