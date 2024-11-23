@@ -37,6 +37,8 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
         return installedCasks;
       }
 
+      // This serves a secondary purpose as well. It checks that each cask to install is valid (alerting the user
+      // in the plan instead of in the apply)
       const casksWithConflicts = await this.findConflicts(notInstalledCasks);
       if (casksWithConflicts.length > 0) {
         // To avoid errors, we pretend that those programs were already installed by homebrew (even though it was installed outside)
@@ -79,7 +81,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     const casksToInstall = casks.filter((c) => !conflicts.includes(c))
 
     if (conflicts.length > 0) {
-      if (!skipAlreadyInstalledCasks) {
+      if (skipAlreadyInstalledCasks) {
         console.log(`Skipping installing ${conflicts.join(', ')} because they were already installed externally.`)
       } else {
         throw new Error(`Could not install casks: ${conflicts.join(', ')} because they were already installed externally. Please delete and try again.`);
