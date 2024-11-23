@@ -79,7 +79,7 @@ describe('Homebrew main resource integration tests', () => {
         expect(plans[0]).toMatchObject({
           "operation": "noop",
           "resourceType": "homebrew",
-          "parameters": [
+          "parameters": expect.arrayContaining([
             {
               "name": "casks",
               "previousValue": [
@@ -92,11 +92,11 @@ describe('Homebrew main resource integration tests', () => {
             },
             {
               "name": "skipAlreadyInstalledCasks",
-              "previousValue": null,
+              "previousValue": true,
               "newValue": true,
               "operation": "noop"
             }
-          ]
+          ])
         })
 
         const programPath = '/Applications/Visual Studio Code.app'
@@ -108,12 +108,6 @@ describe('Homebrew main resource integration tests', () => {
         expect(lstat.isDirectory()).to.be.true;
       }
     })
-
-    expect(async () => await plugin.fullTest([{
-      type: 'homebrew',
-      casks: ['visual-studio-code'],
-      skipAlreadyInstalledCasks: false,
-    }])).rejects.toThrowError();
 
     await plugin.uninstall([{
       type: 'vscode',

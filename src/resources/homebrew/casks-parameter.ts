@@ -5,8 +5,6 @@ import { codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { HomebrewConfig } from './homebrew.js';
 
-const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
-
 export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> {
 
   override getSettings(): ParameterSetting {
@@ -40,15 +38,13 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       // This serves a secondary purpose as well. It checks that each cask to install is valid (alerting the user
       // in the plan instead of in the apply)
       const casksWithConflicts = await this.findConflicts(notInstalledCasks);
-      if (casksWithConflicts.length > 0) {
-        // To avoid errors, we pretend that those programs were already installed by homebrew (even though it was installed outside)
-        if (config?.skipAlreadyInstalledCasks) {
-          installedCasks.push(...casksWithConflicts);
-        } else {
-          throw new Error(`Homebrew plugin: Will not be able to install casks ${casksWithConflicts.join(', ')} because they have already installed to /Applications outside of homebrew`)
-        }
+
+      // To avoid errors, we pretend that those programs were already installed by homebrew (even though it was installed outside)
+      if (casksWithConflicts.length > 0 && config?.skipAlreadyInstalledCasks) {
+        installedCasks.push(...casksWithConflicts);
       }
 
+      console.log(installedCasks);
       return installedCasks;
     }
 
@@ -92,7 +88,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       return;
     }
 
-    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --casks ${casksToInstall.join(' ')}`, { throws: false })
+    const result = await codifySpawn(`brew install --casks ${casksToInstall.join(' ')}`, { throws: false })
     if (result.status === SpawnStatus.SUCCESS) {
       // Casks can't detect if a program was installed by other means. If it returns this message, throw an error
       if (result.data.includes('It seems there is already an App at')) {
@@ -110,7 +106,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       return;
     }
 
-    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew uninstall ${casks.join(' ')}`, { throws: false })
+    const result = await codifySpawn(`brew uninstall ${casks.join(' ')}`, { throws: false })
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Uninstalled casks: ${casks.join(' ')}`);
