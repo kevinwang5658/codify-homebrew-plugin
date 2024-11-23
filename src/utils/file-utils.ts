@@ -67,6 +67,15 @@ ${lines.join('\n')}`)
     }
   }
 
+  static async exists(path: string): Promise<boolean> {
+    try {
+      await fs.stat(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   static async checkDirExistsOrThrowIfFile(path: string): Promise<boolean> {
     let stat;
     try {
