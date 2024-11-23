@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://www.codifycli.com/git.json",
-  "title": "Jenv resource",
+  "title": "Git resource",
   "type": "object",
   "properties": {
     "email": {

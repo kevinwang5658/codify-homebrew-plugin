@@ -97,12 +97,12 @@ async function internalSpawn(
   cmd: string,
   opts: CodifySpawnOptions
 ): Promise<{ status: SpawnStatus, data: string }>  {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const output: string[] = [];
 
     // If TERM_PROGRAM=Apple_Terminal is set then ANSI escape characters may be included
     // in the response.
-    const env = { ...process.env, ...opts.env, 'TERM_PROGRAM': 'codify' }
+    const env = { ...process.env, ...opts.env, TERM_PROGRAM: 'codify', COMMAND_MODE: 'unix2003', COLORTERM: 'truecolor' }
 
     // Source start up shells to emulate a users environment vs. a non-interactive non-login shell script
     // Ignore all stdin

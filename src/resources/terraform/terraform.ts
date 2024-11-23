@@ -54,7 +54,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
 
     if (parameters.version) {
       const versionQuery = await codifySpawn('terraform version -json');
-      const versionJson = JSON.parse(versionQuery.data.trim()) as TerraformVersionInfo;
+      const versionJson = JSON.parse(versionQuery.data.trim().replaceAll('\n', '')) as TerraformVersionInfo;
 
       results.version = versionJson.terraform_version;
     }
