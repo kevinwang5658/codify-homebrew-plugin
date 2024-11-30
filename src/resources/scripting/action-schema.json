@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://www.codifycli.com/action.json",
+  "title": "Action resource",
+  "type": "object",
+  "properties": {
+    "condition": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "cwd": {
+      "type": "string"
+    }
+  },
+  "required": ["action"],
+  "additionalProperties": false
+}

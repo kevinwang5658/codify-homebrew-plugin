@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://www.codifycli.com/file.json",
+  "title": "File resource",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string"
+    },
+    "contents": {
+      "type": "string"
+    },
+    "onlyCreate": {
+      "type": "boolean"
+    }
+  },
+  "required": ["path", "contents"],
+  "additionalProperties": false
+}
