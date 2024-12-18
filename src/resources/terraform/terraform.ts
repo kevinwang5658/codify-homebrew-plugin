@@ -85,7 +85,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
 
     // Download and unzip the terraform binary
     await codifySpawn(`curl -fsSL ${downloadUrl} -o terraform.zip`, { cwd: temporaryDir });
-    await codifySpawn('unzip terraform.zip', { cwd: temporaryDir });
+    await codifySpawn('unzip -q terraform.zip', { cwd: temporaryDir });
 
     // Ensure that /usr/local/bin exists. If not then create it
     await (directory === '/usr/local/bin' ? Utils.createBinDirectoryIfNotExists() : Utils.createDirectoryIfNotExists(directory));

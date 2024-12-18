@@ -43,7 +43,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
     await codifySpawn(`curl -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36" -SL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
 
     // Unzip
-    await codifySpawn('unzip vscode.zip', { cwd: temporaryDir });
+    await codifySpawn('unzip -q vscode.zip', { cwd: temporaryDir });
 
     // Move VSCode to the applications folder
     const { directory } = plan.desiredConfig;
@@ -54,7 +54,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
   override async destroy(plan: DestroyPlan<VscodeConfig>): Promise<void> {
     const { directory } = plan.currentConfig;
     const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
-    await codifySpawn(`rm -r ${location}`);
+    await codifySpawn(`rm -rf ${location}`, { throws: false });
   }
 
   private async isVscodeInstalled(directory: string): Promise<boolean> {
