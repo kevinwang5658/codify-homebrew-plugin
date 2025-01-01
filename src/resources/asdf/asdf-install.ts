@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, untildify, } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, untildify, } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
@@ -50,7 +50,9 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
   }
 
   async refresh(parameters: Partial<AsdfInstallConfig>): Promise<Partial<AsdfInstallConfig> | Partial<AsdfInstallConfig>[] | null> {
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
+    const $ = getPty();
+
+    if ((await $.spawnSafe('which asdf')).status === SpawnStatus.ERROR) {
       return null;
     }
 
@@ -58,7 +60,7 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       const desiredTools = await this.getToolVersions(parameters.directory);
 
       for (const { plugin, version } of desiredTools) {
-        const { status, data } = await codifySpawn(`asdf current ${plugin}`, { throws: false, cwd: parameters.directory });
+        const { status, data } = await $.spawnSafe(`asdf current ${plugin}`, { cwd: parameters.directory });
         if (status === SpawnStatus.ERROR || data.trim() === '') {
           return null;
         }
@@ -72,10 +74,6 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       return {
         directory: parameters.directory,
       };
-    }
-
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
-      return null;
     }
 
     return {

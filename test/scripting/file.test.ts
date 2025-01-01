@@ -6,11 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 
 describe('File resource tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can create a file, modify the contents and delete it', { timeout: 300000 }, async () => {
     const contents = 'AWS_ACCESS_KEY_ID=\n' +
@@ -18,7 +14,7 @@ describe('File resource tests', () => {
       'AWS_S3_ENDPOINT=\n' +
       'AWS_REGION=\n';
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'file',
         path: '~/.env',
         contents
@@ -53,7 +49,7 @@ describe('File resource tests', () => {
   it('Will throw an error if the path given is a directory', { timeout: 300000 }, async () => {
     fs.mkdirSync(path.resolve(os.homedir(), 'tmp'))
 
-    await expect(async () => plugin.fullTest([
+    await expect(async () => PluginTester.fullTest(pluginPath, [
       { type: 'file', path: '~/tmp', contents: 'anything' }
     ])).rejects.toThrow();
   })
@@ -62,7 +58,7 @@ describe('File resource tests', () => {
     const filePath = path.resolve(os.homedir(), 'testFile');
     fs.writeFileSync(filePath, 'this is the previous file', 'utf-8')
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'file', path: filePath, contents: 'anything', onlyCreate: true }
     ], {
       skipUninstall: true,

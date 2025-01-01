@@ -1,4 +1,4 @@
-import { ArrayStatefulParameter } from 'codify-plugin-lib';
+import { ArrayStatefulParameter, getPty } from 'codify-plugin-lib';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { Utils } from '../../../utils/index.js';
@@ -9,7 +9,9 @@ export const JAVA_VERSION_INTEGER = /^\d+$/;
 
 export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string> {
   override async refresh(desired: null | string[]): Promise<null | string[]> {
-    const { data } = await codifySpawn('jenv versions')
+    const $ = getPty();
+
+    const { data } = await $.spawn('jenv versions')
 
     /** Example:
      *   system

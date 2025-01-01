@@ -1,4 +1,12 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  getPty,
+  ModifyPlan,
+  ParameterChange,
+  Resource,
+  ResourceSettings
+} from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -26,9 +34,10 @@ export class AliasResource extends Resource<AliasConfig> {
   }
 
   override async refresh(parameters: Partial<AliasConfig>): Promise<Partial<AliasConfig> | null> {
-    const { alias: desired } = parameters;
+    const $ = getPty();
 
-    const { data, status } = await codifySpawn(`alias ${desired}`, { throws: false })
+    const { alias: desired } = parameters;
+    const { data, status } = await $.spawnSafe(`alias ${desired}`)
 
     if (status === SpawnStatus.ERROR) {
       return null;

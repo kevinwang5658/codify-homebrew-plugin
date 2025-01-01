@@ -1,4 +1,4 @@
-import { ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { getPty, ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../utils/codify-spawn.js'
 import { HomebrewConfig } from './homebrew.js';
@@ -12,16 +12,16 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
   }
 
   override async refresh(): Promise<null | string[]> {
-    const tapsQuery = await codifySpawn('brew tap')
+    const $ = getPty();
 
+    const tapsQuery = await $.spawnSafe('brew tap')
     if (tapsQuery.status === SpawnStatus.SUCCESS && tapsQuery.data !== null && tapsQuery.data !== undefined) {
       return tapsQuery.data
         .split('\n')
         .filter(Boolean)
     }
 
-      return null;
-
+    return null;
   }
 
   override async add(valueToAdd: string[]): Promise<void> {

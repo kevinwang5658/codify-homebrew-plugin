@@ -6,14 +6,10 @@ import * as fs from 'node:fs/promises';
 import os from 'node:os';
 
 describe('Jenv resource integration tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Installs jenv and java with homebrew', { timeout: 500000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'homebrew' },
       {
         type: 'jenv',
@@ -48,8 +44,4 @@ describe('Jenv resource integration tests', () => {
       }
     });
   });
-
-  afterEach(() => {
-    plugin.kill();
-  })
 })

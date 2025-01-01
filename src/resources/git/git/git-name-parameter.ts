@@ -1,4 +1,4 @@
-import { StatefulParameter } from 'codify-plugin-lib';
+import { getPty, StatefulParameter } from 'codify-plugin-lib';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { GitConfig } from './git-resource.js';
@@ -6,8 +6,9 @@ import { GitConfig } from './git-resource.js';
 export class GitNameParameter extends StatefulParameter<GitConfig, string> {
 
   async refresh(): Promise<null | string> {
-    const { data: name, status } = await codifySpawn('git config --global user.name', { throws: false })
+    const $ = getPty()
 
+    const { data: name, status } = await $.spawnSafe('git config --global user.name')
     return status === SpawnStatus.ERROR ? null : name.trim()
   }
 

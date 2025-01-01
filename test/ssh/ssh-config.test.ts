@@ -5,15 +5,11 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 
 describe('Ssh config tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(async () => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can generate a new .ssh/config file if it doesn\'t exist', { timeout: 300000 }, async () => {
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'ssh-config',
         hosts: [
@@ -52,7 +48,7 @@ Host github.com
   })
 
   it('Can modify an existing file', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'ssh-config',
         hosts: [
@@ -97,7 +93,7 @@ Host github.com
   })
 
   it('Can match similar host names + destroy a .ssh/config file by renaming it', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'ssh-config',
         hosts: [
@@ -137,9 +133,5 @@ Host new.com_2
         expect(async () => await fs.lstat(path.resolve(os.homedir(), '.ssh', 'config_deleted_by_codify'))).to.not.throws;
       }
     })
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

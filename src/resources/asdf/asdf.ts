@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
@@ -22,8 +22,9 @@ export class AsdfResource extends Resource<AsdfConfig> {
     }
 
     async refresh(parameters: Partial<AsdfConfig>): Promise<Partial<AsdfConfig> | Partial<AsdfConfig>[] | null> {
-      const { status } = await codifySpawn('which asdf', { throws: false });
+      const $ = getPty();
 
+      const { status } = await $.spawnSafe('which asdf');
       return status === SpawnStatus.SUCCESS ? {} : null;
     }
 

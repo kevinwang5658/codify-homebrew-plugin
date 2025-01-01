@@ -1,8 +1,15 @@
 import { Ajv } from 'ajv';
 import { SudoError } from 'codify-plugin-lib';
-import { IpcMessage, MessageCmd, SudoRequestResponseData, SudoRequestResponseDataSchema } from 'codify-schemas';
+import {
+  IpcMessage,
+  IpcMessageV2,
+  MessageCmd,
+  SudoRequestResponseData,
+  SudoRequestResponseDataSchema
+} from 'codify-schemas';
 import { SpawnOptions, spawn } from 'node:child_process';
 import stripAnsi from 'strip-ansi';
+import { nanoid } from 'nanoid';
 
 const ajv = new Ajv({
   strict: true,
@@ -151,13 +158,26 @@ async function externalSpawnWithSudo(
   opts: CodifySpawnOptions
 ): Promise<{ status: SpawnStatus, data: string }> {
   return await new Promise((resolve) => {
-    const listener = (data: IpcMessage)=> {
-      if (data.cmd === MessageCmd.SUDO_REQUEST + '_Response') {
+    const requestId = nanoid(8);
+
+    console.log('Sudo request')
+
+    const listener = (data: IpcMessageV2)=> {
+      console.log('Sudo request response')
+      console.log(data)
+
+      console.log(`Our request id: ${requestId}, the one from the plugin ${data.requestId}`)
+
+      if (data.requestId === requestId) {
+        console.log('equal');
+
         process.removeListener('message', listener);
 
         if (!validateSudoRequestResponse(data.data)) {
           throw new Error(`Invalid response for sudo request: ${JSON.stringify(validateSudoRequestResponse.errors, null, 2)}`);
         }
+
+        console.log('valid')
 
         resolve(data.data as unknown as SudoRequestResponseData);
       }
@@ -165,12 +185,13 @@ async function externalSpawnWithSudo(
 
     process.on('message', listener);
 
-    process.send!({
+    process.send!(<IpcMessageV2>{
       cmd: MessageCmd.SUDO_REQUEST,
       data: {
         command: cmd,
         options: opts ?? {},
-      }
+      },
+      requestId
     })
   });
 }

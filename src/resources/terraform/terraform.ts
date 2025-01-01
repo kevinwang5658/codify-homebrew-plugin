@@ -1,4 +1,4 @@
-import { CreatePlan, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import semver from 'semver';
 
@@ -39,7 +39,9 @@ export class TerraformResource extends Resource<TerraformConfig> {
   }
 
   override async refresh(parameters: Partial<TerraformConfig>): Promise<Partial<TerraformConfig> | null> {
-    const terraformInfo = await codifySpawn('which terraform', { throws: false });
+    const $ = getPty();
+
+    const terraformInfo = await $.spawnSafe('which terraform');
     if (terraformInfo.status === SpawnStatus.ERROR) {
       return null;
     }
@@ -53,7 +55,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
     }
 
     if (parameters.version) {
-      const versionQuery = await codifySpawn('terraform version -json');
+      const versionQuery = await $.spawn('terraform version -json');
       const versionJson = JSON.parse(versionQuery.data.trim().replaceAll('\n', '')) as TerraformVersionInfo;
 
       results.version = versionJson.terraform_version;

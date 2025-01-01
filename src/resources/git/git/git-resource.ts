@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
@@ -27,7 +27,9 @@ export class GitResource extends Resource<GitConfig> {
   }
 
   async refresh(): Promise<Partial<GitConfig> | null> {
-    const { status } = await codifySpawn('which git', { throws: false })
+    const $ = getPty();
+
+    const { status } = await $.spawnSafe('which git')
     return status === SpawnStatus.ERROR ? null : {}
   }
 

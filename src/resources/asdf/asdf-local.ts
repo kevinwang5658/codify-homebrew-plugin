@@ -1,4 +1,12 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings, } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  getPty,
+  ModifyPlan,
+  ParameterChange,
+  Resource,
+  ResourceSettings,
+} from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 import path from 'node:path';
@@ -66,16 +74,15 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
   }
 
   async refresh(parameters: Partial<AsdfLocalConfig>): Promise<Partial<AsdfLocalConfig> | Partial<AsdfLocalConfig>[] | null> {
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
-      return null;
-    }
+    const $ = getPty();
 
-    if ((await codifySpawn(`asdf list ${parameters.plugin}`, { throws: false })).status === SpawnStatus.ERROR) {
+    const plugins = await $.spawnSafe(`asdf list ${parameters.plugin}`);
+    if (plugins.status === SpawnStatus.ERROR) {
       return null;
     }
 
     // Only check for the installed version matches if it's not latest. The latest version could be out of date.
-    const installedVersions = new Set((await codifySpawn(`asdf list ${parameters.plugin}`))
+    const installedVersions = new Set(plugins
       .data
       .split(/\n/)
       .filter(Boolean)
@@ -91,7 +98,7 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
     }
     
     if (parameters.directory) {
-      const { status, data } = await codifySpawn(`asdf current ${parameters.plugin}`, { throws: false, cwd: parameters.directory });
+      const { status, data } = await $.spawnSafe(`asdf current ${parameters.plugin}`, { cwd: parameters.directory });
 
       if (status === SpawnStatus.ERROR || data.trim() === '') {
         return null;
@@ -109,7 +116,7 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
     let versionUpToDate = true;
     let latestVersion = null;
     for (const dir of parameters.directories!) {
-      const { status, data } = await codifySpawn(`asdf current ${parameters.plugin}`, { throws: false, cwd: dir });
+      const { status, data } = await $.spawnSafe(`asdf current ${parameters.plugin}`, { cwd: dir });
       if (status === SpawnStatus.ERROR || data.trim() === '') {
         continue;
       }

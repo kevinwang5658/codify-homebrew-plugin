@@ -1,4 +1,4 @@
-import { ArrayParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ArrayParameterSetting, getPty, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { HomebrewConfig } from './homebrew.js';
@@ -22,7 +22,8 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
   }
 
   override async refresh(): Promise<null | string[]> {
-    const formulaeQuery = await codifySpawn('brew list --formula -1')
+    const $ = getPty();
+    const formulaeQuery = await $.spawnSafe('brew list --formula -1')
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data !== null && formulaeQuery.data !== undefined) {
       return formulaeQuery.data

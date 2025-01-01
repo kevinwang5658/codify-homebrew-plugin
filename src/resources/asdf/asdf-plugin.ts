@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, untildify } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';

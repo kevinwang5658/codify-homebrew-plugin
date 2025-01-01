@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
@@ -22,7 +22,9 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
 
 
   override async refresh(): Promise<Partial<AwsCliConfig> | null> {
-    const awsCliInfo = await codifySpawn('which aws', { throws: false });
+    const $ = getPty();
+
+    const awsCliInfo = await $.spawnSafe('which aws');
     if (awsCliInfo.status === SpawnStatus.ERROR) {
       return null;
     }

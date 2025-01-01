@@ -6,14 +6,10 @@ import os from 'node:os';
 import { execSync } from 'child_process';
 
 describe('Ssh key tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can generate and delete an ssh key', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'ssh-key',
         passphrase: '',
@@ -63,7 +59,7 @@ describe('Ssh key tests', () => {
   })
 
   it('Can generate and delete a custom key', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'ssh-key',
         keyType: "rsa",
@@ -84,9 +80,4 @@ describe('Ssh key tests', () => {
       }
     })
   })
-
-  afterEach(() => {
-    plugin.kill();
-  })
-
 })

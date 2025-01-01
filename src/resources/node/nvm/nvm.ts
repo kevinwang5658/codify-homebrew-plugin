@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as os from 'node:os';
 
@@ -27,7 +27,9 @@ export class NvmResource extends Resource<NvmConfig> {
   }
 
   override async refresh(): Promise<Partial<NvmConfig> | null> {
-    const nvmQuery = await codifySpawn('command -v nvm', { throws: false })
+    const $ = getPty()
+
+    const nvmQuery = await $.spawnSafe('command -v nvm')
     if (nvmQuery.status === SpawnStatus.ERROR) {
       return null
     }

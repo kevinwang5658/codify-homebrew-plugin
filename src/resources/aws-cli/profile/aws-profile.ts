@@ -1,4 +1,12 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  getPty,
+  ModifyPlan,
+  ParameterChange,
+  Resource,
+  ResourceSettings
+} from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
@@ -50,16 +58,18 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
   }
 
   override async refresh(parameters: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig> | null> {
+    const $ = getPty();
+
     const profile = parameters.profile!;
 
     // Make sure aws-cli is installed
-    const { status: awsStatus } = await codifySpawn('which aws', { throws: false });
+    const { status: awsStatus } = await $.spawnSafe('which aws');
     if (awsStatus === SpawnStatus.ERROR) {
       return null;
     }
 
     // Check if the profile exists
-    const { data: profiles } = await codifySpawn('aws configure list-profiles');
+    const { data: profiles } = await $.spawn('aws configure list-profiles');
     if (!profiles.includes(profile)) {
       return null;
     }
@@ -160,7 +170,9 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
   }
 
   private async getAwsConfigureValueOrNull(key: string, profile: string): Promise<string | undefined> {
-    const { data, status } = await codifySpawn(`aws configure get ${key} --profile ${profile}`, { throws: false });
+    const $ = getPty();
+
+    const { data, status } = await $.spawnSafe(`aws configure get ${key} --profile ${profile}`);
     if (status === SpawnStatus.ERROR) {
       return undefined;
     }

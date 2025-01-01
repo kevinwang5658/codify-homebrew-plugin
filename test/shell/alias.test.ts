@@ -1,19 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'child_process';
-import fs from 'node:fs/promises';
 import os from 'node:os';
 
 describe('Alias resource integration tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can add an alias to zshrc', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'alias',
         alias: 'my-alias',
@@ -49,16 +44,12 @@ describe('Alias resource integration tests', async () => {
   })
 
   it('Validates against invalid alias', { timeout: 300000 }, async () => {
-    expect(async () => plugin.fullTest([
+    expect(async () => PluginTester.fullTest(pluginPath, [
       {
         type: 'alias',
         alias: 'test$$$',
         value: 'ls'
       }
     ])).rejects.toThrowError();
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

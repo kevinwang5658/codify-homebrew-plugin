@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
@@ -16,8 +16,9 @@ export class PgcliResource extends Resource<PgcliConfig> {
   }
 
   override async refresh(): Promise<Partial<PgcliConfig> | null> {
-    const result = await codifySpawn('which pgcli', { throws: false });
+    const $ = getPty();
 
+    const result = await $.spawnSafe('which pgcli');
     if (result.status === SpawnStatus.ERROR) {
       return null;
     }

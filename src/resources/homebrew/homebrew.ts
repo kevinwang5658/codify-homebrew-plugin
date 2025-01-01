@@ -1,4 +1,4 @@
-import { CreatePlan, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
@@ -40,7 +40,9 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   }
 
   override async refresh(parameters: Partial<HomebrewConfig>): Promise<Partial<HomebrewConfig> | null> {
-    const homebrewInfo = await codifySpawn('brew config', { throws: false });
+    const $ = getPty();
+
+    const homebrewInfo = await $.spawnSafe('brew config');
     if (homebrewInfo.status === SpawnStatus.ERROR) {
       return null;
     }

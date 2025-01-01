@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import path from 'node:path';
 
@@ -31,19 +31,21 @@ export class SshAddResource extends Resource<SshAddConfig> {
   }
 
   async refresh(parameters: Partial<SshAddConfig>): Promise<Partial<SshAddConfig> | null> {
+    const $ = getPty();
+
     const sshPath = parameters.path!;
     if (!(await FileUtils.fileExists(sshPath))) {
       return null;
     }
 
-    await codifySpawn('eval "$(ssh-agent -s)"')
+    await $.spawnSafe('eval "$(ssh-agent -s)"')
 
-    const { data: keyFingerprint, status: keygenStatus } = await codifySpawn(`ssh-keygen -lf ${sshPath}`, {  throws: false });
+    const { data: keyFingerprint, status: keygenStatus } = await $.spawnSafe(`ssh-keygen -lf ${sshPath}`);
     if (keygenStatus === SpawnStatus.ERROR) {
       return null;
     }
 
-    const { data: loadedSshKeys, status: sshAddStatus } = await codifySpawn('/usr/bin/ssh-add -l', { throws: false });
+    const { data: loadedSshKeys, status: sshAddStatus } = await $.spawnSafe('/usr/bin/ssh-add -l');
     if (sshAddStatus === SpawnStatus.ERROR) {
       return null;
     }

@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 
@@ -49,14 +49,16 @@ export class JenvResource extends Resource<JenvConfig> {
   }
 
   override async refresh(): Promise<Partial<JenvConfig> | null> {
-    const jenvQuery = await codifySpawn('which jenv', { throws: false })
+    const $ = getPty();
+
+    const jenvQuery = await $.spawnSafe('which jenv')
     if (jenvQuery.status === SpawnStatus.ERROR) {
       return null
     }
 
     // For some reason jenv doctor will return with a non-zero status code even
     // if it's successful. We can ignore the status code and only check for the text
-    const jenvDoctor = await codifySpawn('jenv doctor', { throws: false })
+    const jenvDoctor = await $.spawnSafe('jenv doctor')
     if (jenvDoctor.data.includes('Jenv is not loaded in')) {
       return null
     }

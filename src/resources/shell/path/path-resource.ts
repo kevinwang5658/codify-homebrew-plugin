@@ -1,4 +1,12 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  getPty,
+  ModifyPlan,
+  ParameterChange,
+  Resource,
+  ResourceSettings
+} from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -58,8 +66,9 @@ export class PathResource extends Resource<PathConfig> {
   }
 
   override async refresh(parameters: Partial<PathConfig>): Promise<Partial<PathConfig> | null> {
-    const { data: existingPaths } = await codifySpawn('echo $PATH')
+    const $ = getPty();
 
+    const { data: existingPaths } = await $.spawnSafe('echo $PATH')
     if (parameters.path && (existingPaths.includes(parameters.path) || existingPaths.includes(untildify(parameters.path)))) {
       return parameters;
     }

@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import path from 'node:path';
 
@@ -15,7 +15,9 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
   }
 
   override async refresh(): Promise<Partial<XCodeToolsConfig> | null> {
-    const { data, status } = await codifySpawn('xcode-select -p', { throws: false })
+    const $ = getPty()
+
+    const { data, status } = await $.spawnSafe('xcode-select -p')
 
     // The last check, ensures that a valid path is returned.
     if (status === SpawnStatus.ERROR || !data || path.basename(data) === data) {

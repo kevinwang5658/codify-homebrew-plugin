@@ -1,4 +1,4 @@
-import { ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { getPty, ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { JenvConfig } from './jenv.js';
@@ -12,8 +12,9 @@ export class JenvGlobalParameter extends StatefulParameter<JenvConfig, string>{
   }
 
   override async refresh(): Promise<null | string> {
-    const { data, status } = await codifySpawn('jenv global', { throws: false })
+    const $ = getPty();
 
+    const { data, status } = await $.spawnSafe('jenv global')
     if (status === SpawnStatus.ERROR) {
       return null;
     }
