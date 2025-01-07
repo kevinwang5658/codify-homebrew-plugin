@@ -67,26 +67,30 @@ async function run(cmd: string, debug: boolean, simple = true) {
         const [_, ip] = data.toString().match(IP_REGEX);
 
         console.log(`Copying ssh keys to ${ip}`)
-        spawnSync(`source $HOME/.zshrc; sshpass -p admin ssh-copy-id -o "StrictHostKeyChecking=no" admin@${ip}`, { stdio: 'inherit', shell: 'zsh' });
+        // spawnSync(`source $HOME/.zshrc; sshpass -p admin ssh-copy-id -o "StrictHostKeyChecking=no" admin@${ip}`, { stdio: 'inherit', shell: 'zsh' });
 
         console.log('Enabling port forwarding')
-        const portForward1 = spawn(`ssh -L 9229:localhost:9229 -Nf admin@${ip}`, { stdio: 'pipe', shell: 'zsh' });
+        const sshStatement1 = `ssh${ Array.from({ length: 20 }, (i: number) => i + 9000).map((i) => ` -L ${i}:localhost:${i}`)} admin@${ip}`;
+        const sshStatement2 = `source $HOME/.zshrc; sshpass -p admin ssh -L 9221:localhost:9221 -L 9229:localhost:9229 -N -o "StrictHostKeyChecking=no" admin@${ip}`
+
+        const portForward1 = spawn(sshStatement2, { stdio: 'pipe', shell: 'zsh' });
+        portForward1.stderr.pipe(process.stdout)
         portForward1.stdout.on('data', data => {
           console.log(data.toString());
           if (data.toString().includes('Address already in use')) {
             throw new Error('Port 9229 already in use!')
           }
         })
-        console.log('Enabled on port 9229')
+        // console.log('Enabled on port 9229')
 
-        const portForward2 = spawn(`ssh -L 9221:localhost:9221 -Nf admin@${ip}`, { stdio: 'pipe', shell: 'zsh' });
-        portForward2.stdout.on('data', data => {
-          console.log(data.toString());
-          if (data.toString().includes('Address already in use')) {
-            throw new Error('Port 9221 already in use!')
-          }
-        });
-        console.log('Enabled on port 9221')
+        // const portForward2 = spawn(`ssh -L 9221:localhost:9221 -Nf admin@${ip}`, { stdio: 'pipe', shell: 'zsh' });
+        // portForward2.stdout.on('data', data => {
+        //   console.log(data.toString());
+        //   if (data.toString().includes('Address already in use')) {
+        //     throw new Error('Port 9221 already in use!')
+        //   }
+        // });
+        // console.log('Enabled on port 9221')
       }
     })
   }

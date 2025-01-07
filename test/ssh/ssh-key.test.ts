@@ -31,7 +31,7 @@ describe('Ssh key tests', () => {
       testModify: {
         modifiedConfigs: [{
           type: 'ssh-key',
-          comment: 'my comment',
+          comment: 'commenting',
         }],
         validateModify: (plans) => {
           expect(plans[0]).toMatchObject({
@@ -40,7 +40,7 @@ describe('Ssh key tests', () => {
             "parameters": expect.arrayContaining([
               expect.objectContaining({
                 "name": "comment",
-                "newValue": "my comment",
+                "newValue": "commenting",
                 "operation": "modify"
               })
             ])
@@ -48,7 +48,7 @@ describe('Ssh key tests', () => {
 
           const location = path.resolve(os.homedir(), '.ssh', 'id_ed25519.pub');
           const key = fs.readFileSync(location).toString('utf-8');
-          expect(key).to.include('my comment'); // updated comment
+          expect(key).to.include('commenting'); // updated comment
         }
       },
       validateDestroy: () => {

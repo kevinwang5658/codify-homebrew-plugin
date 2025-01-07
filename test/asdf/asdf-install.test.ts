@@ -6,11 +6,7 @@ import os from 'node:os';
 import cp from 'child_process';
 
 describe('Asdf install tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install a .tool-versions file', { timeout: 300000 }, async () => {
     await fs.mkdir(path.join(os.homedir(), 'toolDir'));
@@ -20,7 +16,7 @@ describe('Asdf install tests', async () => {
       'golang 1.23.2'
     )
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
       },
@@ -44,7 +40,7 @@ describe('Asdf install tests', async () => {
   })
 
   it('Can install a plugin and then a version', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
         plugins: ['nodejs']
@@ -64,9 +60,5 @@ describe('Asdf install tests', async () => {
         expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
       }
     });
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

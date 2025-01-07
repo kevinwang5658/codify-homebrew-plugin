@@ -5,14 +5,10 @@ import * as fs from 'node:fs/promises';
 import os from 'node:os';
 
 describe('Android studios tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install the latest Android studios', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'android-studio' }
     ], {
       validateApply: async () => {
@@ -25,9 +21,5 @@ describe('Android studios tests', async () => {
         expect(async () => await fs.lstat(programPath)).to.throw;
       }
     });
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

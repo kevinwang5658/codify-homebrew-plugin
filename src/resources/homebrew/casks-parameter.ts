@@ -124,7 +124,14 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   private async findConflicts(casks: string[]): Promise<string[]> {
     const $ = getPty();
 
-    const brewInfo = JSON.parse((await $.spawnSafe(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', ''));
+    let result: string;
+    if ($) {
+      result = (await $.spawnSafe(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', '')
+    } else {
+      result = (await codifySpawn(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', '')
+    }
+
+    const brewInfo = JSON.parse(result);
     const casksWithConflicts = new Array<string>();
 
     for (const caskInfo of brewInfo.casks) {

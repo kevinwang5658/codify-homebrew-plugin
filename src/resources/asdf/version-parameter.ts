@@ -9,7 +9,7 @@ export class AsdfPluginVersionsParameter extends ArrayStatefulParameter<AsdfPlug
     const $ = getPty();
 
     const versions = await $.spawnSafe(`asdf list ${config.plugin}`);
-    if (versions.status === SpawnStatus.ERROR) {
+    if (versions.status === SpawnStatus.ERROR || versions.data.trim() === 'No versions installed') {
       return null;
     }
 
@@ -29,7 +29,7 @@ export class AsdfPluginVersionsParameter extends ArrayStatefulParameter<AsdfPlug
   }
 
   async removeItem(item: string, plan: Plan<AsdfPluginConfig>): Promise<void> {
-    await codifySpawn(`asdf install ${plan.desiredConfig?.plugin} ${item}`);
+    await codifySpawn(`asdf uninstall ${plan.currentConfig?.plugin} ${item}`);
   }
 
 }

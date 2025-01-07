@@ -6,15 +6,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 
 describe('Homebrew main resource integration tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Creates brew and can install formulas', { timeout: 300000 }, async () => {
     // Plans correctly and detects that brew is not installed
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
       formulae: [
         'apr',
@@ -56,7 +52,7 @@ describe('Homebrew main resource integration tests', () => {
 
   it('Can handle casks that were already installed by skipping in the plan', { timeout: 300000 }, async () => {
     // Install vscode outside of cask
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: 'vscode',
     }, {
       type: 'homebrew'
@@ -70,7 +66,7 @@ describe('Homebrew main resource integration tests', () => {
     })
 
     // Without skipping vscode install this should throw
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
       casks: ['visual-studio-code'],
     }], {
@@ -109,20 +105,22 @@ describe('Homebrew main resource integration tests', () => {
       }
     })
 
-    expect(async () => await plugin.fullTest([{
+    await expect(async () => PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
       casks: ['visual-studio-code'],
       skipAlreadyInstalledCasks: false,
     }])).rejects.toThrowError();
 
-    await plugin.uninstall([{
+    await PluginTester.uninstall(pluginPath, [{
       type: 'vscode',
+    }, {
+      type: 'homebrew',
     }])
   })
 
   it('Can handle casks that were already installed by skipping in the install (only applicable to the initial)', { timeout: 300000 }, async () => {
     // Install vscode outside of cask
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: 'vscode',
     }, {
       type: 'homebrew',
@@ -157,9 +155,5 @@ describe('Homebrew main resource integration tests', () => {
         expect((await fs.readFile(path.join(os.homedir(), '.zshrc'))).toString('utf-8')).to.not.include('homebrew')
       }
     })
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })
