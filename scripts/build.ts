@@ -3,6 +3,9 @@ import { Ajv } from 'ajv';
 import { IpcMessage, IpcMessageSchema, MessageStatus, ResourceSchema } from 'codify-schemas';
 import mergeJsonSchemas from 'merge-json-schemas';
 import { ChildProcess, fork } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import * as url from 'node:url';
 
 import { codifySpawn } from '../src/utils/codify-spawn.js';
 
@@ -88,8 +91,13 @@ const mergedSchemas = [...schemasMap.entries()].map(([type, schema]) => {
 await codifySpawn('rm -rf ./dist')
 await codifySpawn('npm run rollup'); // re-run rollup without building for es
 
-console.log('JSON Schemas for all resources')
-console.log(JSON.stringify(mergedSchemas, null, 2));
+console.log('Generated JSON Schemas for all resources')
+
+const distFolder = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'dist');
+const schemaOutputPath = path.resolve(distFolder, 'schemas.json');
+fs.writeFileSync(schemaOutputPath, JSON.stringify(mergedSchemas, null, 2));
+
+console.log('Successfully wrote schema to ./dist/schemas.json')
 
 // eslint-disable-next-line n/no-process-exit,unicorn/no-process-exit
 process.exit(0)

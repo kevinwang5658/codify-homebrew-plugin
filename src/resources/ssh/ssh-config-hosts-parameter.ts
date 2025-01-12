@@ -52,10 +52,7 @@ export class SshConfigHostsParameter extends StatefulParameter<SshConfig, SshCon
     const sshConfigFile = await fs.readFile(filePath, 'utf8');
     const hostBlocks = this.parseHostBlocks(sshConfigFile);
 
-    const parseHostObjects= this.parseHostObjects(hostBlocks);
-
-    console.log(JSON.stringify(parseHostObjects, null, 2));
-    return parseHostObjects
+    return this.parseHostObjects(hostBlocks);
   }
   
   async add(valueToAdd: SshConfigOptions[]): Promise<void> {

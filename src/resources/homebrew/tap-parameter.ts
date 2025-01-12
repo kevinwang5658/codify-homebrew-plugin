@@ -46,7 +46,6 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
     }
 
     await codifySpawn(`brew tap ${taps.join(' ')}`)
-    console.log(`Installed taps: ${taps}`);
   }
 
   private async uninstallTaps(taps: string[]): Promise<void> {
@@ -55,7 +54,6 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
     }
 
     await codifySpawn(`brew untap ${taps.join(' ')}`)
-    console.log(`Uninstalled taps: ${taps}`);
   }
 
 }

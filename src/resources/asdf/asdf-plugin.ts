@@ -37,7 +37,6 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
       .map((l) => l.trim())
       .map((l) => l.replaceAll('*', ''))
       .map((l) => {
-        console.log(l);
         const matches = l.match(PLUGIN_LIST_REGEX)
         if (!matches) {
           return null;

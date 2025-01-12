@@ -160,24 +160,13 @@ async function externalSpawnWithSudo(
   return await new Promise((resolve) => {
     const requestId = nanoid(8);
 
-    console.log('Sudo request')
-
     const listener = (data: IpcMessageV2)=> {
-      console.log('Sudo request response')
-      console.log(data)
-
-      console.log(`Our request id: ${requestId}, the one from the plugin ${data.requestId}`)
-
       if (data.requestId === requestId) {
-        console.log('equal');
-
         process.removeListener('message', listener);
 
         if (!validateSudoRequestResponse(data.data)) {
           throw new Error(`Invalid response for sudo request: ${JSON.stringify(validateSudoRequestResponse.errors, null, 2)}`);
         }
-
-        console.log('valid')
 
         resolve(data.data as unknown as SudoRequestResponseData);
       }

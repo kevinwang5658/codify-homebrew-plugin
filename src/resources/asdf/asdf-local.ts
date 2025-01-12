@@ -180,9 +180,7 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
     }
 
     for (const dir of plan.currentConfig.directories!) {
-      console.log(path.join(dir, '.tool-versions'))
       await FileUtils.removeLineFromFile(path.join(dir, '.tool-versions'), plan.currentConfig.plugin);
-      console.log(fs.readFileSync(path.join(dir, '.tool-versions')).toString());
     }
   }
 }

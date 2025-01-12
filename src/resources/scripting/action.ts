@@ -24,7 +24,6 @@ export class ActionResource extends Resource<ActionConfig> {
   
   async refresh(parameters: Partial<ActionConfig>): Promise<Partial<ActionConfig> | Partial<ActionConfig>[] | null> {
     const $ = getPty();
-    console.log($);
 
     // Always run if condition doesn't exist
     // TODO: Remove hack. Right now we're returning null to simulate CREATE and a value for NO-OP
