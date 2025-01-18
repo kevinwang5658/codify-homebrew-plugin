@@ -7,15 +7,11 @@ import { ParameterOperation, ResourceOperation } from 'codify-schemas';
 import { execSync } from 'child_process';
 
 describe('Path resource integration tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can add a path to zshrc', { timeout: 300000 }, async () => {
     const tempDir1 = await fs.mkdtemp(os.tmpdir() + '/');
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'path',
         path: tempDir1,
@@ -34,7 +30,7 @@ describe('Path resource integration tests', async () => {
     const tempDir1 = await fs.mkdtemp(os.tmpdir() + '/');
     const tempDir2 = await fs.mkdtemp(os.tmpdir() + '/');
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'path',
         paths: [tempDir1, tempDir2],
@@ -57,7 +53,7 @@ describe('Path resource integration tests', async () => {
     const tempDir1 = await fs.mkdtemp(os.tmpdir() + '/');
     const tempDir2 = await fs.mkdtemp(os.tmpdir() + '/');
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'path',
         paths: [tempDir1, tempDir2],
@@ -83,7 +79,7 @@ describe('Path resource integration tests', async () => {
     const tempDir3 = await fs.mkdtemp(os.tmpdir() + '/');
     const tempDir4 = await fs.mkdtemp(os.tmpdir() + '/');
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'path',
         paths: [tempDir1, tempDir2],
@@ -132,15 +128,11 @@ describe('Path resource integration tests', async () => {
 
   it('Supports tildy for home', { timeout: 300000 }, async () => {
     await fs.mkdir(path.resolve(os.homedir(), 'temp', 'dir'), { recursive: true });
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'path',
         path: '~/temp/dir',
       }
     ]);
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

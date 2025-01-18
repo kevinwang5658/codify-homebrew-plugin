@@ -2,8 +2,9 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
+    pool: 'forks',
     onConsoleLog: (log) => {
-      console.log(log);
+      process.stdout.write(log);
     },
     watch: false,
   },

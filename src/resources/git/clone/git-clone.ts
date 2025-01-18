@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
@@ -37,6 +37,8 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
   }
 
   override async refresh(parameters: Partial<GitCloneConfig>): Promise<Partial<GitCloneConfig> | null> {
+    const $ = getPty();
+
     if (parameters.parentDirectory) {
       const folderName = this.extractBasename(parameters.repository!);
       if (!folderName) {
@@ -50,7 +52,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
         return null;
       }
 
-      const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: fullPath });
+      const { data: url } = await $.spawn('git config --get remote.origin.url', { cwd: fullPath });
 
       return {
         parentDirectory: parameters.parentDirectory,
@@ -65,7 +67,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
         return null;
       }
 
-      const { data: url } = await codifySpawn('git config --get remote.origin.url', { cwd: parameters.directory });
+      const { data: url } = await $.spawn('git config --get remote.origin.url', { cwd: parameters.directory });
 
       return {
         directory: parameters.directory,

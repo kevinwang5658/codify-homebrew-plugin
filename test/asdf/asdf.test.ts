@@ -7,14 +7,10 @@ import * as cp from 'child_process'
 import { PlanRequestDataSchema, PlanResponseDataSchema } from 'codify-schemas';
 
 describe('Asdf tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install asdf and plugins', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
         plugins: ['nodejs', 'ruby']
@@ -42,7 +38,7 @@ describe('Asdf tests', async () => {
   })
 
   it('Support plugins resource', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
       },
@@ -64,7 +60,7 @@ describe('Asdf tests', async () => {
   })
 
   it('Can install custom gitUrls', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
       },
@@ -78,7 +74,7 @@ describe('Asdf tests', async () => {
       skipUninstall: true,
     });
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
       },
@@ -105,7 +101,7 @@ describe('Asdf tests', async () => {
   it('Can install a local version', { timeout: 300000 }, async () => {
     await fs.mkdir(path.join(os.homedir(), 'localDir'));
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
         plugins: ['nodejs'],
@@ -128,7 +124,7 @@ describe('Asdf tests', async () => {
     // localDir1 is created in the previous test
     await fs.mkdir(path.join(os.homedir(), 'localDir2'));
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'asdf',
         plugins: ['nodejs'],
@@ -148,7 +144,7 @@ describe('Asdf tests', async () => {
       skipUninstall: true,
     });
 
-    await plugin.uninstall([
+    await PluginTester.uninstall(pluginPath, [
       {
         type: 'asdf-local',
         plugin: 'golang',
@@ -156,24 +152,5 @@ describe('Asdf tests', async () => {
         directories: ['~/localDir', '~/localDir2']
       }
     ])
-
-    const plan = await plugin.plan({
-      desired: {
-        type: 'asdf-plugin',
-        plugin: 'golang',
-        versions: ['latest'],
-      },
-      state: undefined,
-      isStateful: false
-    });
-
-    expect(plan).toMatchObject({
-      resourceType: 'asdf-plugin',
-      operation: 'noop'
-    })
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

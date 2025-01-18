@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty, } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import os from 'node:os';
 import path from 'node:path';
@@ -29,16 +29,15 @@ export class AsdfGlobalResource extends Resource<AsdfGlobalConfig> {
   }
 
   async refresh(parameters: Partial<AsdfGlobalConfig>): Promise<Partial<AsdfGlobalConfig> | Partial<AsdfGlobalConfig>[] | null> {
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
-      return null;
-    }
+    const $ = getPty();
 
-    if ((await codifySpawn(`asdf list ${parameters.plugin}`, { throws: false })).status === SpawnStatus.ERROR) {
+    const plugins = await $.spawnSafe(`asdf list ${parameters.plugin}`);
+    if (plugins.status === SpawnStatus.ERROR) {
       return null;
     }
 
     // Only check for the installed version matches if it's not latest. The latest version could be out of date.
-    const installedVersions = new Set((await codifySpawn(`asdf list ${parameters.plugin}`))
+    const installedVersions = new Set(plugins
       .data
       .split(/\n/)
       .filter(Boolean)
@@ -53,7 +52,7 @@ export class AsdfGlobalResource extends Resource<AsdfGlobalConfig> {
       return null;
     }
 
-    const { status } = await codifySpawn(`asdf current ${parameters.plugin}`, { throws: false, cwd: os.homedir() });
+    const { status } = await $.spawnSafe(`asdf current ${parameters.plugin}`, { cwd: os.homedir() });
     return status === SpawnStatus.ERROR
       ? null
       : parameters;

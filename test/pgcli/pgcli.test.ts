@@ -4,14 +4,10 @@ import * as path from 'node:path';
 import { execSync } from 'child_process';
 
 describe('Pgcli integration tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install pgcli', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'homebrew' },
       { type: 'pgcli' }
     ], {
@@ -24,9 +20,5 @@ describe('Pgcli integration tests', async () => {
         expect(() => execSync('source ~/.zshrc; pgcli -v', { shell: 'zsh' })).to.throw();
       }
     })
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

@@ -1,4 +1,12 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  getPty,
+  ModifyPlan,
+  ParameterChange,
+  Resource,
+  ResourceSettings
+} from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 import os from 'node:os';
 import path from 'node:path';
@@ -51,6 +59,8 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
   }
 
   override async refresh(parameters: Partial<SshKeyConfig>): Promise<Partial<SshKeyConfig> | null> {
+    const $ = getPty();
+
     if (!(await FileUtils.dirExists(parameters.folder!))) {
       return null;
     }
@@ -60,7 +70,7 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
       return null;
     }
 
-    const { data: existingKey } = await codifySpawn(`ssh-keygen -l -f ${parameters.fileName}`, { cwd: parameters.folder! });
+    const { data: existingKey } = await $.spawn(`ssh-keygen -l -f ${parameters.fileName}`, { cwd: parameters.folder! });
     const [_, bits, __, ___, comment, type] = existingKey
       .trim()
       .match(SSH_KEYGEN_FINGERPRINT_REGEX) ?? [];

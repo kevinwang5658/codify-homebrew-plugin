@@ -5,14 +5,10 @@ import { execSync } from 'child_process';
 
 // Example test suite
 describe('nvm tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install nvm and node',  { timeout: 500000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'nvm',
         global: '20',
@@ -43,5 +39,3 @@ describe('nvm tests', () => {
     });
   });
 });
-
-export {};

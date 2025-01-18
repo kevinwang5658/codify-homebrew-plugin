@@ -1,4 +1,4 @@
-import { ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { getPty, ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { PyenvConfig } from './pyenv.js';
@@ -12,8 +12,9 @@ export class PyenvGlobalParameter extends StatefulParameter<PyenvConfig, string>
   }
 
   override async refresh(): Promise<null | string> {
-    const { data, status } = await codifySpawn('pyenv global')
+    const $ = getPty();
 
+    const { data, status } = await $.spawnSafe('pyenv global')
     if (status === SpawnStatus.ERROR) {
       return null;
     }

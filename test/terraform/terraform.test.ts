@@ -3,15 +3,12 @@ import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'child_process';
 
-describe('Terraform tests', async () => {
-  let plugin: PluginTester;
+const pluginPath = path.resolve('./src/index.ts');
 
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+describe('Terraform tests', async () => {
 
   it('Can install the latest terraform in the default location', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: "terraform"
     }], {
       validateApply: () => {
@@ -24,7 +21,7 @@ describe('Terraform tests', async () => {
   })
 
   it('Can install the latest terraform in a custom location', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: "terraform",
       directory: '~/path/to/bin'
     }], {
@@ -38,7 +35,7 @@ describe('Terraform tests', async () => {
   })
 
   it('Can install the a custom version of Terraform', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: "terraform",
       version: '1.4.2',
     }], {
@@ -53,7 +50,7 @@ describe('Terraform tests', async () => {
   })
 
   it('Can upgrade the version of Terraform', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: "terraform",
       version: '1.5.2',
     }], {
@@ -64,9 +61,5 @@ describe('Terraform tests', async () => {
         expect(() => execSync('source ~/.zshrc; terraform -v')).to.throw();
       }
     })
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as os from 'node:os';
 
@@ -19,7 +19,9 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   }
 
   override async refresh(): Promise<Partial<GitLfsConfig> | null> {
-    const result = await codifySpawn('git lfs', { throws: false });
+    const $ = getPty();
+
+    const result = await $.spawnSafe('git lfs');
 
     if (result.status === SpawnStatus.ERROR) {
       return null;
@@ -52,8 +54,9 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   }
 
   private async checkIfGitLfsIsInstalled(): Promise<boolean> {
-    const gitLfsStatus = await codifySpawn('git lfs env', { cwd: os.homedir() });
+    const $ = getPty();
 
+    const gitLfsStatus = await $.spawn('git lfs env', { cwd: os.homedir() });
     const lines = gitLfsStatus.data.split('\n');
 
     // When git lfs exists but git lfs install hasn't been called then git lfs env returns:

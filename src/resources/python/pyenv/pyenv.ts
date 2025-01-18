@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 import os from 'node:os';
@@ -29,7 +29,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
   }
 
   override async refresh(): Promise<Partial<PyenvConfig> | null> {
-    const pyenvVersion = await codifySpawn('pyenv --version', { throws: false })
+    const $ = getPty();
+
+    const pyenvVersion = await $.spawnSafe('pyenv --version')
     if (pyenvVersion.status === SpawnStatus.ERROR) {
       return null
     }

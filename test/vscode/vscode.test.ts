@@ -4,14 +4,10 @@ import * as path from 'node:path';
 import fs from 'node:fs/promises';
 
 describe('Vscode integration tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install vscode', { timeout: 300000 }, async () => {
-    await plugin.fullTest([{
+    await PluginTester.fullTest(pluginPath, [{
       type: 'vscode',
       directory: '/Applications'
     }], {
@@ -25,9 +21,5 @@ describe('Vscode integration tests', async () => {
         expect(async () => await fs.lstat(programPath)).to.throw;
       }
     });
-  })
-  
-  afterEach(() => {
-    plugin.kill();
   })
 })

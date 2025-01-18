@@ -6,14 +6,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 
 describe('Pyenv resource integration tests', () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Installs pyenv and python (this installs on a clean system without readline, openSSL, etc.)', { timeout: 500000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'pyenv',
         pythonVersions: ['3.11']
@@ -27,7 +23,7 @@ describe('Pyenv resource integration tests', () => {
   });
 
   it ('Can install additional python versions. (this installs after openSSL and readline have been installed)', { timeout: 700000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'homebrew',
         formulae: ['readline', 'openssl@3']
@@ -51,9 +47,5 @@ describe('Pyenv resource integration tests', () => {
         expect(() => execSync('source ~/.zshrc; which pyenv', { shell: 'zsh' })).to.throw();
       }
     })
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

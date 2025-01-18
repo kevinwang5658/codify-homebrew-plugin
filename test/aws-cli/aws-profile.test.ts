@@ -5,14 +5,10 @@ import { execSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 
 describe('Aws profile tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can add a aws-cli profile', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'homebrew' },
       { type: 'aws-cli' },
       {
@@ -37,7 +33,7 @@ describe('Aws profile tests', async () => {
   })
 
   it('Always defaults output to json + can modify a previous profile', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'aws-profile',
         profile: 'default',
@@ -82,7 +78,7 @@ describe('Aws profile tests', async () => {
 AKIA,zhKpjk
 `, 'utf-8');
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'aws-profile',
         profile: 'codify3',
@@ -105,10 +101,6 @@ AKIA,zhKpjk
         expect(profileList).to.not.include('codify3');
       }
     });
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 
   function validateProfile(profile: {

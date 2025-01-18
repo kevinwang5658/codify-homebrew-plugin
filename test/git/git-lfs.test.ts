@@ -4,14 +4,10 @@ import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 
 describe('Git lfs integration tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install git-lfs', { timeout: 500000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'homebrew' },
       { type: 'git-lfs' }
     ], {
@@ -26,9 +22,5 @@ describe('Git lfs integration tests', async () => {
         expect(() => execSync('source ~/.zshrc; which git lfs')).to.throw;
       }
     });
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

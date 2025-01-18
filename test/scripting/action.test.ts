@@ -1,19 +1,16 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
 import { ResourceOperation } from 'codify-schemas';
 import fs from 'node:fs';
 import os from 'node:os';
 
-describe('Action tests', () => {
-  let plugin: PluginTester;
+const pluginPath = path.resolve('./src/index.ts');
 
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+describe('Action tests', () => {
 
   it('Can run an action if the condition returns as non-zero', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'action', condition: '[ -d ~/tmp ]', action: 'mkdir ~/tmp; touch ~/tmp/testFile' }
     ], {
       skipUninstall: true,
@@ -29,8 +26,8 @@ describe('Action tests', () => {
   })
 
   it('It will return NO-OP when the return is 0', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
-      { type: 'action', condition: 'exit 0;', action: 'mkdir ~/tmp; touch ~/tmp/testFile' }
+    await PluginTester.fullTest(pluginPath, [
+      { type: 'action', condition: 'echo okay', action: 'mkdir ~/tmp; touch ~/tmp/testFile' }
     ], {
       skipUninstall: true,
       validatePlan: (plans) => {
@@ -43,7 +40,7 @@ describe('Action tests', () => {
 
   it('It can use the cwd parameter to run all commands from a specific directory', { timeout: 300000 }, async () => {
     fs.mkdirSync(path.resolve(os.homedir(), 'tmp2'))
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'action', condition: '[ -e testFile ]', action: 'touch testFile', cwd: '~/tmp2' }
     ], {
       skipUninstall: true,
@@ -56,7 +53,7 @@ describe('Action tests', () => {
 
     expect(fs.existsSync(path.resolve(os.homedir(), 'tmp2', 'testFile'))).to.be.true;
 
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       { type: 'action', condition: '[ -e testFile ]', action: 'touch testFile', cwd: '~/tmp2' }
     ], {
       skipUninstall: true,

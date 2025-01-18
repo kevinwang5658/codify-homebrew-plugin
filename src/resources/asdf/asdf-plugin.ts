@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, untildify } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
@@ -37,7 +37,6 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
       .map((l) => l.trim())
       .map((l) => l.replaceAll('*', ''))
       .map((l) => {
-        console.log(l);
         const matches = l.match(PLUGIN_LIST_REGEX)
         if (!matches) {
           return null;

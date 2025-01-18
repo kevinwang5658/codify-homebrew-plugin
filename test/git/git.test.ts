@@ -4,14 +4,10 @@ import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 
 describe('Git integration tests', async () => {
-  let plugin: PluginTester;
-
-  beforeEach(() => {
-    plugin = new PluginTester(path.resolve('./src/index.ts'));
-  })
+  const pluginPath = path.resolve('./src/index.ts');
 
   it('Can add global user name and email', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'git',
         username: 'test',
@@ -30,7 +26,7 @@ describe('Git integration tests', async () => {
   })
 
   it('Can modify git user name and email', { timeout: 300000 }, async () => {
-    await plugin.fullTest([
+    await PluginTester.fullTest(pluginPath, [
       {
         type: 'git',
         username: 'test2',
@@ -47,9 +43,5 @@ describe('Git integration tests', async () => {
         expect(username.toString('utf-8').trim()).to.equal('test2')
       }
     });
-  })
-
-  afterEach(() => {
-    plugin.kill();
   })
 })

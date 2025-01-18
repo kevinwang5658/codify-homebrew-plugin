@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, untildify, } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, untildify, } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
@@ -26,12 +26,12 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       schema: AsdfInstallSchema,
       parameterSettings: {
         directory: { type: 'directory', inputTransformation: (input) => untildify(input) },
-        versions: { type: 'stateful', definition: new AsdfPluginVersionsParameter() }
+        versions: { type: 'array' }
       },
       import: {
         requiredParameters: ['directory'],
         refreshKeys: ['directory']
-      }
+      },
     }
   }
 
@@ -50,7 +50,9 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
   }
 
   async refresh(parameters: Partial<AsdfInstallConfig>): Promise<Partial<AsdfInstallConfig> | Partial<AsdfInstallConfig>[] | null> {
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
+    const $ = getPty();
+
+    if ((await $.spawnSafe('which asdf')).status === SpawnStatus.ERROR) {
       return null;
     }
 
@@ -58,7 +60,7 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       const desiredTools = await this.getToolVersions(parameters.directory);
 
       for (const { plugin, version } of desiredTools) {
-        const { status, data } = await codifySpawn(`asdf current ${plugin}`, { throws: false, cwd: parameters.directory });
+        const { status, data } = await $.spawnSafe(`asdf current ${plugin}`, { cwd: parameters.directory });
         if (status === SpawnStatus.ERROR || data.trim() === '') {
           return null;
         }
@@ -74,12 +76,25 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       };
     }
 
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
+    // Directly check plugin version
+    const versionsQuery = await $.spawnSafe(`asdf list ${parameters.plugin}`);
+    if (versionsQuery.status === SpawnStatus.ERROR || versionsQuery.data.trim() === 'No versions installed') {
       return null;
     }
 
+    const latest = parameters.versions?.includes('latest')
+      ? (await codifySpawn(`asdf latest ${parameters.plugin}`)).data.trim()
+      : null;
+
+    const versions = versionsQuery.data.split(/\n/)
+      .map((l) => l.trim())
+      .map((l) => l.replaceAll('*', ''))
+      .map((l) => l.trim() === latest ? 'latest' : l)
+      .filter(Boolean);
+
     return {
       plugin: parameters.plugin,
+      versions,
     }
   }
 
@@ -95,7 +110,10 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       }
 
       await codifySpawn('asdf install', { cwd: plan.desiredConfig.directory });
+      return;
     }
+
+    await codifySpawn(`asdf install ${plan.desiredConfig?.plugin} ${plan.desiredConfig.versions?.join(' ')}`);
   }
 
   async destroy(plan: DestroyPlan<AsdfInstallConfig>): Promise<void> {
@@ -106,7 +124,12 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       for (const { plugin, version } of desiredTools) {
         await codifySpawn(`asdf uninstall ${plugin} ${version}`);
       }
+
+      return;
     }
+
+    // Other path is uninstalled through the stateful parameter
+    await codifySpawn(`asdf uninstall ${plan.currentConfig?.plugin} ${plan.currentConfig.versions?.join(' ')}`);
   }
 
   private async getToolVersions(directory: string): Promise<Array<{ plugin: string; version: string }>> {

@@ -1,4 +1,4 @@
-import { ParameterSetting, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { getPty, ParameterSetting, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 import path from 'node:path';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
@@ -25,7 +25,9 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   }
 
   async refresh(desired: string[], config: Partial<HomebrewConfig> | null): Promise<null | string[]> {
-    const caskQuery = await codifySpawn('brew list --casks -1')
+    const $ = getPty();
+
+    const caskQuery = await $.spawnSafe('brew list --casks -1')
 
     if (caskQuery.status === SpawnStatus.SUCCESS && caskQuery.data !== null && caskQuery.data !== undefined) {
       const installedCasks = caskQuery.data
@@ -120,7 +122,16 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   }
 
   private async findConflicts(casks: string[]): Promise<string[]> {
-    const brewInfo = JSON.parse((await codifySpawn(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', ''));
+    const $ = getPty();
+
+    let result: string;
+    if ($) {
+      result = (await $.spawnSafe(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', '')
+    } else {
+      result = (await codifySpawn(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', '')
+    }
+
+    const brewInfo = JSON.parse(result);
     const casksWithConflicts = new Array<string>();
 
     for (const caskInfo of brewInfo.casks) {

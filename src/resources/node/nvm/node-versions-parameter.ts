@@ -1,4 +1,4 @@
-import { ArrayParameterSetting, ArrayStatefulParameter } from 'codify-plugin-lib';
+import { ArrayParameterSetting, ArrayStatefulParameter, getPty } from 'codify-plugin-lib';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { NvmConfig } from './nvm.js';
@@ -12,7 +12,9 @@ export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, 
   }
 
   override async refresh(desired: null | string[]): Promise<null | string[]> {
-    const { data } = await codifySpawn('nvm ls --no-colors --no-alias')
+    const $ = getPty()
+
+    const { data } = await $.spawnSafe('nvm ls --no-colors --no-alias')
 
     const versions = data.split(/\n/)
       .map((l) =>
@@ -27,7 +29,7 @@ export class NvmNodeVersionsParameter extends ArrayStatefulParameter<NvmConfig, 
     // current with what we currently have installed. This is because nvm has weird
     // matching logic that we cannot replicate
     for (const desiredVersion of desired ?? []) {
-      const { status, data } = await codifySpawn(`nvm ls ${desiredVersion} --no-colors`, { throws: false });
+      const { status, data } = await $.spawnSafe(`nvm ls ${desiredVersion} --no-colors`);
 
       if (status !== SpawnStatus.SUCCESS) {
         continue;

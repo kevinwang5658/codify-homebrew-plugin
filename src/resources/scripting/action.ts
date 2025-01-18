@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
@@ -23,6 +23,8 @@ export class ActionResource extends Resource<ActionConfig> {
   }
   
   async refresh(parameters: Partial<ActionConfig>): Promise<Partial<ActionConfig> | Partial<ActionConfig>[] | null> {
+    const $ = getPty();
+
     // Always run if condition doesn't exist
     // TODO: Remove hack. Right now we're returning null to simulate CREATE and a value for NO-OP
     if (!parameters.condition) {
@@ -30,7 +32,7 @@ export class ActionResource extends Resource<ActionConfig> {
     }
     
     const { condition, action, cwd } = parameters;
-    const { status } = await codifySpawn(condition, { throws: false, cwd: cwd ?? undefined });
+    const { status } = await $.spawnSafe(condition, { cwd: cwd ?? undefined });
 
     return status === SpawnStatus.ERROR
       ? null

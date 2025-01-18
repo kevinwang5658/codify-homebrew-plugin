@@ -1,4 +1,4 @@
-import { ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { getPty, ParameterSetting, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { NvmConfig } from './nvm.js';
@@ -12,7 +12,9 @@ export class NvmGlobalParameter extends StatefulParameter<NvmConfig, string>{
   }
 
   override async refresh(): Promise<null | string> {
-    const { data, status } = await codifySpawn('nvm ls default --no-colors', { throws: false })
+    const $ = getPty();
+
+    const { data, status } = await $.spawnSafe('nvm ls default --no-colors')
 
     if (status === SpawnStatus.ERROR) {
       return null;
