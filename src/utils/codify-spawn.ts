@@ -157,7 +157,7 @@ async function externalSpawnWithSudo(
   cmd: string,
   opts: CodifySpawnOptions
 ): Promise<{ status: SpawnStatus, data: string }> {
-  return await new Promise((resolve) => {
+  return new Promise((resolve) => {
     const requestId = nanoid(8);
 
     const listener = (data: IpcMessageV2)=> {
