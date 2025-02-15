@@ -29,7 +29,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
           type: 'directory',
         }
       },
-      import: {
+      importAndDestroy:{
         refreshKeys: ['directory', 'version'],
         defaultRefreshValues: {
           version: 'latest',

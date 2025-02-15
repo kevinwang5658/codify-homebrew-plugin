@@ -30,27 +30,11 @@ export class PathResource extends Resource<PathConfig> {
       id: 'path',
       schema: Schema,
       parameterSettings: {
-        path: {
-          type: 'directory',
-          inputTransformation: (value) => {
-            const escapedPath = untildify(value);
-            return path.resolve(escapedPath)
-          }
-        },
-        paths: {
-          canModify: true,
-          type: 'array',
-          isElementEqual: 'directory',
-          inputTransformation: (values) =>
-            values.map((value: string) => {
-              const escapedPath = untildify(value);
-              return path.resolve(escapedPath)
-            }
-          )
-        },
+        path: { type: 'directory' },
+        paths: { canModify: true, type: 'array', itemType: 'directory' },
         prepend: { default: false }
       },
-      import: {
+      importAndDestroy:{
         refreshKeys: ['paths'],
         defaultRefreshValues: {
           paths: []

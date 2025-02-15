@@ -25,7 +25,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
         directory: { type: 'directory' },
         autoVerifySSH: { type: 'setting', default: true },
       },
-      import: {
+      importAndDestroy:{
         requiredParameters: ['directory']
       },
       dependencies: [
@@ -99,6 +99,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
 
   override async destroy(plan: DestroyPlan<GitCloneConfig>): Promise<void> {
     // Do nothing here. We don't want to destroy a user's repository.
+    // TODO: change this to skip the destroy only if the user's repo has pending changes (check via git)
     throw new Error(`The git-clone resource is not designed to delete folders. 
 Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.parentDirectory! + this.extractBasename(plan.currentConfig.repository))} manually and re-apply`);
   }

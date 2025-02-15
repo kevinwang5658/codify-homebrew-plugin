@@ -33,19 +33,13 @@ export class AsdfLocalResource extends Resource<AsdfLocalConfig> {
       dependencies: ['asdf', 'asdf-plugin'],
       schema: AsdfLocalSchema,
       parameterSettings: {
-        directory: {
-          inputTransformation: (input) => untildify(input),
-        },
-        directories: {
-          type: 'array',
-          canModify: true,
-          inputTransformation: (input) => input.map((i: any) => untildify(i)),
-        },
+        directory: { type: 'directory' },
+        directories: { type: 'array', canModify: true, itemType: 'directory' },
         version: {
           canModify: true,
         }
       },
-      import: {
+      importAndDestroy:{
         requiredParameters: ['plugin', 'directory'],
         refreshKeys: ['plugin', 'version', 'directory'],
         defaultRefreshValues: {

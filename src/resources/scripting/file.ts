@@ -22,7 +22,7 @@ export class FileResource extends Resource<FileConfig> {
         contents: { canModify: true },
         onlyCreate: { type: 'boolean' }
       },
-      import: {
+      importAndDestroy:{
         requiredParameters: ['path']
       }
     }

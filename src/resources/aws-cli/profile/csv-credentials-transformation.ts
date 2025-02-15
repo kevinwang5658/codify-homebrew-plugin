@@ -1,3 +1,4 @@
+import { type InputTransformation } from 'codify-plugin-lib';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
@@ -5,9 +6,8 @@ import path from 'node:path';
 import { untildify } from '../../../utils/untildify.js';
 import { AwsProfileConfig } from './aws-profile.js';
 
-export const CSVCredentialsParameter = {
-
-  async transform(input: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig>> {
+export const CSVCredentialsTransformation: InputTransformation = {
+  async to(input: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig>> {
     if (!input.csvCredentials) {
       return input;
     }
@@ -30,13 +30,17 @@ export const CSVCredentialsParameter = {
       throw new Error(`File ${csvPath} is not properly formatted. It must be a csv in the format: awsAccessKeyId, awsSecretAccessKey`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { csvCredentials: _, awsAccessKeyId: __, awsSecretAccessKey: ___, ...restOfParameters } = input;
-
     return {
-      ...restOfParameters,
+      ...input,
       awsAccessKeyId,
       awsSecretAccessKey,
     };
   },
+  
+  from(output: Partial<AwsProfileConfig>): Partial<AwsProfileConfig> {
+    delete output.awsAccessKeyId
+    delete output.awsSecretAccessKey
+    
+    return output;
+  }
 };
