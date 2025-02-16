@@ -33,11 +33,13 @@ export class JenvResource extends Resource<JenvConfig> {
   override async validate(parameters: Partial<JenvConfig>): Promise<void> {
     if (parameters.add) {
       for (const version of parameters.add) {
-        if (JAVA_VERSION_INTEGER.test(version)) {
-          if (!OPENJDK_SUPPORTED_VERSIONS.includes(Number.parseInt(version, 10))) {
+        if (version.startsWith('/opt/homebrew/Cellar/openjdk@')) {
+          const versionStr = version.split('/').at(4)?.split('@').at(1);
+
+          if (!OPENJDK_SUPPORTED_VERSIONS.includes(Number.parseInt(versionStr!, 10))) {
             throw new Error(`Version must be one of [${OPENJDK_SUPPORTED_VERSIONS.join(', ')}]`)
           }
-          
+
           continue;
         }
 
