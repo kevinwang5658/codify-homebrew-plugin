@@ -23,7 +23,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       parameterSettings: {
         parentDirectory: { type: 'directory' },
         directory: { type: 'directory' },
-        autoVerifySSH: { type: 'setting', default: true },
+        autoVerifySSH: { type: 'boolean', default: true, setting: true },
       },
       importAndDestroy:{
         requiredParameters: ['directory']

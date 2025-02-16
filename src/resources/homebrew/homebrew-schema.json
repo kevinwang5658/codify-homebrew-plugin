@@ -28,6 +28,10 @@
     "skipAlreadyInstalledCasks": {
       "type": "boolean",
       "description": "Skips installing an casks which has already been installed externally. This prevents homebrew from conflicting with the existing install. Defaults to true."
+    },
+    "onlyPlanUserInstalled": {
+      "type": "boolean",
+      "description": "Only consider packages that the user has explicitly specified in the plan and ignore any dependent packages"
     }
   },
   "additionalProperties": false
