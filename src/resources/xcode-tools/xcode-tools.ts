@@ -11,6 +11,9 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
   getSettings(): ResourceSettings<XCodeToolsConfig> {
     return {
       id: 'xcode-tools',
+      importAndDestroy: {
+        preventImport: true,
+      }
     }
   }
 

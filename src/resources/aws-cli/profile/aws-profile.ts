@@ -84,11 +84,11 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       profile,
     };
 
-    if (parameters.region) {
+    if (parameters.region !== undefined) {
       result.region = await this.getAwsConfigureValueOrNull('region', profile);
     }
 
-    if (parameters.output) {
+    if (parameters.output !== undefined) {
       result.output = await this.getAwsConfigureValueOrNull('output', profile);
     }
 

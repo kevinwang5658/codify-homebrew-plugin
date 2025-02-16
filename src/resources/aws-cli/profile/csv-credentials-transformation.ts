@@ -38,9 +38,11 @@ export const CSVCredentialsTransformation: InputTransformation = {
   },
   
   from(output: Partial<AwsProfileConfig>): Partial<AwsProfileConfig> {
-    delete output.awsAccessKeyId
-    delete output.awsSecretAccessKey
-    
+    if (output.csvCredentials) {
+      delete output.awsAccessKeyId;
+      delete output.awsSecretAccessKey;
+    }
+
     return output;
   }
 };
