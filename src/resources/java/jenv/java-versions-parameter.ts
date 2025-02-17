@@ -26,13 +26,14 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
 
             return i;
           }),
-        from: (output: string[]) => output.map((i) => {
+        // De-dupe the results for imports.
+        from: (output: string[]) => [...new Set(output.map((i) => {
           if (i.startsWith('/opt/homebrew/Cellar/openjdk@')) {
             return i.split('/').at(4)?.split('@').at(1)
           }
 
           return i;
-        }),
+        }))],
       }
     }
   }
@@ -57,7 +58,7 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
     return [...versionPaths]
       // Re-map the path back to what was provided in the config
       .map((v) => {
-        const matched = params.find((p) => v.includes(p));
+        const matched = params?.find((p) => v.includes(p));
         return matched === undefined
           ? v
           : matched;
