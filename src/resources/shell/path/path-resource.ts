@@ -12,11 +12,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { untildify } from '../../../utils/untildify.js';
 import Schema from './path-schema.json';
-import { Utils } from '../../../utils/index.js';
 
 export interface PathConfig extends StringIndexedObject {
   path: string;
@@ -53,23 +51,27 @@ export class PathResource extends Resource<PathConfig> {
     const $ = getPty();
 
     const { data: existingPaths } = await $.spawnSafe('echo $PATH')
-    if (parameters.path && (existingPaths.includes(parameters.path) || existingPaths.includes(untildify(parameters.path)))) {
+    if (parameters.path !== undefined && (existingPaths.includes(parameters.path) || existingPaths.includes(untildify(parameters.path)))) {
       return parameters;
     }
 
-    if (parameters.paths) {
+    // MacOS defines system paths in /etc/paths and inside the /etc/paths.d folders
+    const systemPaths = (await fs.readFile('/etc/paths', 'utf8'))
+      .split(/\n/)
+      .filter(Boolean);
 
-      // Only add the paths that are found on the system
-      const existingPathsSplit = new Set(existingPaths.split(':')
+    for (const pathFile of await fs.readdir('/etc/paths.d')) {
+      systemPaths.push(...(await fs.readFile(path.join('/etc/paths.d', pathFile), 'utf8'))
+        .split(/\n/)
         .filter(Boolean)
-        .map((l) => path.resolve(l.trim())))
+      );
+    }
 
-      const foundPaths = parameters.paths.filter((p) => existingPathsSplit.has(p));
-      if (foundPaths.length === 0) {
-        return null;
-      }
+    const userPaths = existingPaths.split(':')
+      .filter((p) => !systemPaths.includes(p))
 
-      return { paths: foundPaths, prepend: parameters.prepend };
+    if (parameters.paths !== undefined) {
+      return { paths: userPaths, prepend: parameters.prepend };
     }
 
     return null;
