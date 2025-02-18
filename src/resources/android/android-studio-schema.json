@@ -3,13 +3,16 @@
   "$id": "https://www.codifycli.com/pgcli.json",
   "title": "Android studios resource",
   "type": "object",
+  "description": "Install Android Studios.",
   "properties": {
     "version": {
       "type": "string",
       "description": "Android studios version. Visit: https://developer.android.com/studio/releases for version info"
     },
     "directory": {
-
+      "type": "string",
+      "description": "The directory to install Android Studios into. Defaults to /Applications",
+      "default": "/Applications"
     }
   },
   "additionalProperties": false

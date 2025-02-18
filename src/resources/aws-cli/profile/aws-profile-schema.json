@@ -3,6 +3,7 @@
   "$id": "https://www.codifycli.com/aws-profile.json",
   "title": "Aws-CLI configure resource",
   "type": "object",
+  "description": "Configures AWS profiles.",
   "properties": {
     "profile": {
       "type": "string",

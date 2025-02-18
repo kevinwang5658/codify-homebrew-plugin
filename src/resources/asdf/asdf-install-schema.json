@@ -3,6 +3,7 @@
   "$id": "https://www.codifycli.com/asdf-install-schema.json",
   "title": "Asdf plugin resource",
   "type": "object",
+  "description": "Install a .tools-version file or directly install an asdf plugin + tool version.",
   "properties": {
     "plugin": {
       "type": "string",

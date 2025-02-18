@@ -2,16 +2,20 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://www.codifycli.com/action.json",
   "title": "Action resource",
+  "description": "Run custom scripts using the action resource. A condition can be specified to conditionally trigger a script.",
   "type": "object",
   "properties": {
     "condition": {
-      "type": "string"
+      "type": "string",
+      "description": "A condition (in bash) that decides if the action is triggered. Return 0 to trigger and any non-zero exit code to skip."
     },
     "action": {
-      "type": "string"
+      "type": "string",
+      "description": "A bash command to run."
     },
     "cwd": {
-      "type": "string"
+      "type": "string",
+      "description": "The directory that the action should be ran in."
     }
   },
   "required": ["action"],

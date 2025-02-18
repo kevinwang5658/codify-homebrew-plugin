@@ -3,6 +3,7 @@
   "$id": "https://www.codifycli.com/asdf-global-schema.json",
   "title": "Asdf plugin global resource",
   "type": "object",
+  "description": "Manage the asdf global version for a tool. An asdf-global or asdf-local resource must be specified before a tool installed with asdf is active in the shell.",
   "properties": {
     "plugin": {
       "type": "string",
