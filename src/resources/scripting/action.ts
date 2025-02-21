@@ -21,7 +21,8 @@ export class ActionResource extends Resource<ActionConfig> {
       },
       importAndDestroy: {
         preventImport: true,
-      }
+      },
+      allowMultiple: true,
     }
   }
   

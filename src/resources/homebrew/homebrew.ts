@@ -37,7 +37,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
         directory: { type: 'directory' },
         skipAlreadyInstalledCasks: { type: 'boolean', default: true, setting: true },
         onlyPlanUserInstalled: { type: 'boolean', default: true, setting: true },
-      },
+      }
     };
   }
 

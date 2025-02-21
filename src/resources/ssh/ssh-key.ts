@@ -57,6 +57,9 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
           return input;
         },
         from: (output) => output,
+      },
+      allowMultiple: {
+        identifyingParameters: ['fileName'],
       }
     }
   }

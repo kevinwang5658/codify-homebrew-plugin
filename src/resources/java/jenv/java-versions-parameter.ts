@@ -119,8 +119,8 @@ export class JenvAddParameter extends ArrayStatefulParameter<JenvConfig, string>
 
     try {
       await codifySpawn(`jenv add ${location}`, { throws: true });
-    } catch (error: Error) {
-      if (error.message.includes('jenv: cannot rehash')) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('jenv: cannot rehash')) {
         await this.rehash();
         return;
       }

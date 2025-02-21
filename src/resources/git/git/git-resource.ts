@@ -22,7 +22,6 @@ export class GitResource extends Resource<GitConfig> {
         email: { type: 'stateful', definition: new GitEmailParameter(), },
         username: { type: 'stateful', definition: new GitNameParameter() },
       },
-
     }
   }
 

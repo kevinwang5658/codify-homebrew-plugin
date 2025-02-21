@@ -37,6 +37,9 @@ export class PathResource extends Resource<PathConfig> {
         defaultRefreshValues: {
           paths: []
         }
+      },
+      allowMultiple: {
+        identifyingParameters: ['path', 'paths']
       }
     }
   }

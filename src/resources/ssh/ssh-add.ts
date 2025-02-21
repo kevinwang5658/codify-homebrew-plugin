@@ -26,6 +26,9 @@ export class SshAddResource extends Resource<SshAddConfig> {
           type: 'boolean'
         }
       },
+      allowMultiple: {
+        identifyingParameters: ['path']
+      },
       dependencies: ['ssh-key', 'ssh-config']
     }
   }

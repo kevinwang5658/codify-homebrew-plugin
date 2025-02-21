@@ -24,6 +24,9 @@ export class FileResource extends Resource<FileConfig> {
       importAndDestroy:{
         refreshKeys: ['path', 'contents'],
         requiredParameters: ['path']
+      },
+      allowMultiple: {
+        identifyingParameters: ['path']
       }
     }
   }

@@ -28,6 +28,9 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       importAndDestroy:{
         requiredParameters: ['directory']
       },
+      allowMultiple: {
+        identifyingParameters: ['repository'],
+      },
       dependencies: [
         'ssh-key',
         'ssh-add-key',

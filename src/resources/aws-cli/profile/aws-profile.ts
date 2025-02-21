@@ -47,6 +47,9 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       importAndDestroy:{
         refreshKeys: ['output', 'profile', 'awsAccessKeyId', 'awsSecretAccessKey', 'region'],
         requiredParameters: ['profile']
+      },
+      allowMultiple: {
+        identifyingParameters: ['profile']
       }
     };
   }
