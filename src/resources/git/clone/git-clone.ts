@@ -1,10 +1,9 @@
-import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
-import { untildify } from '../../../utils/untildify.js';
 import Schema from './git-clone-schema.json';
 
 
@@ -29,7 +28,22 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
         requiredParameters: ['directory']
       },
       allowMultiple: {
-        identifyingParameters: ['repository'],
+        matcher: (desired, current) => {
+          const desiredPath = desired.parentDirectory
+            ? path.resolve(desired.parentDirectory, this.extractBasename(desired.repository!)!)
+            : path.resolve(desired.directory!);
+
+          const currentPath = current.parentDirectory
+            ? path.resolve(current.parentDirectory, this.extractBasename(current.repository!)!)
+            : path.resolve(current.directory!);
+
+          const isNotCaseSensitive = process.platform === 'darwin';
+          if (isNotCaseSensitive) {
+            return desiredPath.toLowerCase() === currentPath.toLowerCase()
+          }
+ 
+          return desiredPath === currentPath;
+        }
       },
       dependencies: [
         'ssh-key',

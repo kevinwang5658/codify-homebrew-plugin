@@ -19,6 +19,11 @@
     "prepend": {
       "type": "boolean",
       "description": "Whether or not to prepend to the path."
+    },
+    "declarationsOnly": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only plan and manage explicitly declared paths found in shell startup scripts. This value is forced to true for stateful mode"
     }
   },
   "additionalProperties": false
