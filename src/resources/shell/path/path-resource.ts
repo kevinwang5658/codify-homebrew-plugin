@@ -43,10 +43,12 @@ export class PathResource extends Resource<PathConfig> {
         declarationsOnly: { default: false, setting: true },
       },
       importAndDestroy:{
-        refreshKeys: ['paths', 'declarationsOnly'],
-        defaultRefreshValues: {
-          paths: [],
-          declarationsOnly: true,
+        refreshMapper: (input) => {
+          if (Object.keys(input).length === 0) {
+            return { paths: [], declarationsOnly: true };
+          }
+
+          return input;
         }
       },
       allowMultiple: {
@@ -56,7 +58,7 @@ export class PathResource extends Resource<PathConfig> {
           }
 
           const currentPaths = new Set(current.paths)
-          return desired.paths?.some((p) => currentPaths.has(p));
+          return desired.paths?.some((p) => currentPaths.has(p)) ?? false;
         }
       }
     }
@@ -69,6 +71,9 @@ export class PathResource extends Resource<PathConfig> {
   }
 
   override async refresh(parameters: Partial<PathConfig>, context: RefreshContext<PathConfig>): Promise<Partial<PathConfig> | null> {
+    console.log(parameters)
+    console.log(context);
+
     // If declarations only, we only look into files to find potential paths
     if (parameters.declarationsOnly || context.isStateful) {
       const pathsResult = new Set<string>();
@@ -86,6 +91,8 @@ export class PathResource extends Resource<PathConfig> {
         }
 
         if (parameters.paths) {
+          console.log(`Path declarations ${path}`);
+          console.log(pathDeclarations)
           pathDeclarations
             .map((d) => d.path)
             .forEach((d) => pathsResult.add(resolvePathWithVariables(untildify(d))));
@@ -95,6 +102,8 @@ export class PathResource extends Resource<PathConfig> {
       if (parameters.path || pathsResult.size === 0) {
         return null;
       }
+
+      console.log(pathsResult)
 
       return {
         ...parameters,
