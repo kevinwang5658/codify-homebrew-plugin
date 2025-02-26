@@ -44,7 +44,7 @@ export class PathResource extends Resource<PathConfig> {
       },
       importAndDestroy:{
         refreshMapper: (input) => {
-          if (Object.keys(input).length === 0) {
+          if ((input.paths?.length === 0 || !input?.paths) && input?.path === undefined) {
             return { paths: [], declarationsOnly: true };
           }
 
@@ -71,9 +71,6 @@ export class PathResource extends Resource<PathConfig> {
   }
 
   override async refresh(parameters: Partial<PathConfig>, context: RefreshContext<PathConfig>): Promise<Partial<PathConfig> | null> {
-    console.log(parameters)
-    console.log(context);
-
     // If declarations only, we only look into files to find potential paths
     if (parameters.declarationsOnly || context.isStateful) {
       const pathsResult = new Set<string>();
@@ -91,8 +88,6 @@ export class PathResource extends Resource<PathConfig> {
         }
 
         if (parameters.paths) {
-          console.log(`Path declarations ${path}`);
-          console.log(pathDeclarations)
           pathDeclarations
             .map((d) => d.path)
             .forEach((d) => pathsResult.add(resolvePathWithVariables(untildify(d))));
@@ -102,8 +97,6 @@ export class PathResource extends Resource<PathConfig> {
       if (parameters.path || pathsResult.size === 0) {
         return null;
       }
-
-      console.log(pathsResult)
 
       return {
         ...parameters,
