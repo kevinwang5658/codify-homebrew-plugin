@@ -16,11 +16,12 @@ import { TapsParameter } from './tap-parameter.js';
 const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 
 export interface HomebrewConfig extends ResourceConfig {
-  casks?: string[],
-  directory?: string,
-  formulae?: string[],
-  taps?: string[],
-  skipAlreadyInstalledCasks: boolean
+  casks?: string[];
+  directory?: string;
+  formulae?: string[];
+  taps?: string[];
+  skipAlreadyInstalledCasks: boolean;
+  onlyPlanUserInstalled: boolean
 }
 
 export class HomebrewResource extends Resource<HomebrewConfig> {
@@ -34,8 +35,9 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
         formulae: { type: 'stateful', definition: new FormulaeParameter(), order: 2 },
         casks: { type: 'stateful', definition: new CasksParameter(), order: 3 },
         directory: { type: 'directory' },
-        skipAlreadyInstalledCasks: { type: 'setting', default: true }
-      },
+        skipAlreadyInstalledCasks: { type: 'boolean', default: true, setting: true },
+        onlyPlanUserInstalled: { type: 'boolean', default: true, setting: true },
+      }
     };
   }
 

@@ -40,7 +40,7 @@ export class SshConfigFileResource extends Resource<SshConfig> {
       parameterSettings: {
         hosts: { type: 'stateful', definition: new SshConfigHostsParameter() }
       },
-      import: {
+      importAndDestroy: {
         refreshKeys: ['hosts'],
         defaultRefreshValues: { hosts: [] },
         requiredParameters: []

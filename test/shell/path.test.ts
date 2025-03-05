@@ -36,6 +36,9 @@ describe('Path resource integration tests', async () => {
         paths: [tempDir1, tempDir2],
       }
     ], {
+      validatePlan: (plan) => {
+        console.log(JSON.stringify(plan, null, 2));
+      },
       validateApply: () => {
         const path = execSync('source ~/.zshrc; echo $PATH').toString('utf-8').trim()
         expect(path).to.include(tempDir1);

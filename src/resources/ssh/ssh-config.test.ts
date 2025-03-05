@@ -12,7 +12,7 @@ describe('Ssh config unit test', () => {
 
   it('Can remap the input hosts objects', async () => {
     const resource = new SshConfigFileResource();
-    const transformedInput = resource.getSettings().inputTransformation({
+    const transformedInput = resource.getSettings().transformation?.to({
       hosts: [
         {
           Host: '*',

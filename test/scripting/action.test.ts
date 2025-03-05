@@ -14,6 +14,7 @@ describe('Action tests', () => {
       { type: 'action', condition: '[ -d ~/tmp ]', action: 'mkdir ~/tmp; touch ~/tmp/testFile' }
     ], {
       skipUninstall: true,
+      skipImport: true,
       validateApply: (plans) => {
         expect(plans[0]).toMatchObject({
           operation: ResourceOperation.CREATE,
@@ -30,6 +31,7 @@ describe('Action tests', () => {
       { type: 'action', condition: 'echo okay', action: 'mkdir ~/tmp; touch ~/tmp/testFile' }
     ], {
       skipUninstall: true,
+      skipImport: true,
       validatePlan: (plans) => {
         expect(plans[0]).toMatchObject({
           operation: ResourceOperation.NOOP,
@@ -44,6 +46,7 @@ describe('Action tests', () => {
       { type: 'action', condition: '[ -e testFile ]', action: 'touch testFile', cwd: '~/tmp2' }
     ], {
       skipUninstall: true,
+      skipImport: true,
       validatePlan: (plans) => {
         expect(plans[0]).toMatchObject({
           operation: ResourceOperation.CREATE,
@@ -57,6 +60,7 @@ describe('Action tests', () => {
       { type: 'action', condition: '[ -e testFile ]', action: 'touch testFile', cwd: '~/tmp2' }
     ], {
       skipUninstall: true,
+      skipImport: true,
       validatePlan: (plans) => {
         expect(plans[0]).toMatchObject({
           operation: ResourceOperation.NOOP,

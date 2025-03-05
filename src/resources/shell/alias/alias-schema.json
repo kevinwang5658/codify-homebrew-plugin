@@ -1,13 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://www.codifycli.com/path.json",
-  "title": "Path resource",
+  "$id": "https://www.codifycli.com/alias.json",
+  "title": "Alias resource",
+  "description": "Manages user aliases. It permanently saves the alias by adding it to the shell startup script.",
   "type": "object",
   "properties": {
     "alias": {
       "type": "string",
       "pattern": "^[^ \t\n/\\$`=|&;()<>'\"]*$",
-      "description": "The path to append. This parameter cannot be used at the same time as paths"
+      "description": "The name of the alias"
     },
     "value": {
       "type": "string",

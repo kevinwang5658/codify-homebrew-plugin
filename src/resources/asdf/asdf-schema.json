@@ -3,6 +3,7 @@
   "$id": "https://www.codifycli.com/asdf-schema.json",
   "title": "Asdf resource",
   "type": "object",
+  "description": "Installs asdf and manages asdf plugins. Use 'asdf-install' or 'asdf-plugin' to install the actual tool. Use 'asdf-global' or 'asdf-local' to activate the tool in the shell.",
   "properties": {
     "plugins": {
       "type": "array",

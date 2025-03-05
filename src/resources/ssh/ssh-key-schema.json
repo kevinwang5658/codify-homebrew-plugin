@@ -2,6 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://www.codifycli.com/ssh-key.json",
   "title": "Ssh key resource",
+  "description": "Generate and manage a ssh private/public key.",
   "type": "object",
   "properties": {
     "keyType": {

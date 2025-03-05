@@ -21,9 +21,9 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
     }
   }
 
-  override async refresh(): Promise<null | string[]> {
+  override async refresh(desired: unknown, config: Partial<HomebrewConfig>): Promise<null | string[]> {
     const $ = getPty();
-    const formulaeQuery = await $.spawnSafe('brew list --formula -1')
+    const formulaeQuery = await $.spawnSafe(`brew list --formula -1 ${config.onlyPlanUserInstalled ? '--installed-on-request' : ''}`)
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data !== null && formulaeQuery.data !== undefined) {
       return formulaeQuery.data

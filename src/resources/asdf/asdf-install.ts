@@ -25,10 +25,10 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       dependencies: ['asdf'],
       schema: AsdfInstallSchema,
       parameterSettings: {
-        directory: { type: 'directory', inputTransformation: (input) => untildify(input) },
+        directory: { type: 'directory' },
         versions: { type: 'array' }
       },
-      import: {
+      importAndDestroy:{
         requiredParameters: ['directory'],
         refreshKeys: ['directory']
       },

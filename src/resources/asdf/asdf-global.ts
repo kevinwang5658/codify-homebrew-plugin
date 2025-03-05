@@ -18,7 +18,7 @@ export class AsdfGlobalResource extends Resource<AsdfGlobalConfig> {
       id: 'asdf-global',
       dependencies: ['asdf', 'asdf-plugin'],
       schema: AsdfGlobalSchema,
-      import: {
+      importAndDestroy:{
         requiredParameters: ['plugin'],
         refreshKeys: ['plugin', 'version'],
         defaultRefreshValues: {

@@ -2,16 +2,20 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://www.codifycli.com/file.json",
   "title": "File resource",
+  "description": "Manages a file.",
   "type": "object",
   "properties": {
     "path": {
-      "type": "string"
+      "type": "string",
+      "description": "The location of the file."
     },
     "contents": {
-      "type": "string"
+      "type": "string",
+      "description": "The contents of the file."
     },
     "onlyCreate": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Forces the resource to only create the file if it doesn't exist but don't detect any content changes."
     }
   },
   "required": ["path", "contents"],

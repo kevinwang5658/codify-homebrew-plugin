@@ -14,6 +14,8 @@ describe('XCode tools install tests', async () => {
   it('Can install xcode tools', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [{
       type: 'xcode-tools',
-    }]);
+    }], {
+      skipImport: true,
+    });
   })
 })

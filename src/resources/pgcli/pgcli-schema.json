@@ -3,6 +3,7 @@
   "$id": "https://www.codifycli.com/pgcli.json",
   "title": "Pgcli resource",
   "type": "object",
+  "description": "Installs pgcli.",
   "properties": {},
   "additionalProperties": false
 }

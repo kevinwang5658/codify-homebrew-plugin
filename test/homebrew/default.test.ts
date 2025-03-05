@@ -91,7 +91,13 @@ describe('Homebrew main resource integration tests', () => {
               "previousValue": null,
               "newValue": true,
               "operation": "noop"
-            }
+            },
+            {
+              "name": "onlyPlanUserInstalled",
+              "newValue": true,
+              "operation": "noop",
+              "previousValue": null,
+            },
           ]
         })
 

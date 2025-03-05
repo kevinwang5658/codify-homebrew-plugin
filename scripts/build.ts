@@ -74,14 +74,15 @@ const mergedSchemas = [...schemasMap.entries()].map(([type, schema]) => {
 
     delete resourceSchema.$id;
     delete resourceSchema.$schema;
-    resourceSchema.description = `Resource type: "${type}" | ${resourceSchema.title}`;
     delete resourceSchema.title;
+    delete resourceSchema.oneOf;
     delete resourceSchema.properties.type;
 
     if (schema) {
       delete schema.$id;
       delete schema.$schema;
       delete schema.title;
+      delete schema.oneOf;
     }
 
     return mergeJsonSchemas([schema ?? {}, resourceSchema, { properties: { type: { const: type, type: 'string' } } }]);

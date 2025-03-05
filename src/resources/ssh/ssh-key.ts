@@ -38,22 +38,28 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
         passphrase: { canModify: true },
         folder: { type: 'directory', default: '~/.ssh' }
       },
-      import: {
+      importAndDestroy:{
         requiredParameters: ['fileName'],
         defaultRefreshValues: {
           passphrase: '',
         }
       },
-      inputTransformation(input) {
-        if (!input.keyType) {
-          input.keyType = 'ed25519';
-        }
+      transformation: {
+        to(input) {
+          if (!input.keyType) {
+            input.keyType = 'ed25519';
+          }
 
-        if (!input.fileName) {
-          input.fileName = `id_${input.keyType}`;
-        }
+          if (!input.fileName) {
+            input.fileName = `id_${input.keyType}`;
+          }
 
-        return input;
+          return input;
+        },
+        from: (output) => output,
+      },
+      allowMultiple: {
+        identifyingParameters: ['fileName'],
       }
     }
   }

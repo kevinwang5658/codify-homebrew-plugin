@@ -2,11 +2,12 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://www.codifycli.com/vscode.json",
   "title": "Vscode resource",
+  "description": "Installs Vscode.",
   "type": "object",
   "properties": {
     "directory": {
       "type": "string",
-      "description": "The installation of VSCode. This value defaults to the Applications folder",
+      "description": "The directory to install VSCode into. Defaults to /Applications.",
       "default": "/Applications"
     }
   },

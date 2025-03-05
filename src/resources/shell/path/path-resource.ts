@@ -3,7 +3,7 @@ import {
   DestroyPlan,
   getPty,
   ModifyPlan,
-  ParameterChange,
+  ParameterChange, RefreshContext, resolvePathWithVariables,
   Resource,
   ResourceSettings
 } from 'codify-plugin-lib';
@@ -12,48 +12,53 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { untildify } from '../../../utils/untildify.js';
 import Schema from './path-schema.json';
-import { Utils } from '../../../utils/index.js';
 
 export interface PathConfig extends StringIndexedObject {
   path: string;
   paths: string[];
   prepend: boolean;
+  declarationsOnly: boolean;
 }
 
 export class PathResource extends Resource<PathConfig> {
+  private readonly PATH_DECLARATION_REGEX = /((export PATH=)|(path+=\()|(path=\())(.+?)[\n;]/g;
+  private readonly PATH_REGEX = /(?<=[="':(])([^"'\n\r]+?)(?=["':)\n;])/g
+  private readonly filePaths = [
+    path.join(os.homedir(), '.zshrc'),
+    path.join(os.homedir(), '.zprofile'),
+    path.join(os.homedir(), '.zshenv'),
+  ]
+
   getSettings(): ResourceSettings<PathConfig> {
     return {
       id: 'path',
       schema: Schema,
       parameterSettings: {
-        path: {
-          type: 'directory',
-          inputTransformation: (value) => {
-            const escapedPath = untildify(value);
-            return path.resolve(escapedPath)
-          }
-        },
-        paths: {
-          canModify: true,
-          type: 'array',
-          isElementEqual: 'directory',
-          inputTransformation: (values) =>
-            values.map((value: string) => {
-              const escapedPath = untildify(value);
-              return path.resolve(escapedPath)
-            }
-          )
-        },
-        prepend: { default: false }
+        path: { type: 'directory' },
+        paths: { canModify: true, type: 'array', itemType: 'directory' },
+        prepend: { default: false, setting: true },
+        declarationsOnly: { default: false, setting: true },
       },
-      import: {
-        refreshKeys: ['paths'],
-        defaultRefreshValues: {
-          paths: []
+      importAndDestroy:{
+        refreshMapper: (input) => {
+          if ((input.paths?.length === 0 || !input?.paths) && input?.path === undefined) {
+            return { paths: [], declarationsOnly: true };
+          }
+
+          return input;
+        }
+      },
+      allowMultiple: {
+        matcher: (desired, current) => {
+          if (desired.path) {
+            return desired.path === current.path;
+          }
+
+          const currentPaths = new Set(current.paths)
+          return desired.paths?.some((p) => currentPaths.has(p)) ?? false;
         }
       }
     }
@@ -65,27 +70,67 @@ export class PathResource extends Resource<PathConfig> {
     }
   }
 
-  override async refresh(parameters: Partial<PathConfig>): Promise<Partial<PathConfig> | null> {
-    const $ = getPty();
+  override async refresh(parameters: Partial<PathConfig>, context: RefreshContext<PathConfig>): Promise<Partial<PathConfig> | null> {
+    // If declarations only, we only look into files to find potential paths
+    if (parameters.declarationsOnly || context.isStateful) {
+      const pathsResult = new Set<string>();
 
-    const { data: existingPaths } = await $.spawnSafe('echo $PATH')
-    if (parameters.path && (existingPaths.includes(parameters.path) || existingPaths.includes(untildify(parameters.path)))) {
-      return parameters;
-    }
+      for (const path of this.filePaths) {
+        if (!(await FileUtils.fileExists(path))) {
+          continue;
+        }
 
-    if (parameters.paths) {
+        const contents = await fs.readFile(path, 'utf8');
+        const pathDeclarations = this.findAllPathDeclarations(contents);
 
-      // Only add the paths that are found on the system
-      const existingPathsSplit = new Set(existingPaths.split(':')
-        .filter(Boolean)
-        .map((l) => path.resolve(l.trim())))
+        if (parameters.path && pathDeclarations.some((d) => resolvePathWithVariables(untildify(d.path)) === parameters.path)) {
+          return parameters;
+        }
 
-      const foundPaths = parameters.paths.filter((p) => existingPathsSplit.has(p));
-      if (foundPaths.length === 0) {
+        if (parameters.paths) {
+          pathDeclarations
+            .map((d) => d.path)
+            .forEach((d) => pathsResult.add(resolvePathWithVariables(untildify(d))));
+        }
+      }
+
+      if (parameters.path || pathsResult.size === 0) {
         return null;
       }
 
-      return { paths: foundPaths, prepend: parameters.prepend };
+      return {
+        ...parameters,
+        paths: [...pathsResult],
+      }
+    }
+
+    // Otherwise look in path variable to see if it exists
+    const $ = getPty();
+    const { data: existingPaths } = await $.spawnSafe('echo $PATH')
+
+    if (parameters.path !== undefined && (
+      existingPaths.includes(parameters.path)
+    )) {
+      return parameters;
+    }
+
+    // MacOS defines system paths in /etc/paths and inside the /etc/paths.d folders
+    const systemPaths = (await fs.readFile('/etc/paths', 'utf8'))
+      .split(/\n/)
+      .filter(Boolean);
+
+    for (const pathFile of await fs.readdir('/etc/paths.d')) {
+      systemPaths.push(...(await fs.readFile(path.join('/etc/paths.d', pathFile), 'utf8'))
+        .split(/\n/)
+        .filter(Boolean)
+      );
+    }
+
+    const userPaths = existingPaths.split(':')
+      .filter((p) => !systemPaths.includes(p))
+
+    if (parameters.paths && userPaths.length > 0) {
+      return { ...parameters, paths: userPaths };
     }
 
     return null;
@@ -142,68 +187,63 @@ export class PathResource extends Resource<PathConfig> {
   }
   
   private async removePath(pathValue: string): Promise<void> {
-    const fileInfo = await this.findPathDeclaration(pathValue);
-    if (!fileInfo) {
+    const foundPaths = await this.findPath(pathValue);
+    if (foundPaths.length === 0) {
       throw new Error(`Could not find path declaration: ${pathValue}. Please manually remove the path and then re-run Codify`);
     }
 
-    const { content, pathsFound, filePath } = fileInfo;
-
-    const fileLines = content
-      .split(/\n/);
-
-    for (const pathFound of pathsFound) {
-      const line = fileLines
-        .findIndex((l) => l.includes(pathFound));
-
-      if (line === -1) {
-        throw new Error(`Could not find path declaration: ${pathValue}. Please manually remove the path and then re-run Codify`);
-      }
-
-      fileLines.splice(line, 1);
+    for (const foundPath of foundPaths) {
+      console.log(`Removing path: ${pathValue} from ${foundPath.file}`)
+      await FileUtils.removeFromFile(foundPath.file, foundPath.pathDeclaration.declaration);
     }
-
-    console.log(`Removing path: ${pathValue} from ${filePath}`)
-    await fs.writeFile(filePath, fileLines.join('\n'), { encoding: 'utf8' });
   }
 
-  private async findPathDeclaration(value: string): Promise<PathDeclaration | null> {
-    const filePaths = [
-      path.join(os.homedir(), '.zshrc'),
-      path.join(os.homedir(), '.zprofile'),
-      path.join(os.homedir(), '.zshenv'),
-    ];
+  private async findPath(pathToFind: string): Promise<Array<{ file: string; pathDeclaration: PathDeclaration }>> {
+    const result = [];
 
-    const searchTerms = [
-      `export PATH=${value}:$PATH`,
-      `export PATH=$PATH:${value}`,
-      `path+=('${value}')`,
-      `path+=(${value})`,
-      `path=('${value}' $path)`,
-      `path=(${value} $path)`
-    ]
+    for (const filePath of this.filePaths) {
+      if (!(await FileUtils.fileExists(filePath))) {
+        continue;
+      }
 
-    for (const filePath of filePaths) {
-      if (await FileUtils.fileExists(filePath)) {
-        const fileContents = await fs.readFile(filePath, 'utf8');
+      const contents = await fs.readFile(filePath, 'utf8');
+      const pathDeclarations = this.findAllPathDeclarations(contents);
 
-        const pathsFound = searchTerms.filter((st) => fileContents.includes(st));
-        if (pathsFound.length > 0) {
-          return {
-            filePath,
-            content: fileContents,
-            pathsFound,
-          }
+      const foundDeclarations = pathDeclarations.filter((d) => d.path === pathToFind);
+      result.push(...foundDeclarations.map((d) => ({ pathDeclaration: d, file: filePath })));
+    }
+
+    return result;
+  }
+
+  findAllPathDeclarations(contents: string): PathDeclaration[] {
+    const results = [];
+    const pathDeclarations = contents.matchAll(this.PATH_DECLARATION_REGEX);
+
+    for (const declaration of pathDeclarations) {
+      const trimmedDeclaration = declaration[0];
+      const paths = trimmedDeclaration.matchAll(this.PATH_REGEX);
+
+      for (const path of paths) {
+        const trimmedPath = path[0];
+        if (trimmedPath === '$PATH') {
+          continue;
         }
+
+        results.push({
+          declaration: trimmedDeclaration.trim(),
+          path: trimmedPath,
+        });
       }
     }
 
-    return null;
+    return results;
   }
 }
 
 interface PathDeclaration {
-  filePath: string;
-  content: string;
-  pathsFound: string[];
+  // The entire declaration. Ex for: export PATH="$PYENV_ROOT/bin:$PATH", it's export PATH="$PYENV_ROOT/bin:$PATH"
+  declaration: string;
+  // The path being added. Ex for: export PATH="$PYENV_ROOT/bin:$PATH", it's $PYENV_ROOT/bin
+  path: string;
 }

@@ -14,7 +14,7 @@ import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import Schema from './aws-profile-schema.json'
-import { CSVCredentialsParameter } from './csv-credentials-parameter.js';
+import { CSVCredentialsTransformation } from './csv-credentials-transformation.js';
 
 export interface AwsProfileConfig extends StringIndexedObject {
   awsAccessKeyId: string;
@@ -37,24 +37,28 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       parameterSettings: {
         awsAccessKeyId: { canModify: true },
         awsSecretAccessKey: { canModify: true },
+        csvCredentials: { type: 'directory', setting: true }, // Type setting means it won't be included in the plan calculation
         output: { default: 'json', canModify: true },
         profile: { default: 'default', canModify: true },
         metadataServiceNumAttempts: { canModify: true },
         metadataServiceTimeout: { canModify: true },
       },
-      inputTransformation: CSVCredentialsParameter.transform,
-      import: {
+      transformation: CSVCredentialsTransformation,
+      importAndDestroy:{
         refreshKeys: ['output', 'profile', 'awsAccessKeyId', 'awsSecretAccessKey', 'region'],
         requiredParameters: ['profile']
+      },
+      allowMultiple: {
+        identifyingParameters: ['profile']
       }
     };
   }
 
   override async validate(parameters: Partial<AwsProfileConfig>): Promise<void> {
-    if (parameters.csvCredentials
-      && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
-      throw new Error('Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey')
-    }
+    // if (parameters.csvCredentials
+    //   && (parameters.awsAccessKeyId || parameters.awsSecretAccessKey)) {
+    //   throw new Error('Csv credentials cannot be added together with awsAccessKeyId or awsSecretAccessKey')
+    // }
   }
 
   override async refresh(parameters: Partial<AwsProfileConfig>): Promise<Partial<AwsProfileConfig> | null> {
@@ -83,11 +87,11 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       profile,
     };
 
-    if (parameters.region) {
+    if (parameters.region !== undefined) {
       result.region = await this.getAwsConfigureValueOrNull('region', profile);
     }
 
-    if (parameters.output) {
+    if (parameters.output !== undefined) {
       result.output = await this.getAwsConfigureValueOrNull('output', profile);
     }
 

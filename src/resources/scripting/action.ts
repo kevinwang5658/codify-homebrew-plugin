@@ -18,7 +18,11 @@ export class ActionResource extends Resource<ActionConfig> {
       schema,
       parameterSettings: {
         cwd: { type: 'directory' },
-      }
+      },
+      importAndDestroy: {
+        preventImport: true,
+      },
+      allowMultiple: true,
     }
   }
   

@@ -1,10 +1,9 @@
-import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
-import { untildify } from '../../../utils/untildify.js';
 import Schema from './git-clone-schema.json';
 
 
@@ -23,10 +22,28 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       parameterSettings: {
         parentDirectory: { type: 'directory' },
         directory: { type: 'directory' },
-        autoVerifySSH: { type: 'setting', default: true },
+        autoVerifySSH: { type: 'boolean', default: true, setting: true },
       },
-      import: {
+      importAndDestroy:{
         requiredParameters: ['directory']
+      },
+      allowMultiple: {
+        matcher: (desired, current) => {
+          const desiredPath = desired.parentDirectory
+            ? path.resolve(desired.parentDirectory, this.extractBasename(desired.repository!)!)
+            : path.resolve(desired.directory!);
+
+          const currentPath = current.parentDirectory
+            ? path.resolve(current.parentDirectory, this.extractBasename(current.repository!)!)
+            : path.resolve(current.directory!);
+
+          const isNotCaseSensitive = process.platform === 'darwin';
+          if (isNotCaseSensitive) {
+            return desiredPath.toLowerCase() === currentPath.toLowerCase()
+          }
+ 
+          return desiredPath === currentPath;
+        }
       },
       dependencies: [
         'ssh-key',
@@ -99,6 +116,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
 
   override async destroy(plan: DestroyPlan<GitCloneConfig>): Promise<void> {
     // Do nothing here. We don't want to destroy a user's repository.
+    // TODO: change this to skip the destroy only if the user's repo has pending changes (check via git)
     throw new Error(`The git-clone resource is not designed to delete folders. 
 Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.parentDirectory! + this.extractBasename(plan.currentConfig.repository))} manually and re-apply`);
   }

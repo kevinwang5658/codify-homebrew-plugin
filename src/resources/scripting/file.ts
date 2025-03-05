@@ -19,11 +19,14 @@ export class FileResource extends Resource<FileConfig> {
       schema,
       parameterSettings: {
         path: { type: 'directory' },
-        contents: { canModify: true },
-        onlyCreate: { type: 'boolean' }
+        contents: { canModify: true }
       },
-      import: {
+      importAndDestroy:{
+        refreshKeys: ['path', 'contents'],
         requiredParameters: ['path']
+      },
+      allowMultiple: {
+        identifyingParameters: ['path']
       }
     }
   }

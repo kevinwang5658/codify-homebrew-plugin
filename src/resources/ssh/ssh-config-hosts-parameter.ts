@@ -33,16 +33,28 @@ export class SshConfigHostsParameter extends StatefulParameter<SshConfig, SshCon
       filterInStatelessMode(desired, current) {
         return current.filter((c) => desired.some((d) => SshConfigHostsParameter.isHostObjectSame(c, d)))
       },
-      inputTransformation: (hosts: SshConfigOptions[]) =>  hosts.map((h) => Object.fromEntries(
-        Object.entries(h)
-          .map(([k, v]) => [
-            k,
-            typeof v === 'boolean'
-              ? (v ? 'yes' : 'no') // The file takes 'yes' or 'no' instead of booleans
-              : v,
-          ])
-        )
-      )
+      transformation: {
+        to: (hosts: SshConfigOptions[]) =>  hosts.map((h) => Object.fromEntries(
+            Object.entries(h)
+              .map(([k, v]) => [
+                k,
+                typeof v === 'boolean'
+                  ? (v ? 'yes' : 'no') // The file takes 'yes' or 'no' instead of booleans
+                  : v,
+              ])
+          )
+        ),
+        from: (hosts: SshConfigOptions[]) => hosts.map((h) => Object.fromEntries(
+            Object.entries(h)
+              .map(([k, v]) => [
+                k,
+                v === 'yes' || v === 'no'
+                  ? (v === 'yes') // The file takes 'yes' or 'no' instead of booleans
+                  : v,
+              ])
+          )
+        ),
+      }
     }
   }
 

@@ -101,6 +101,14 @@ ${lines.join('\n')}`)
     return os.homedir()
   }
 
+  static async removeFromFile(filePath: string, search: string): Promise<void> {
+    const contents = await fs.readFile(filePath, 'utf8');
+    const newContents = contents.replaceAll(search, '');
+
+    await fs.writeFile(filePath, newContents, 'utf8');
+  }
+
+
   static async removeLineFromFile(filePath: string, search: RegExp | string): Promise<void> {
     const file = await fs.readFile(filePath, 'utf8')
     const lines = file.split('\n');
