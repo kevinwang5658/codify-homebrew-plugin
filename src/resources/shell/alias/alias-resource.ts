@@ -31,8 +31,8 @@ export class AliasResource extends Resource<AliasConfig> {
         value: { canModify: true }
       },
       allowMultiple: {
-        identifyingParameters: ['alias']
-      }
+        identifyingParameters: ['alias'],
+      },
     }
   }
 

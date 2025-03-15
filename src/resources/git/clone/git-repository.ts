@@ -6,7 +6,6 @@ import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import Schema from './git-clone-schema.json';
 
-
 export interface GitCloneConfig extends ResourceConfig {
   autoVerifySSH: boolean
   directory?: string,
@@ -17,7 +16,7 @@ export interface GitCloneConfig extends ResourceConfig {
 export class GitCloneResource extends Resource<GitCloneConfig> {
   getSettings(): ResourceSettings<GitCloneConfig> {
     return {
-      id: 'git-clone',
+      id: 'git-repository',
       schema: Schema,
       parameterSettings: {
         parentDirectory: { type: 'directory' },
@@ -43,6 +42,16 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
           }
  
           return desiredPath === currentPath;
+        },
+        findAllParameters: async () => {
+          const $ = getPty();
+          const { data } = await $.spawnSafe('find ~ -type d \\( -path $HOME/Library -o -path $HOME/Pictures -o -path $HOME/Utilities -o -path "$HOME/.*" \\) -prune -o -name .git -print')
+
+          return data
+              ?.split(/\n/)?.filter(Boolean)
+              ?.map((p) => path.dirname(p))
+              ?.map((directory) => ({ directory }))
+            ?? [];
         }
       },
       dependencies: [

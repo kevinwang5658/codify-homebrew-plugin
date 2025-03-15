@@ -18,11 +18,9 @@ export const Utils = {
   },
 
   async findInFolder(dir: string, search: string): Promise<string[]> {
-    const { data } = await codifySpawn('ls -a', {
-      cwd: dir,
-    })
+    const data = await fs.readdir(dir);
 
-    return data.split(/\n/)
+    return data
       .filter((l) => l.includes(search))
       .map((l) => path.join(dir, l));
   },
@@ -58,7 +56,7 @@ export const Utils = {
       throw new Error(`Found file at ${path}. Cannot create a directory there`)
     }
 
-    await codifySpawn(`mkdir -p ${path}`)
+    await fs.mkdir(path, { recursive: true })
   },
 
   async findInstallLocation(name: string): Promise<null | string> {

@@ -1,13 +1,14 @@
 import {
   CreatePlan,
   DestroyPlan,
-  getPty,
   ModifyPlan,
   ParameterChange,
   Resource,
-  ResourceSettings
+  ResourceSettings,
+  getPty
 } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -60,6 +61,23 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
       },
       allowMultiple: {
         identifyingParameters: ['fileName'],
+        async findAllParameters() {
+          try {
+            const sshPublicKeys = await fs.readdir(path.join(os.homedir(), '.ssh'));
+
+            return sshPublicKeys.filter((p) => {
+              if (!p.endsWith('.pub')) {
+                return false;
+              }
+
+              // We only want public / private pairs.
+              const name = p.slice(0, - 4);
+              return sshPublicKeys.includes(name)
+            }).map((p) => ({ fileName: p.slice(0, - 4) }))
+          } catch {
+            return [];
+          }
+        }
       }
     }
   }
@@ -142,7 +160,7 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
     // Passphrase can't be called in stateless mode because we don't know what the previous password is
     if (pc.name === 'passphrase') {
       await codifySpawn(`ssh-keygen -f ${plan.desiredConfig.fileName} -N ${pc.newValue} -P ${pc.previousValue} -p`)
-      return;
+      
     }
   }
 

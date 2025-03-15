@@ -1,5 +1,5 @@
 import { Ajv } from 'ajv';
-import { SudoError } from 'codify-plugin-lib';
+import { SudoError, VerbosityLevel } from 'codify-plugin-lib';
 import {
   IpcMessage,
   IpcMessageV2,
@@ -7,9 +7,9 @@ import {
   SudoRequestResponseData,
   SudoRequestResponseDataSchema
 } from 'codify-schemas';
+import { nanoid } from 'nanoid';
 import { SpawnOptions, spawn } from 'node:child_process';
 import stripAnsi from 'strip-ansi';
-import { nanoid } from 'nanoid';
 
 const ajv = new Ajv({
   strict: true,
@@ -139,7 +139,7 @@ async function internalSpawn(
     // please node that this is not a full replacement for 'inherit'
     // the child process can and will detect if stdout is a pty and change output based on it
     // the terminal context is lost & ansi information (coloring) etc will be lost
-    if (stdout && stderr) {
+    if (stdout && stderr && VerbosityLevel.get() > 0) {
       stdout.pipe(process.stdout)
       stderr.pipe(process.stderr)
     }

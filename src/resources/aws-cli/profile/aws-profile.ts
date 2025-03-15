@@ -40,16 +40,30 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
         csvCredentials: { type: 'directory', setting: true }, // Type setting means it won't be included in the plan calculation
         output: { default: 'json', canModify: true },
         profile: { default: 'default', canModify: true },
-        metadataServiceNumAttempts: { canModify: true },
-        metadataServiceTimeout: { canModify: true },
+        metadataServiceNumAttempts: { canModify: true, setting: true },
+        metadataServiceTimeout: { canModify: true, setting: true },
       },
       transformation: CSVCredentialsTransformation,
       importAndDestroy:{
-        refreshKeys: ['output', 'profile', 'awsAccessKeyId', 'awsSecretAccessKey', 'region'],
         requiredParameters: ['profile']
       },
       allowMultiple: {
-        identifyingParameters: ['profile']
+        identifyingParameters: ['profile'],
+        findAllParameters: async () => {
+          const $ = getPty();
+          const { status } = await $.spawnSafe('which aws');
+          if (status === 'error') {
+            return [];
+          }
+
+          const { data } = await $.spawnSafe('aws configure list-profiles')
+
+          return data
+            ?.split(/\n/)
+            ?.filter(Boolean)
+            ?.map((profile) => ({ profile }))
+          ?? [];
+        }
       }
     };
   }

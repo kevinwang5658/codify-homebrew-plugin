@@ -8,7 +8,7 @@ import { AsdfLocalResource } from './resources/asdf/asdf-local.js';
 import { AsdfPluginResource } from './resources/asdf/asdf-plugin.js';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
-import { GitCloneResource } from './resources/git/clone/git-clone.js';
+import { GitCloneResource } from './resources/git/clone/git-repository.js';
 import { GitResource } from './resources/git/git/git-resource.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
