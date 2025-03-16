@@ -55,7 +55,7 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
       return;
     }
 
-    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --formula ${formulae.join(' ')}`)
+    const result = await codifySpawn(`HOMEBREW_NO_AUTO_UPDATE=1 SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --formula ${formulae.join(' ')}`)
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Installed formula: ${formulae.join(' ')}`);

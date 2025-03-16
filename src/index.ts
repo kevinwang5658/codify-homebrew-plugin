@@ -16,6 +16,8 @@ import { JenvResource } from './resources/java/jenv/jenv.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
 import { PyenvResource } from './resources/python/pyenv/pyenv.js';
+import { Virtualenv } from './resources/python/virtualenv/virtualenv.js';
+import { VirtualenvProject } from './resources/python/virtualenv/virtualenv-project.js';
 import { ActionResource } from './resources/scripting/action.js';
 import { FileResource } from './resources/scripting/file.js';
 import { AliasResource } from './resources/shell/alias/alias-resource.js';
@@ -55,6 +57,8 @@ runPlugin(Plugin.create(
     new SshConfigFileResource(),
     new SshAddResource(),
     new ActionResource(),
-    new FileResource()
+    new FileResource(),
+    new Virtualenv(),
+    new VirtualenvProject()
   ])
 )
