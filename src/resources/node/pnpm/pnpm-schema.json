@@ -9,7 +9,7 @@
       "type": "string",
       "description": "A specific version of pnpm to install. (defaults to the latest)"
     },
-    "globalEnv": {
+    "globalEnvNodeVersion": {
       "type": "string",
       "description": "Set the global node version. Corresponds to pnpm env --global use"
     }

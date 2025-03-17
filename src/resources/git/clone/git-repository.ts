@@ -57,7 +57,8 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
       dependencies: [
         'ssh-key',
         'ssh-add-key',
-        'ssh-config'
+        'ssh-config',
+        'wait-github-ssh-key'
       ]
     }
   }

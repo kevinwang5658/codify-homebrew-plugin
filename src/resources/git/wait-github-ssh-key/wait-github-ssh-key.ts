@@ -14,6 +14,11 @@ export class WaitGithubSshKey extends Resource<WaitGithubSshKeyConfig> {
   getSettings(): ResourceSettings<WaitGithubSshKeyConfig> {
     return {
       id: 'wait-github-ssh-key',
+      dependencies: [
+        'ssh-key',
+        'ssh-add-key',
+        'ssh-config',
+      ]
     }
   }
 
