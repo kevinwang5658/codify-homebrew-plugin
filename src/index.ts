@@ -11,6 +11,7 @@ import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { GitCloneResource } from './resources/git/clone/git-repository.js';
 import { GitResource } from './resources/git/git/git-resource.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
+import { WaitGithubSshKey } from './resources/git/wait-github-ssh-key/wait-github-ssh-key.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
 import { JenvResource } from './resources/java/jenv/jenv.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
@@ -61,6 +62,7 @@ runPlugin(Plugin.create(
     new FileResource(),
     new Virtualenv(),
     new VirtualenvProject(),
-    new Pnpm()
+    new Pnpm(),
+    new WaitGithubSshKey()
   ])
 )

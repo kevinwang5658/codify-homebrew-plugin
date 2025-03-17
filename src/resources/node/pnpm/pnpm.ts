@@ -6,10 +6,12 @@ import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
+import { PnpmGlobalEnvStatefulParameter } from './pnpm-global-env-stateful-parameter.js';
 import schema from './pnpm-schema.json';
 
 export interface PnpmConfig extends ResourceConfig {
   version?: string;
+  globalEnvNodeVersion?: string;
 }
 
 export class Pnpm extends Resource<PnpmConfig> {
@@ -18,7 +20,8 @@ export class Pnpm extends Resource<PnpmConfig> {
       id: 'pnpm',
       schema,
       parameterSettings: {
-        version: { type: 'version' }
+        version: { type: 'version' },
+        globalEnvNodeVersion: { type: 'stateful', definition: new PnpmGlobalEnvStatefulParameter() }
       }
     }
   }
