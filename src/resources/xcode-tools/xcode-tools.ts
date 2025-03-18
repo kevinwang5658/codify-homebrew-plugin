@@ -3,6 +3,7 @@ import { StringIndexedObject } from 'codify-schemas';
 import path from 'node:path';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
+import fs from 'node:fs/promises';
 
 interface XCodeToolsConfig extends StringIndexedObject {}
 
@@ -53,7 +54,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
       await codifySpawn(`softwareupdate -i "${xcodeToolsVersion[0]}" --verbose`, { requiresRoot: true });
 
     } finally {
-      await codifySpawn('rm /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress')
+      await fs.rm('/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress', { force: true, recursive: true });
     }
   }
 

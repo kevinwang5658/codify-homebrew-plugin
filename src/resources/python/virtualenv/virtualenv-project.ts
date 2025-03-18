@@ -40,7 +40,7 @@ export class VirtualenvProject extends Resource<VirtualenvProjectConfig> {
       allowMultiple: {
         identifyingParameters: ['dest'],
       },
-      dependencies: ['virtualenv', 'homebrew', 'pyenv']
+      dependencies: ['virtualenv', 'homebrew', 'pyenv', 'git-repository']
     }
   }
 
