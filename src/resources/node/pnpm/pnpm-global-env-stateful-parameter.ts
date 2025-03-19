@@ -1,4 +1,4 @@
-import { ParameterSetting, Plan, StatefulParameter, getPty } from 'codify-plugin-lib';
+import { ParameterSetting, StatefulParameter, getPty } from 'codify-plugin-lib';
 import fs from 'node:fs/promises';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';

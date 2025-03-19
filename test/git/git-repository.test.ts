@@ -5,13 +5,13 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import { execSync } from 'child_process';
 
-describe('Git clone integration tests', async () => {
+describe('Git repository integration tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install git repo to parent dir', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
       {
-        type: 'git-clone',
+        type: 'git-repository',
         parentDirectory: '~/projects/test',
         repository: 'https://github.com/kevinwang5658/untitled.git'
       }
@@ -34,7 +34,7 @@ describe('Git clone integration tests', async () => {
   it('Can install git repo to specified dir', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
       {
-        type: 'git-clone',
+        type: 'git-repository',
         directory: '~/projects/nested/codify-plugin',
         repository: 'https://github.com/kevinwang5658/untitled.git'
       }

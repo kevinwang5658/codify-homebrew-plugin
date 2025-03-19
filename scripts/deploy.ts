@@ -18,4 +18,4 @@ if (!name) {
 console.log(`Uploading plugin ${name}, version ${version} to cloudflare!`)
 
 const outputFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'dist', 'index.js')
-cp.spawnSync(`source ~/.zshrc; npx wrangler r2 object put plugins/${name}/${version}/index.js --file=${outputFilePath}`, { shell: 'zsh', stdio: 'inherit' });
+cp.spawnSync(`source ~/.zshrc; npx wrangler r2 object put plugins/${name}/${version}/index.js --file=${outputFilePath} --remote`, { shell: 'zsh', stdio: 'inherit' });
