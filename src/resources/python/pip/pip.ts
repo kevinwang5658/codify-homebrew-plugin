@@ -1,12 +1,11 @@
 import {
   CreatePlan,
   DestroyPlan,
+  getPty,
   ModifyPlan,
   ParameterChange,
-  RefreshContext,
   Resource,
-  ResourceSettings,
-  getPty
+  ResourceSettings
 } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
@@ -32,24 +31,20 @@ export class PipResource extends Resource<PipResourceConfig> {
           type: 'array',
           itemType: 'object',
           canModify: true,
-          isElementEqual(desired: PipListResult | string, current: PipListResult | string) {
-            if (typeof desired === 'string' && typeof current === 'string') {
-              return desired === current;
-            }
-
-            // We can do this check because of the pre-filtering we are doing in refresh. It converts the current to match the desired if it is defined.
-            return (desired as PipListResult).name === (current as PipListResult).name;
-          }
+          isElementEqual: this.isEqual,
+          filterInStatelessMode: (desired, current) =>
+            current.filter((c) => desired.find((d) => this.isSame(c, d)))
         },
         virtualEnv: { type: 'directory' }
       },
       allowMultiple: {
         identifyingParameters: ['virtualEnv']
-      }
+      },
+      dependencies: ['pyenv', 'git-repository']
     }
   }
 
-  async refresh(parameters: Partial<PipResourceConfig>, context: RefreshContext<PipResourceConfig>): Promise<Partial<PipResourceConfig> | Partial<PipResourceConfig>[] | null> {
+  async refresh(parameters: Partial<PipResourceConfig>): Promise<Partial<PipResourceConfig> | Partial<PipResourceConfig>[] | null> {
     const pty = getPty()
 
     const { status: pipStatus } = await pty.spawnSafe('which pip');
@@ -93,14 +88,13 @@ export class PipResource extends Resource<PipResourceConfig> {
         return { name, version };
       });
 
-    console.log(parsedInstalledPackages);
-
     return {
       ...parameters,
       install: parsedInstalledPackages,
     }
   }
 
+  // Pip cannot be individually installed. It's installed via installing python. This only installs packages when python is first created.
   async create(plan: CreatePlan<PipResourceConfig>): Promise<void> {
     const { install, virtualEnv } = plan.desiredConfig;
 
@@ -123,11 +117,8 @@ export class PipResource extends Resource<PipResourceConfig> {
     }
   }
 
-  async destroy(plan: DestroyPlan<PipResourceConfig>): Promise<void> {
-    const { install, virtualEnv } = plan.currentConfig;
-
-    await this.pipUninstall(install, virtualEnv);
-  }
+  // Pip cannot be individually destroyed.
+  async destroy(plan: DestroyPlan<PipResourceConfig>): Promise<void> {}
 
   private async pipInstall(packages: Array<PipListResult | string>, virtualEnv?: string): Promise<void> {
     const packagesToInstall = packages.map((p) => {
@@ -159,29 +150,43 @@ export class PipResource extends Resource<PipResourceConfig> {
 
     await codifySpawn(
       (virtualEnv ? `source ${virtualEnv}/bin/activate; ` : '')
-      + `pip install ${packagesToUninstall.join(' ')}`
+      + `pip uninstall -y ${packagesToUninstall.join(' ')}`
     )
   }
 
-  findMatchingForModify(d: PipListResult | string, cList: Array<PipListResult | string>): PipListResult | string | undefined {
-    return cList.find((c) => {
-      if (typeof d === 'string' && typeof c === 'string') {
-        return d === c;
-      }
+  findMatchingForModify(a: PipListResult | string, bList: Array<PipListResult | string>): PipListResult | string | undefined {
+    return bList.find((b) => this.isEqual(a, b))
+  }
 
-      if (!(typeof d === 'object' && typeof c === 'object')) {
-        return false;
-      }
+  isEqual(a: PipListResult | string, b: PipListResult | string): boolean {
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a === b;
+    }
 
-      if (d.name !== c.name) {
-        return false;
-      }
+    if (!(typeof a === 'object' && typeof b === 'object')) {
+      return false;
+    }
 
-      if (d.version && d.version !== c.version) {
-        return false
-      }
+    if (a.name !== b.name) {
+      return false;
+    }
 
-      return true;
-    })
+    if (a.version && a.version !== b.version) {
+      return false
+    }
+
+    return true;
+  }
+
+  isSame(a: PipListResult | string, b: PipListResult | string): boolean {
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a === b;
+    }
+
+    if (!(typeof a === 'object' && typeof b === 'object')) {
+      return false;
+    }
+
+    return a.name === b.name;
   }
 }
