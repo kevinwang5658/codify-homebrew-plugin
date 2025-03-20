@@ -1,15 +1,16 @@
 import {
   CreatePlan,
   DestroyPlan,
-  getPty,
   ModifyPlan,
   ParameterChange,
   Resource,
-  ResourceSettings
+  ResourceSettings,
+  getPty
 } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
+import schema from './pip-schema.json';
 
 interface PipListResult {
   name: string;
@@ -21,11 +22,12 @@ export interface PipResourceConfig extends ResourceConfig {
   virtualEnv?: string,
 }
 
-export class PipResource extends Resource<PipResourceConfig> {
+export class Pip extends Resource<PipResourceConfig> {
 
   getSettings(): ResourceSettings<PipResourceConfig> {
     return {
       id: 'pip',
+      schema,
       parameterSettings: {
         install: {
           type: 'array',
@@ -35,7 +37,7 @@ export class PipResource extends Resource<PipResourceConfig> {
           filterInStatelessMode: (desired, current) =>
             current.filter((c) => desired.find((d) => this.isSame(c, d)))
         },
-        virtualEnv: { type: 'directory' }
+        virtualEnv: { type: 'directory', setting: true }
       },
       allowMultiple: {
         identifyingParameters: ['virtualEnv']
