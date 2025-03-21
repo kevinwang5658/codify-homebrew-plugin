@@ -55,9 +55,8 @@ export class Pip extends Resource<PipResourceConfig> {
     }
 
     const { status: pipListStatus, data: installedPackages } = await pty.spawnSafe(
-      (parameters.virtualEnv ? `source ${parameters.virtualEnv}/bin/activate; ` : '')
-      + 'pip list --format=json --disable-pip-version-check'
-      + (parameters.virtualEnv ? '; deactivate' : ''))
+      Pip.withVirtualEnv('pip list --format=json --disable-pip-version-check', parameters.virtualEnv)
+    )
 
     if (pipListStatus === 'error') {
       return null;
@@ -136,8 +135,7 @@ export class Pip extends Resource<PipResourceConfig> {
     });
 
     await codifySpawn(
-      (virtualEnv ? `source ${virtualEnv}/bin/activate; ` : '')
-      + `pip install ${packagesToInstall.join(' ')}`
+      Pip.withVirtualEnv(`pip install ${packagesToInstall.join(' ')}`, virtualEnv)
     )
   }
 
@@ -151,8 +149,7 @@ export class Pip extends Resource<PipResourceConfig> {
     });
 
     await codifySpawn(
-      (virtualEnv ? `source ${virtualEnv}/bin/activate; ` : '')
-      + `pip uninstall -y ${packagesToUninstall.join(' ')}`
+      Pip.withVirtualEnv(`pip uninstall -y ${packagesToUninstall.join(' ')}`, virtualEnv)
     )
   }
 
@@ -190,5 +187,13 @@ export class Pip extends Resource<PipResourceConfig> {
     }
 
     return a.name === b.name;
+  }
+
+  static withVirtualEnv(command: string, virtualEnv?: string, ): string {
+    if (!virtualEnv) {
+      return command;
+    }
+
+    return `( set -e; source ${virtualEnv}/bin/activate; ${command}; deactivate )`;
   }
 }

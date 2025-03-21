@@ -41,11 +41,11 @@ export class PipSync extends Resource<PipSyncConfig> {
   }
 
   async create(plan: CreatePlan<PipSyncConfig>): Promise<void> {
-    await codifySpawn(PipSync.withVirtualEnv('pip install pip-tools'), { cwd: plan.desiredConfig.cwd ?? undefined })
+    await codifySpawn(PipSync.withVirtualEnv('pip install pip-tools', plan.desiredConfig.virtualEnv), { cwd: plan.desiredConfig.cwd ?? undefined })
   }
 
   async destroy(plan: DestroyPlan<PipSyncConfig>): Promise<void> {
-    await codifySpawn(PipSync.withVirtualEnv('pip uninstall -y pip-tools'), { cwd: plan.currentConfig.cwd ?? undefined })
+    await codifySpawn(PipSync.withVirtualEnv('pip uninstall -y pip-tools', plan.currentConfig.virtualEnv), { cwd: plan.currentConfig.cwd ?? undefined })
   }
 
   static withVirtualEnv(command: string, virtualEnv?: string, ): string {
@@ -53,7 +53,7 @@ export class PipSync extends Resource<PipSyncConfig> {
       return command;
     }
 
-    return `source ${virtualEnv}/bin/activate; ${command}; deactivate`;
+    return `( set -e; source ${virtualEnv}/bin/activate; ${command}; deactivate )`;
   }
 
 }

@@ -1,7 +1,7 @@
 import { ArrayParameterSetting, Plan, StatefulParameter, getPty } from 'codify-plugin-lib';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
-import { PipSync, PipSyncConfig } from './pip-sync.js';
+import { PipSyncConfig } from './pip-sync.js';
 
 export class RequirementFilesParameter extends StatefulParameter<PipSyncConfig, string[]> {
   getSettings(): ArrayParameterSetting {
@@ -18,19 +18,39 @@ export class RequirementFilesParameter extends StatefulParameter<PipSyncConfig, 
     }
     
     const pty = getPty();
-    const { status } = await pty.spawnSafe(PipSync.withVirtualEnv(`pip-sync -n ${desired?.join(' ')}`),  { cwd: config.cwd ?? undefined })
+    const { status } = await pty.spawnSafe(
+      this.appendVirtualEnv(`pip-sync -n ${desired?.join(' ')}`, config.virtualEnv),
+      { cwd: config.cwd ?? undefined }
+    )
     return status === 'error' ? null : desired;
   }
 
   async add(valueToAdd: string[], plan: Plan<PipSyncConfig>): Promise<void> {
-    await codifySpawn(PipSync.withVirtualEnv(`pip-sync ${valueToAdd.join(' ')}`), { cwd: plan.desiredConfig?.cwd ?? undefined })
+    await codifySpawn(
+      this.appendVirtualEnv(`pip-sync ${valueToAdd.join(' ')}`, plan.desiredConfig?.virtualEnv),
+      { cwd: plan.desiredConfig?.cwd ?? undefined }
+    )
   }
   
   async modify(newValue: string[], _: string[], plan: Plan<PipSyncConfig>): Promise<void> {
-    await codifySpawn(PipSync.withVirtualEnv(`pip-sync ${newValue.join(' ')}`), { cwd: plan.desiredConfig?.cwd ?? undefined })
+    await codifySpawn(
+      this.appendVirtualEnv(`pip-sync ${newValue.join(' ')}`, plan.desiredConfig?.virtualEnv),
+      { cwd: plan.desiredConfig?.cwd ?? undefined }
+    )
   }
   
   async remove(valueToRemove: string[], plan: Plan<PipSyncConfig>): Promise<void> {
-    await codifySpawn(PipSync.withVirtualEnv(`pip-sync ${valueToRemove.join(' ')}`),  { cwd: plan.currentConfig?.cwd ?? undefined })
+    await codifySpawn(
+      this.appendVirtualEnv(`pip-sync ${valueToRemove.join(' ')}`, plan.currentConfig?.virtualEnv),
+      { cwd: plan.currentConfig?.cwd ?? undefined }
+    )
+  }
+
+  private appendVirtualEnv(command: string, virtualEnv?: string): string {
+    if (!virtualEnv) {
+      return command;
+    }
+
+    return `( set -e; source ${virtualEnv}/bin/activate; ${command} --python-executable ${virtualEnv}/bin/python; deactivate )`
   }
 }

@@ -1,9 +1,10 @@
-import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
 import { StringIndexedObject } from 'codify-schemas';
+import fs from 'node:fs/promises';
 import path from 'node:path';
+import { compare, coerce } from 'semver';
 
 import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
-import fs from 'node:fs/promises';
 
 interface XCodeToolsConfig extends StringIndexedObject {}
 
@@ -51,7 +52,22 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
         return await this.attemptGUIInstall();
       }
 
-      await codifySpawn(`softwareupdate -i "${xcodeToolsVersion[0]}" --verbose`, { requiresRoot: true });
+      let latestVersion = '';
+      latestVersion = xcodeToolsVersion.length > 0 ? xcodeToolsVersion.reduce((prev, current) => {
+          if (!prev) {
+            return current;
+          }
+          
+          const currentVerIndex = current.lastIndexOf('-')
+          const prevVerIndex = prev.lastIndexOf('-')
+          
+          const currentVer = current.slice(currentVerIndex + 1);
+          const prevVer = prev.slice(prevVerIndex + 1);
+          
+          return compare(coerce(currentVer)!, coerce(prevVer)!) > 0 ? current : prev;
+        }) : xcodeToolsVersion.at(0)!;
+
+      await codifySpawn(`softwareupdate -i "${latestVersion}" --verbose`, { requiresRoot: true });
 
     } finally {
       await fs.rm('/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress', { force: true, recursive: true });
