@@ -45,7 +45,7 @@ export class TapsParameter extends StatefulParameter<HomebrewConfig, string[]> {
       return;
     }
 
-    await codifySpawn(`brew tap ${taps.join(' ')}`)
+    await codifySpawn(`HOMEBREW_NO_AUTO_UPDATE=1 brew tap ${taps.join(' ')}`)
   }
 
   private async uninstallTaps(taps: string[]): Promise<void> {

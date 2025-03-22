@@ -13,13 +13,17 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     return {
       type: 'array',
       isElementEqual(desired, current) {
+        if (desired === current) {
+          return true;
+        }
+
         // Handle the case where the name is fully qualified (tap + name)
         if (desired.includes('/')) {
           const formulaName = desired.split('/').at(-1);
           return formulaName === current;
         }
 
-        return desired === current;
+        return false;
       },
     }
   }
@@ -27,7 +31,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   async refresh(desired: string[], config: Partial<HomebrewConfig> | null): Promise<null | string[]> {
     const $ = getPty();
 
-    const caskQuery = await $.spawnSafe('brew list --casks -1')
+    const caskQuery = await $.spawnSafe('brew list --casks -1 --full-name')
 
     if (caskQuery.status === SpawnStatus.SUCCESS && caskQuery.data !== null && caskQuery.data !== undefined) {
       const installedCasks = caskQuery.data
@@ -66,8 +70,9 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     const casksToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
 
     const skipAlreadyInstalledCasks = plan.desiredConfig?.skipAlreadyInstalledCasks ?? plan.currentConfig?.skipAlreadyInstalledCasks;
-    await this.installCasks(casksToInstall, skipAlreadyInstalledCasks!);
+
     await this.uninstallCasks(casksToUninstall);
+    await this.installCasks(casksToInstall, skipAlreadyInstalledCasks!);
   }
 
   override async remove(valueToRemove: string[]): Promise<void> {
@@ -94,7 +99,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       return;
     }
 
-    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --casks ${casksToInstall.join(' ')}`, { throws: false })
+    const result = await codifySpawn(`HOMEBREW_NO_AUTO_UPDATE=1 SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --casks ${casksToInstall.join(' ')}`, { throws: false })
     if (result.status === SpawnStatus.SUCCESS) {
       // Casks can't detect if a program was installed by other means. If it returns this message, throw an error
       if (result.data.includes('It seems there is already an App at')) {

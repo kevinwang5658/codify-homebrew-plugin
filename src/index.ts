@@ -17,7 +17,10 @@ import { JenvResource } from './resources/java/jenv/jenv.js';
 import { NvmResource } from './resources/node/nvm/nvm.js';
 import { Pnpm } from './resources/node/pnpm/pnpm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
+import { Pip } from './resources/python/pip/pip.js';
+import { PipSync } from './resources/python/pip-sync/pip-sync.js';
 import { PyenvResource } from './resources/python/pyenv/pyenv.js';
+import { VenvProject } from './resources/python/venv/venv-project.js';
 import { Virtualenv } from './resources/python/virtualenv/virtualenv.js';
 import { VirtualenvProject } from './resources/python/virtualenv/virtualenv-project.js';
 import { ActionResource } from './resources/scripting/action.js';
@@ -63,6 +66,9 @@ runPlugin(Plugin.create(
     new Virtualenv(),
     new VirtualenvProject(),
     new Pnpm(),
-    new WaitGithubSshKey()
+    new WaitGithubSshKey(),
+    new VenvProject(),
+    new Pip(),
+    new PipSync()
   ])
 )

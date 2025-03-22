@@ -48,7 +48,8 @@ export class AliasResource extends Resource<AliasConfig> {
 
     const matchedAlias = data.split(/\n/g)
       .find((l) => {
-        const [name] = l.split('=');
+        const firstEqualIndex = l.indexOf('=');
+        const name = l.slice(0, firstEqualIndex);
         return name === desired;
       });
 
@@ -56,7 +57,9 @@ export class AliasResource extends Resource<AliasConfig> {
       return null;
     }
 
-    const [name, value] = matchedAlias.split('=');
+    const firstEqualIndex = matchedAlias.indexOf('=');
+    const name = matchedAlias.slice(0, firstEqualIndex);
+    const value = matchedAlias.slice(firstEqualIndex + 1);
 
     let processedValue = value.trim()
     if ((processedValue.startsWith('\'') && processedValue.endsWith('\'')) || (processedValue.startsWith('"') && processedValue.endsWith('"'))) {

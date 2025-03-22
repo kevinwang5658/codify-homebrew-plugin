@@ -50,7 +50,7 @@ export async function codifySpawn(
 ): Promise<SpawnResult> {
   const throws = opts?.throws ?? true;
 
-  console.log(`Running command: ${cmd}`)
+  console.log(`Running command: ${cmd}` + (opts?.cwd ? `(${opts?.cwd})` : ''))
 
   try {
     // TODO: Need to benchmark the effects of using sh vs zsh for shell.

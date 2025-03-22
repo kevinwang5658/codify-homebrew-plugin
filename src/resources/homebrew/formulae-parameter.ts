@@ -10,20 +10,24 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
     return {
       type: 'array',
       isElementEqual(desired, current) {
+        if (desired === current) {
+          return true;
+        }
+
         // Handle the case where the name is fully qualified (tap + name)
         if (desired.includes('/')) {
           const formulaName = desired.split('/').at(-1);
           return formulaName === current;
         }
 
-        return desired === current;
+        return false;
       },
     }
   }
 
   override async refresh(desired: unknown, config: Partial<HomebrewConfig>): Promise<null | string[]> {
     const $ = getPty();
-    const formulaeQuery = await $.spawnSafe(`brew list --formula -1 ${config.onlyPlanUserInstalled ? '--installed-on-request' : ''}`)
+    const formulaeQuery = await $.spawnSafe(`brew list --formula -1 --full-name ${config.onlyPlanUserInstalled ? '--installed-on-request' : ''}`)
 
     if (formulaeQuery.status === SpawnStatus.SUCCESS && formulaeQuery.data !== null && formulaeQuery.data !== undefined) {
       return formulaeQuery.data
@@ -42,8 +46,8 @@ export class FormulaeParameter extends StatefulParameter<HomebrewConfig, string[
     const formulaeToInstall = newValue.filter((x: string) => !previousValue.includes(x));
     const formulaeToUninstall = previousValue.filter((x: string) => !newValue.includes(x));
 
-    await this.installFormulae(formulaeToInstall);
     await this.uninstallFormulae(formulaeToUninstall);
+    await this.installFormulae(formulaeToInstall);
   }
 
   async remove(valueToRemove: string[]): Promise<void> {
