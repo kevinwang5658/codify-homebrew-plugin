@@ -33,6 +33,7 @@ import { SshKeyResource } from './resources/ssh/ssh-key.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
+import { MacportsResource } from './resources/macports/macports.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -69,6 +70,7 @@ runPlugin(Plugin.create(
     new WaitGithubSshKey(),
     new VenvProject(),
     new Pip(),
-    new PipSync()
+    new PipSync(),
+    new MacportsResource()
   ])
 )

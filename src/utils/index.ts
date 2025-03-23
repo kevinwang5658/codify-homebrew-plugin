@@ -1,8 +1,11 @@
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
 
 import { codifySpawn, SpawnStatus } from './codify-spawn.js';
 import { SpotlightKind, SpotlightUtils } from './spotlight-search.js';
 import path from 'node:path';
+import { finished } from 'node:stream/promises';
+import { Readable } from 'node:stream';
 
 export const Utils = {
   async findApplication(name: string): Promise<string[]> {
@@ -91,5 +94,18 @@ export const Utils = {
   shellEscape(arg: string): string {
     if (/[^\w/:=-]/.test(arg)) return arg.replaceAll(/([ !"#$%&'()*;<>?@[\\\]`{}~])/g, '\\$1')
     return arg;
+  },
+
+  async downloadUrlIntoFile(filePath: string, url: string): Promise<void> {
+    const { body } = await fetch(url)
+
+    const dirname = path.dirname(filePath);
+    if (!await fs.stat(dirname).then((s) => s.isDirectory()).catch(() => false)) {
+      await fs.mkdir(dirname, { recursive: true });
+    }
+
+    const ws = fsSync.createWriteStream(filePath)
+    // Different type definitions here for readable stream (NodeJS vs DOM). Small hack to fix that
+    await finished(Readable.fromWeb(body as never).pipe(ws));
   },
 };
