@@ -11,6 +11,7 @@ import { ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import schema from './pip-schema.json';
+import { PipInstallFilesParameter } from './install-files.js';
 
 interface PipListResult {
   name: string;
@@ -18,8 +19,9 @@ interface PipListResult {
 }
 
 export interface PipResourceConfig extends ResourceConfig {
-  install: Array<PipListResult | string>,
-  virtualEnv?: string,
+  install: Array<PipListResult | string>;
+  installFiles: string[];
+  virtualEnv?: string;
 }
 
 export class Pip extends Resource<PipResourceConfig> {
@@ -37,6 +39,7 @@ export class Pip extends Resource<PipResourceConfig> {
           filterInStatelessMode: (desired, current) =>
             current.filter((c) => desired.find((d) => this.isSame(c, d)))
         },
+        installFiles: { type: 'stateful', definition: new PipInstallFilesParameter(), },
         virtualEnv: { type: 'directory', setting: true }
       },
       allowMultiple: {

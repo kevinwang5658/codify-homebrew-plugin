@@ -25,13 +25,17 @@ describe('Pip resource integration tests', () => {
   })
 
   it('Installs python and installs a package using pip', { timeout: 300000 }, async () => {
+    const requirementsPath = path.join(os.homedir(), 'requirements.txt')
+    fs.writeFileSync(requirementsPath, 'aayush-color')
+
     await PluginTester.fullTest(pluginPath, [
       {
         type: 'pip',
         install: [
           'ffmpeg',
           { name:  'qoverage', version:  "0.1.12"},
-        ]
+        ],
+        installFiles: [requirementsPath]
       }
     ], {
       skipUninstall: true,
