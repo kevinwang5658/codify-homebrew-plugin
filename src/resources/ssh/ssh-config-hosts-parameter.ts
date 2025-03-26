@@ -61,7 +61,7 @@ export class SshConfigHostsParameter extends StatefulParameter<SshConfig, SshCon
   async refresh(): Promise<SshConfigOptions[] | null> {
     const filePath = path.resolve(os.homedir(), '.ssh', 'config');
 
-    const sshConfigFile = await fs.readFile(filePath, 'utf8');
+    const sshConfigFile = await fs.readFile(filePath, 'utf8')
     const hostBlocks = this.parseHostBlocks(sshConfigFile);
 
     return this.parseHostObjects(hostBlocks);
@@ -171,7 +171,9 @@ export class SshConfigHostsParameter extends StatefulParameter<SshConfig, SshCon
   }
 
   private parseHostBlocks(sshConfigFile: string): string[] {
-    return sshConfigFile.split(SSH_CONFIG_REGEX)
+    return sshConfigFile
+      .replaceAll(/#(.*)[\n\r]/g, '') // Remove all comments
+      .split(SSH_CONFIG_REGEX)
       .filter(Boolean)
   }
 

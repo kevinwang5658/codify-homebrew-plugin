@@ -3,6 +3,8 @@ import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
+import { PluginProcess } from 'codify-plugin-test/dist/plugin-process';
+import { ResourceOperation } from 'codify-schemas';
 
 describe('Ssh config tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -90,6 +92,42 @@ Host github.com
         )
       }
     })
+  })
+
+  it('Can handle a file with comments', { timeout: 300000 }, async () => {
+    const configPath = path.join(os.homedir(), '.ssh', 'config');
+
+    const existingFile = await fs.readFile(configPath, 'utf8')
+    await fs.writeFile(configPath, '# This is a comment\n' + existingFile, 'utf8');
+
+    const plugin = new PluginProcess(pluginPath);
+    const plan = await plugin.plan({
+      core: {
+        type: 'ssh-config'
+      },
+      desired: {
+        hosts: [
+          {
+            Host: 'new.com',
+            AddKeysToAgent: true,
+            IdentityFile: 'id_ed25519'
+          },
+          {
+            Host: 'github.com',
+            AddKeysToAgent: true,
+            UseKeychain: true,
+          },
+          {
+            Match: 'User bob,joe,phil',
+            PasswordAuthentication: true,
+          }
+        ],
+      },
+      state: undefined,
+      isStateful: false
+    })
+
+    expect(plan.operation).to.eq(ResourceOperation.NOOP)
   })
 
   it('Can match similar host names + destroy a .ssh/config file by renaming it', { timeout: 300000 }, async () => {
