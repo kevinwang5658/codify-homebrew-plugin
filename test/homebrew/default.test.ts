@@ -131,6 +131,7 @@ describe('Homebrew main resource integration tests', () => {
     }, {
       type: 'homebrew',
       casks: ['visual-studio-code'],
+      dependsOn: ['vscode']
     }], {
       validateApply: async (plans) => {
         expect(plans[0]).toMatchObject({
