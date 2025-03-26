@@ -34,6 +34,7 @@ import { TerraformResource } from './resources/terraform/terraform.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 import { MacportsResource } from './resources/macports/macports.js';
+import { Npm } from './resources/node/npm/npm.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -71,6 +72,7 @@ runPlugin(Plugin.create(
     new VenvProject(),
     new Pip(),
     new PipSync(),
-    new MacportsResource()
+    new MacportsResource(),
+    new Npm(),
   ])
 )
