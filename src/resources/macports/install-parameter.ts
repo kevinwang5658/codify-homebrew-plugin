@@ -46,8 +46,6 @@ export class MacportsInstallParameter extends StatefulParameter<MacportsConfig, 
         return installed;
       })
 
-    console.log(r)
-
     return r;
   }
 

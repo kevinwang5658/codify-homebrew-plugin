@@ -43,7 +43,11 @@ export class Pip extends Resource<PipResourceConfig> {
         virtualEnv: { type: 'directory', setting: true }
       },
       allowMultiple: {
-        identifyingParameters: ['virtualEnv']
+        identifyingParameters: ['virtualEnv'],
+      },
+      importAndDestroy: {
+        refreshKeys: ['install'],
+        requiredParameters: []
       },
       dependencies: ['pyenv', 'git-repository']
     }

@@ -32,7 +32,7 @@ export class NpmGlobalInstallParameter extends StatefulParameter<NpmConfig, Arra
   async refresh(desired: (NpmPackage | string)[] | null, config: Partial<NpmConfig>): Promise<(NpmPackage | string)[] | null> {
     const pty = getPty();
 
-    const { data } = await pty.spawnSafe('npm ls --json --global --depth=0 --loglevel=error')
+    const { data } = await pty.spawnSafe('npm ls --json --global --depth=0 --loglevel=silent')
     if (!data) {
       return null;
     }

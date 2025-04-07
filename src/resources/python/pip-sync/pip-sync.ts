@@ -24,6 +24,9 @@ export class PipSync extends Resource<PipSyncConfig> {
       dependencies: ['pyenv', 'pip', 'venv-project', 'virtualenv-project', 'virtualenv'],
       allowMultiple: {
         identifyingParameters: ['virtualEnv'],
+      },
+      importAndDestroy: {
+        preventImport: true,
       }
     };
   }

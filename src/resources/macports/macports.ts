@@ -41,7 +41,6 @@ export class MacportsResource extends Resource<MacportsConfig> {
   }
 
   override async refresh(parameters: Partial<MacportsConfig>): Promise<Partial<MacportsConfig> | null> {
-    console.log(fsSync.readFileSync(path.join(os.homedir(), '.zshrc'), 'utf8'))
     const $ = getPty();
 
     const homebrewInfo = await $.spawnSafe('which port');
