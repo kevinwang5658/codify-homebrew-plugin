@@ -1,4 +1,4 @@
-import { CreatePlan, DestroyPlan, RefreshContext, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 
 import { NpmGlobalInstallParameter, NpmPackage } from './global-install.js';
@@ -22,7 +22,7 @@ export class Npm extends Resource<NpmConfig> {
     }
   }
 
-  async refresh(parameters: Partial<NpmConfig>, context: RefreshContext<NpmConfig>): Promise<Partial<NpmConfig> | Partial<NpmConfig>[] | null> {
+  async refresh(parameters: Partial<NpmConfig>): Promise<Partial<NpmConfig> | Partial<NpmConfig>[] | null> {
     const pty = getPty();
 
     const { status } = await pty.spawnSafe('which npm')
@@ -34,9 +34,9 @@ export class Npm extends Resource<NpmConfig> {
   }
 
   // Npm gets created with NodeJS
-  async create(plan: CreatePlan<NpmConfig>): Promise<void> {}
+  async create(): Promise<void> {}
 
   // Npm is destroyed with NodeJS
-  destroy(plan: DestroyPlan<NpmConfig>): Promise<void> {}
+  async destroy(): Promise<void> {}
 
 }

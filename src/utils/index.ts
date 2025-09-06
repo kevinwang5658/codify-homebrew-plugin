@@ -1,11 +1,12 @@
-import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
-
-import { codifySpawn, SpawnStatus } from './codify-spawn.js';
-import { SpotlightKind, SpotlightUtils } from './spotlight-search.js';
+import * as fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
-import { finished } from 'node:stream/promises';
 import { Readable } from 'node:stream';
+import { finished } from 'node:stream/promises';
+
+import { SpawnStatus, codifySpawn } from './codify-spawn.js';
+import { SpotlightKind, SpotlightUtils } from './spotlight-search.js';
 
 export const Utils = {
   async findApplication(name: string): Promise<string[]> {
@@ -73,7 +74,7 @@ export const Utils = {
 
   async isArmArch(): Promise<boolean> {
     const query = await codifySpawn('sysctl -n machdep.cpu.brand_string');
-    return /M([0-9])/.test(query.data);
+    return /M(\d)/.test(query.data);
   },
 
   async isDirectoryOnPath(directory: string): Promise<boolean> {
@@ -108,4 +109,8 @@ export const Utils = {
     // Different type definitions here for readable stream (NodeJS vs DOM). Small hack to fix that
     await finished(Readable.fromWeb(body as never).pipe(ws));
   },
+
+  getUser(): string {
+    return os.userInfo().username;
+  }
 };

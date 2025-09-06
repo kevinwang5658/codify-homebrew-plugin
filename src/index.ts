@@ -35,6 +35,7 @@ import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 import { MacportsResource } from './resources/macports/macports.js';
 import { Npm } from './resources/node/npm/npm.js';
+import { DockerResource } from './resources/docker/docker.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -74,5 +75,6 @@ runPlugin(Plugin.create(
     new PipSync(),
     new MacportsResource(),
     new Npm(),
+    new DockerResource(),
   ])
 )
