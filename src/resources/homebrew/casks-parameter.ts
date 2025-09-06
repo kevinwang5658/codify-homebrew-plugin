@@ -131,9 +131,9 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
 
     let result: string;
     if ($) {
-      result = (await $.spawnSafe(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', '')
+      result = (await $.spawnSafe(`brew info -q --json=v2 ${casks.map((c) => `"${c}"`).join(' ')}`)).data.replaceAll('\n', '')
     } else {
-      result = (await codifySpawn(`brew info -q --json=v2 ${casks.join(' ')}`)).data.replaceAll('\n', '')
+      result = (await codifySpawn(`brew info -q --json=v2 ${casks.map((c) => `"${c}"`).join(' ')}`)).data.replaceAll('\n', '')
     }
 
     const brewInfo = JSON.parse(result);

@@ -2,7 +2,7 @@ import { CreatePlan, DestroyPlan, RefreshContext, Resource, ResourceSettings, ge
 import { ResourceConfig } from 'codify-schemas';
 
 import { NpmGlobalInstallParameter, NpmPackage } from './global-install.js';
-import schema from './npm-shema.json'
+import schema from './npm-schema.json'
 
 export interface NpmConfig extends ResourceConfig {
   globalInstall: Array<NpmPackage | string>
