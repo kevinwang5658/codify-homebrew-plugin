@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -30,7 +30,7 @@ MY_SUPER_SECRET_VAR=********`);
       validateImport: async (importResults) => {
         expect(fs.existsSync('./my_test_file')).to.be.true;
 
-        expect(importResults).toMatchObject({
+        expect(importResults[0].parameters).toMatchObject({
           path: './my_test_file',
           remote: 'codify://14d1c15b-baa9-47fb-a298-a50a9d809687:test_file.env',
           hash: 'cec9d0e430250854ac683f062ef71547'
@@ -40,5 +40,11 @@ MY_SUPER_SECRET_VAR=********`);
         expect(fs.existsSync('./my_test_file')).to.be.false;
       }
     });
+  })
+
+  afterAll(() => {
+    if (fs.existsSync('./my_test_file')) {
+      fs.rmSync('./my_test_file');
+    }
   })
 })
