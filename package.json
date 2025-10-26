@@ -13,7 +13,8 @@
     "test": "vitest",
     "rollup": "rollup -c",
     "build": "tsx ./scripts/build.ts",
-    "deploy": "tsx ./scripts/deploy.ts"
+    "deploy": "tsx ./scripts/deploy.ts",
+    "deploy:beta": "BETA=true tsx ./scripts/deploy.ts"
   },
   "keywords": [],
   "author": "",
