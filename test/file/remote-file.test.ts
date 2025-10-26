@@ -14,13 +14,30 @@ describe('File integration tests', async () => {
       {
         type: 'remote-file',
         path: './my_test_file',
-        remote: 'codify://29198d08-08fb-44aa-a014-c45690aa822b:favicon.svg',
+        remote: 'codify://14d1c15b-baa9-47fb-a298-a50a9d809687:test_file.env',
       }
     ], {
-      validateApply: async () => {
+      validateApply: async (plans) => {
+        expect(plans[0].operation).to.eq(ResourceOperation.CREATE);
+
+        expect(fs.existsSync('./my_test_file')).to.be.true;
+        const contents = fs.readFileSync('./my_test_file', 'utf8');
+        expect(contents).to.eq(`MY_VAR_1=abcdef
+MY_VAR_2=123456
+
+MY_SUPER_SECRET_VAR=********`);
+      },
+      validateImport: async (importResults) => {
         expect(fs.existsSync('./my_test_file')).to.be.true;
 
-        console.log(fs.readFileSync('./my_test_file', 'utf8'));
+        expect(importResults).toMatchObject({
+          path: './my_test_file',
+          remote: 'codify://14d1c15b-baa9-47fb-a298-a50a9d809687:test_file.env',
+          hash: 'cec9d0e430250854ac683f062ef71547'
+        })
+      },
+      validateDestroy: async () => {
+        expect(fs.existsSync('./my_test_file')).to.be.false;
       }
     });
   })
