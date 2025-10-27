@@ -60,15 +60,7 @@
             "type": "boolean",
             "description": "Specifies whether to use password authentication."
           }
-        },
-        "oneOf": [
-          {
-            "required": ["Host"]
-          },
-          {
-            "required": ["Match"]
-          }
-        ]
+        }
       }
     }
   },
