@@ -2,10 +2,12 @@ import * as cp from 'node:child_process';
 import path from 'node:path';
 import * as url from 'node:url';
 
+const isBeta = process.env.BETA === 'true';
+
 // This should run the build
 cp.spawnSync('source ~/.zshrc; npm run build', { shell: 'zsh', stdio: 'inherit' });
 
-const version = process.env.npm_package_version;
+const version = isBeta ? 'beta' : process.env.npm_package_version;
 if (!version) {
   throw new Error('Unable to find version');
 }
