@@ -9,17 +9,18 @@ import { AsdfPluginResource } from './resources/asdf/asdf-plugin.js';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
 import { DockerResource } from './resources/docker/docker.js';
+import { FileResource } from './resources/file/file.js';
 import { RemoteFileResource } from './resources/file/remote-file.js';
-import { GitCloneResource } from './resources/git/clone/git-repository.js';
+import { GitCloneResource } from './resources/git/repository/git-repository.js';
 import { GitResource } from './resources/git/git/git-resource.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
 import { WaitGithubSshKey } from './resources/git/wait-github-ssh-key/wait-github-ssh-key.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
 import { JenvResource } from './resources/java/jenv/jenv.js';
 import { MacportsResource } from './resources/macports/macports.js';
-import { Npm } from './resources/node/npm/npm.js';
-import { NvmResource } from './resources/node/nvm/nvm.js';
-import { Pnpm } from './resources/node/pnpm/pnpm.js';
+import { Npm } from './resources/javascript/npm/npm.js';
+import { NvmResource } from './resources/javascript/nvm/nvm.js';
+import { Pnpm } from './resources/javascript/pnpm/pnpm.js';
 import { PgcliResource } from './resources/pgcli/pgcli.js';
 import { Pip } from './resources/python/pip/pip.js';
 import { PipSync } from './resources/python/pip-sync/pip-sync.js';
@@ -36,7 +37,6 @@ import { SshKeyResource } from './resources/ssh/ssh-key.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
-import { FileResource } from './resources/file/file.js';
 
 runPlugin(Plugin.create(
   'default',

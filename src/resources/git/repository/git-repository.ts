@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
-import Schema from './git-clone-schema.json';
+import Schema from './git-repository-schema.json';
 
 export interface GitCloneConfig extends ResourceConfig {
   autoVerifySSH: boolean
