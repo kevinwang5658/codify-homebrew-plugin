@@ -36,7 +36,7 @@ export class AwsProfileResource extends Resource<AwsProfileConfig> {
       schema: Schema,
       parameterSettings: {
         awsAccessKeyId: { canModify: true },
-        awsSecretAccessKey: { canModify: true },
+        awsSecretAccessKey: { canModify: true, isSensitive: true },
         csvCredentials: { type: 'directory', setting: true }, // Type setting means it won't be included in the plan calculation
         output: { default: 'json', canModify: true },
         profile: { default: 'default', canModify: true },

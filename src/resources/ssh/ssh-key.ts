@@ -36,7 +36,7 @@ export class SshKeyResource extends Resource<SshKeyConfig> {
       schema: Schema,
       parameterSettings: {
         comment: { canModify: true },
-        passphrase: { canModify: true },
+        passphrase: { canModify: true, isSensitive: true },
         folder: { type: 'directory', default: '~/.ssh' }
       },
       importAndDestroy:{

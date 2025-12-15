@@ -37,6 +37,7 @@ export class SshConfigFileResource extends Resource<SshConfig> {
     return {
       id: 'ssh-config',
       schema: Schema,
+      isSensitive: true,
       parameterSettings: {
         hosts: { type: 'stateful', definition: new SshConfigHostsParameter() }
       },
