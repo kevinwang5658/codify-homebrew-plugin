@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'child_process';
+import { TestUtils } from '../test-utils.js';
 
 describe('Pgcli integration tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -12,12 +13,12 @@ describe('Pgcli integration tests', async () => {
       { type: 'pgcli' }
     ], {
       validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which pgcli', { shell: 'zsh' })).to.not.throw();
-        expect(() => execSync('source ~/.zshrc; pgcli -v', { shell: 'zsh' })).to.not.throw();
+        expect(() => execSync(TestUtils.getShellCommand('which pgcli'), { shell: TestUtils.getShellName() })).to.not.throw();
+        expect(() => execSync(TestUtils.getShellCommand('pgcli -v'), { shell: TestUtils.getShellName() })).to.not.throw();
       },
       validateDestroy: () => {
-        expect(() => execSync('source ~/.zshrc; which pgcli', { shell: 'zsh' })).to.throw();
-        expect(() => execSync('source ~/.zshrc; pgcli -v', { shell: 'zsh' })).to.throw();
+        expect(() => execSync(TestUtils.getShellCommand('which pgcli'), { shell: TestUtils.getShellName() })).to.throw();
+        expect(() => execSync(TestUtils.getShellCommand('pgcli -v'), { shell: TestUtils.getShellName() })).to.throw();
       }
     })
   })

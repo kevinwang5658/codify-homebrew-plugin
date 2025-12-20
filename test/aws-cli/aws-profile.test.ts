@@ -3,6 +3,7 @@ import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';
+import { TestUtils } from '../test-utils.js';
 
 describe('Aws profile tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -96,7 +97,7 @@ AKIA,zhKpjk
         })
       },
       validateDestroy: async () => {
-        const profiles = execSync('source ~/.zshrc; aws configure list-profiles')
+        const profiles = execSync(TestUtils.getShellCommand('aws configure list-profiles'))
         const profileList = profiles.toString('utf-8').trim().split(/\n/);
         expect(profileList).to.not.include('codify3');
       }
@@ -110,19 +111,19 @@ AKIA,zhKpjk
     accessKeyId: string;
     secretAccessKey: string;
   }) {
-    const profiles = execSync('source ~/.zshrc; aws configure list-profiles')
+    const profiles = execSync(TestUtils.getShellCommand('aws configure list-profiles'))
     expect(profiles.toString('utf-8')).to.include(profile.name);
 
-    const region = execSync(`source ~/.zshrc; aws configure get region --profile ${profile.name}`);
+    const region = execSync(TestUtils.getShellCommand(`aws configure get region --profile ${profile.name}`));
     expect(region.toString('utf-8').trim()).to.equal(profile.region);
 
-    const output = execSync(`source ~/.zshrc; aws configure get output --profile ${profile.name}`);
+    const output = execSync(TestUtils.getShellCommand(`aws configure get output --profile ${profile.name}`));
     expect(output.toString('utf-8').trim()).to.equal(profile.output);
 
-    const accessKeyId = execSync(`source ~/.zshrc; aws configure get aws_access_key_id --profile ${profile.name}`);
+    const accessKeyId = execSync(TestUtils.getShellCommand(`aws configure get aws_access_key_id --profile ${profile.name}`));
     expect(accessKeyId.toString('utf-8').trim()).to.equal(profile.accessKeyId);
 
-    const secretAccessKey = execSync(`source ~/.zshrc; aws configure get aws_secret_access_key --profile ${profile.name}`);
+    const secretAccessKey = execSync(TestUtils.getShellCommand(`aws configure get aws_secret_access_key --profile ${profile.name}`));
     expect(secretAccessKey.toString('utf-8').trim()).to.equal(profile.secretAccessKey);
   }
 

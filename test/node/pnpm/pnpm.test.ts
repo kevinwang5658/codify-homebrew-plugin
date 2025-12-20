@@ -4,6 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import { codifySpawn } from '../../../src/utils/codify-spawn';
+import { TestUtils } from '../../test-utils.js';
 
 describe('Pnpm tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -13,8 +14,8 @@ describe('Pnpm tests', () => {
       { type: 'pnpm' },
     ], {
       validateDestroy: async () => {
-        const zshFile = fs.readFileSync(path.join(os.homedir(), '.zshrc'), 'utf8')
-        expect(zshFile.trim()).to.eq('');
+        const shellRcFile = fs.readFileSync(TestUtils.getPrimaryShellRc(), 'utf8')
+        expect(shellRcFile.trim()).to.eq('');
       }
     })
   })
@@ -28,8 +29,8 @@ describe('Pnpm tests', () => {
         expect(result.data.trim()).to.include('20')
       },
       validateDestroy: async () => {
-        const zshFile = fs.readFileSync(path.join(os.homedir(), '.zshrc'), 'utf8')
-        expect(zshFile.trim()).to.eq('');
+        const shellRcFile = fs.readFileSync(TestUtils.getPrimaryShellRc(), 'utf8')
+        expect(shellRcFile.trim()).to.eq('');
       }
     })
   })

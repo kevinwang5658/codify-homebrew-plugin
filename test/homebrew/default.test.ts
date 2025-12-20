@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { execSync } from 'child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import { TestUtils } from '../test-utils.js';
 
 describe('Homebrew main resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -18,9 +19,9 @@ describe('Homebrew main resource integration tests', () => {
       ]
     }], {
       validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which apr')).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which apr'))).to.not.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.not.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.not.throw;
       },
       testModify: {
         modifiedConfigs: [{
@@ -33,19 +34,19 @@ describe('Homebrew main resource integration tests', () => {
           ],
         }],
         validateModify: () => {
-          expect(() => execSync('source ~/.zshrc; which libxau')).to.not.throw;
-          expect(() => execSync('source ~/.zshrc; which sshpass')).to.not.throw;
-          expect(() => execSync('source ~/.zshrc; which jenv')).to.not.throw;
-          expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
-          expect(() => execSync('source ~/.zshrc; which softnet')).to.not.throw;
+          expect(() => execSync(TestUtils.getShellCommand('which libxau'))).to.not.throw;
+          expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.not.throw;
+          expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.not.throw;
+          expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.not.throw;
+          expect(() => execSync(TestUtils.getShellCommand('which softnet'))).to.not.throw;
         }
       },
       validateDestroy: () => {
-        expect(() => execSync('source ~/.zshrc; which libxau')).to.throw;
-        expect(() => execSync('source ~/.zshrc; which sshpass')).to.throw;
-        expect(() => execSync('source ~/.zshrc; which jenv')).to.throw;
-        expect(() => execSync('source ~/.zshrc; which softnet')).to.throw;
-        expect(() => execSync('source ~/.zshrc; which brew')).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which libxau'))).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which softnet'))).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.throw;
       }
     });
   });
@@ -159,7 +160,7 @@ describe('Homebrew main resource integration tests', () => {
       validateDestroy: async () => {
         const programPath = '/Applications/Visual Studio Code.app'
         expect(async () => await fs.lstat(programPath)).to.throw;
-        expect((await fs.readFile(path.join(os.homedir(), '.zshrc'))).toString('utf-8')).to.not.include('homebrew')
+        expect((await fs.readFile(TestUtils.getPrimaryShellRc())).toString('utf-8')).to.not.include('homebrew')
       }
     })
   })

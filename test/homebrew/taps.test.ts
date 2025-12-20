@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { execSync } from 'child_process';
+import { TestUtils } from '../test-utils.js';
 
 describe('Homebrew taps tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -13,7 +14,7 @@ describe('Homebrew taps tests', () => {
       taps: ['cirruslabs/cli'],
     }], {
       validateApply: () => {
-        expect(execSync('source ~/.zshrc; brew tap')
+        expect(execSync(TestUtils.getShellCommand('brew tap'))
           .toString('utf-8')
           .trim()
           .split(/\n/)
@@ -25,7 +26,7 @@ describe('Homebrew taps tests', () => {
           taps: ['hashicorp/tap'],
         }],
         validateModify: () => {
-          const taps = execSync('source ~/.zshrc; brew tap')
+          const taps = execSync(TestUtils.getShellCommand('brew tap'))
             .toString('utf-8')
             .trim()
             .split(/\n/)
@@ -35,7 +36,7 @@ describe('Homebrew taps tests', () => {
         },
       },
       validateDestroy: () => {
-        expect(() => execSync('source ~/.zshrc; which brew')).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.throw;
       }
     });
   });

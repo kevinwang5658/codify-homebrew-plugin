@@ -127,14 +127,17 @@ export const Utils = {
     return os.platform() === 'linux';
   },
 
-  async getShell(): Promise<'bash' | 'zsh' | 'unknown'> {
+  async getShell(): Promise<'bash' | 'unknown' | 'zsh'> {
     const shell = process.env.SHELL || '';
+
     if (shell.includes('bash')) {
       return 'bash';
     }
+
     if (shell.includes('zsh')) {
       return 'zsh';
     }
+
     return 'unknown';
   },
 

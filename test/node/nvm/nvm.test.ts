@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
 import { execSync } from 'child_process';
+import { TestUtils } from '../../test-utils.js';
 
 // Example test suite
 describe('nvm tests', () => {
@@ -16,10 +17,10 @@ describe('nvm tests', () => {
       }
     ], {
       validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which nvm', { shell: 'zsh' })).to.not.throw();
-        expect(execSync('source ~/.zshrc; node --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('20');
+        expect(() => execSync(TestUtils.getShellCommand('which nvm'), { shell: TestUtils.getShellName() })).to.not.throw();
+        expect(execSync(TestUtils.getShellCommand('node --version'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()).to.include('20');
 
-        const installedVersions = execSync('source ~/.zshrc; nvm list', { shell: 'zsh' }).toString('utf-8').trim();
+        const installedVersions = execSync(TestUtils.getShellCommand('nvm list'), { shell: TestUtils.getShellName() }).toString('utf-8').trim();
         expect(installedVersions).to.include('20');
         expect(installedVersions).to.include('18');
       },
@@ -30,11 +31,11 @@ describe('nvm tests', () => {
           nodeVersions: ['21'],
         }],
         validateModify: () => {
-          expect(execSync('source ~/.zshrc; node --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('21');
+          expect(execSync(TestUtils.getShellCommand('node --version'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()).to.include('21');
         }
       },
       validateDestroy: () => {
-        expect(() => execSync('source ~/.zshrc; which nvm', { shell: 'zsh' })).to.throw();
+        expect(() => execSync(TestUtils.getShellCommand('which nvm'), { shell: TestUtils.getShellName() })).to.throw();
       }
     });
   });

@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { execSync } from 'child_process';
 import fs from 'node:fs';
 import os from 'node:os';
+import { TestUtils } from '../test-utils.js';
 
 describe('Pyenv resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -17,7 +18,7 @@ describe('Pyenv resource integration tests', () => {
     ], {
       skipUninstall: true,
       validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which pyenv', { shell: 'zsh' })).to.not.throw();
+        expect(() => execSync(TestUtils.getShellCommand('which pyenv'), { shell: TestUtils.getShellName() })).to.not.throw();
       }
     });
   });
@@ -35,16 +36,16 @@ describe('Pyenv resource integration tests', () => {
       }
     ], {
       validateApply: () => {
-        expect(execSync('source ~/.zshrc; python --version', { shell: 'zsh' }).toString('utf-8')).to.include('3.12');
+        expect(execSync(TestUtils.getShellCommand('python --version'), { shell: TestUtils.getShellName() }).toString('utf-8')).to.include('3.12');
 
-        const versions = execSync('source ~/.zshrc; pyenv versions', { shell: 'zsh' }).toString('utf-8')
+        const versions = execSync(TestUtils.getShellCommand('pyenv versions'), { shell: TestUtils.getShellName() }).toString('utf-8')
         expect(versions).to.include('3.12')
         expect(versions).to.include('3.11')
       },
       validateDestroy: () => {
         expect(fs.existsSync(path.resolve(os.homedir(), '.pyenv'))).to.be.false;
-        expect(fs.readFileSync(path.resolve(os.homedir(), '.zshrc'), 'utf-8')).to.not.contain('pyenv');
-        expect(() => execSync('source ~/.zshrc; which pyenv', { shell: 'zsh' })).to.throw();
+        expect(fs.readFileSync(TestUtils.getPrimaryShellRc(), 'utf-8')).to.not.contain('pyenv');
+        expect(() => execSync(TestUtils.getShellCommand('which pyenv'), { shell: TestUtils.getShellName() })).to.throw();
       }
     })
   })

@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { TestUtils } from '../test-utils.js';
 
 describe('Pip-sync resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -19,7 +20,7 @@ describe('Pip-sync resource integration tests', () => {
     ], {
       skipUninstall: true,
       validateApply() {
-        expect(execSync('source ~/.zshrc; python --version', { shell: 'zsh' }).toString()).to.include('3.11');
+        expect(execSync(TestUtils.getShellCommand('python --version'), { shell: TestUtils.getShellName() }).toString()).to.include('3.11');
       }
     })
   })

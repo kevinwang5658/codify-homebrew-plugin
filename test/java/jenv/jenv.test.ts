@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { execSync } from 'child_process';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
+import { TestUtils } from '../../test-utils.js';
 
 describe('Jenv resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -18,10 +19,10 @@ describe('Jenv resource integration tests', () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; jenv doctor', { shell: 'zsh' })).to.not.throw;
-        expect(execSync('source ~/.zshrc; java --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('17')
-        expect(execSync('source ~/.zshrc; jenv version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('17')
+        expect(() => execSync(TestUtils.getShellCommand('which jenv'), { shell: TestUtils.getShellName() })).to.not.throw;
+        expect(() => execSync(TestUtils.getShellCommand('jenv doctor'), { shell: TestUtils.getShellName() })).to.not.throw;
+        expect(execSync(TestUtils.getShellCommand('java --version'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()).to.include('17')
+        expect(execSync(TestUtils.getShellCommand('jenv version'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()).to.include('17')
       },
       testModify: {
         modifiedConfigs: [{
@@ -30,17 +31,17 @@ describe('Jenv resource integration tests', () => {
           add: ['17', '21']
         }],
         validateModify: () => {
-          expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.not.throw;
-          expect(execSync('source ~/.zshrc; java --version', { shell: 'zsh' }).toString('utf-8').trim()).to.include('21')
+          expect(() => execSync(TestUtils.getShellCommand('which jenv'), { shell: TestUtils.getShellName() })).to.not.throw;
+          expect(execSync(TestUtils.getShellCommand('java --version'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()).to.include('21')
 
-          const jenvVersions = execSync('source ~/.zshrc; jenv versions', { shell: 'zsh' }).toString('utf-8').trim()
+          const jenvVersions = execSync(TestUtils.getShellCommand('jenv versions'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()
           expect(jenvVersions).to.include('21')
           expect(jenvVersions).to.include('17')
         }
       },
       validateDestroy: () => {
-        expect(() => execSync('source ~/.zshrc; which jenv', { shell: 'zsh' })).to.throw;
-        expect(() => execSync('source ~/.zshrc; which java', { shell: 'zsh' })).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which jenv'), { shell: TestUtils.getShellName() })).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which java'), { shell: TestUtils.getShellName() })).to.throw;
       }
     });
   });

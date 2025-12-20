@@ -26,7 +26,7 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "chalk": "^5.3.0",
-    "codify-plugin-lib": "^1.0.180",
+    "codify-plugin-lib": "^1.0.181",
     "codify-schemas": "1.0.63",
     "debug": "^4.3.4",
     "lodash.isequal": "^4.5.0",

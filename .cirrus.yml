@@ -22,6 +22,19 @@ integration_test_dev_task:
   test_script:
     - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
 
+integration_test_dev_linux_task:
+  arm_container:
+    image: node:22
+#  node_modules_cache:
+#    folder: node_modules
+#    fingerprint_script: cat package-lock.json
+#    populate_script: npm ci
+  test_script:
+    - adduser --disabled-password --gecos '' newuser
+    - su - newuser
+    - npm install
+    - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
+
 integration_individual_test_task:
   macos_instance:
     image: codify-test-vm
@@ -41,6 +54,7 @@ integration_individual_test_linux_task:
 #    fingerprint_script: cat package-lock.json
 #    populate_script: npm ci
   test_script:
-    - npm install
+    - chown -R node /tmp/cirrus-ci/working-dir
+    - su node -c "npm install"
     - echo $FILE_NAME
-    - npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism
+    - su node -c "npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism"

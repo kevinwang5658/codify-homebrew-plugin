@@ -4,6 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import cp from 'child_process';
+import { TestUtils } from '../test-utils.js';
 
 describe('Asdf install tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -26,15 +27,15 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which golang')).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which golang'))).to.not.throw;
 
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which golang')).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which golang'))).to.throw;
       }
     });
   })
@@ -52,12 +53,12 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
       }
     });
   })

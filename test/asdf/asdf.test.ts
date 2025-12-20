@@ -5,6 +5,7 @@ import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import * as cp from 'child_process'
 import { PlanRequestDataSchema, PlanResponseDataSchema } from 'codify-schemas';
+import { TestUtils } from '../test-utils.js';
 
 describe('Asdf tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -27,12 +28,12 @@ describe('Asdf tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
       }
     });
   })
@@ -49,12 +50,12 @@ describe('Asdf tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
       }
     });
   })
@@ -86,14 +87,14 @@ describe('Asdf tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which zig;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which zig;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which zig;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which zig;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
       }
     });
   })

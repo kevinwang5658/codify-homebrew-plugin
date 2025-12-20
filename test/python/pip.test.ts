@@ -5,6 +5,7 @@ import { execSync } from 'child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { ResourceOperation } from 'codify-schemas';
+import { TestUtils } from '../test-utils.js';
 
 describe('Pip resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -19,7 +20,7 @@ describe('Pip resource integration tests', () => {
     ], {
       skipUninstall: true,
       validateApply: () => {
-        expect(execSync('source ~/.zshrc; python --version', { shell: 'zsh' }).toString()).to.include('3.11');
+        expect(execSync(TestUtils.getShellCommand('python --version'), { shell: TestUtils.getShellName() }).toString()).to.include('3.11');
       }
     })
   })
@@ -43,7 +44,7 @@ describe('Pip resource integration tests', () => {
         console.log(JSON.stringify(plans, null, 2))
       },
       validateApply: () => {
-        const installedDependencies = execSync('source ~/.zshrc; pip list --format=json --disable-pip-version-check', { shell: 'zsh' }).toString()
+        const installedDependencies = execSync(TestUtils.getShellCommand('pip list --format=json --disable-pip-version-check'), { shell: TestUtils.getShellName() }).toString()
         const parsed = JSON.parse(installedDependencies) as Array<{ name: string; version: string; }>;
 
         expect(parsed.some((p) => p.name === 'ffmpeg')).to.be.true;
