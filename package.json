@@ -9,12 +9,14 @@
     "start:dev": "tsc && cirrus run run_dev -o simple",
     "test:unit": "vitest src/**/*.test.ts",
     "test:integration:dev": "tsx scripts/run-tests.ts",
+    "test:integration:dev:linux": "tsx scripts/run-tests.ts",
     "test:integration": "vitest test/**/*.test.ts",
     "test": "vitest",
     "rollup": "rollup -c",
     "build": "tsx ./scripts/build.ts",
     "deploy": "tsx ./scripts/deploy.ts",
-    "deploy:beta": "BETA=true tsx ./scripts/deploy.ts"
+    "deploy:beta": "BETA=true tsx ./scripts/deploy.ts",
+    "testing": "codify-deploy"
   },
   "keywords": [],
   "author": "",
@@ -69,6 +71,9 @@
     "tsx": "^4.7.2",
     "typescript": "^5",
     "vitest": "^1.4.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-musl": "4.9.5"
   },
   "engines": {
     "node": ">=18.0.0"

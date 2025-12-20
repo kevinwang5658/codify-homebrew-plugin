@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
+import { Utils } from '../../../utils/index.js';
 import { PnpmGlobalEnvStatefulParameter } from './pnpm-global-env-stateful-parameter.js';
 import schema from './pnpm-schema.json';
 
@@ -66,9 +67,10 @@ export class Pnpm extends Resource<PnpmConfig> {
     await fs.rm(pnpmHome, { recursive: true, force: true });
     console.log('Successfully uninstalled pnpm');
 
+    const shellRc = Utils.getPrimaryShellRc();
     await FileUtils.removeLineFromZshrc('# pnpm')
     await FileUtils.removeLineFromZshrc(`export PNPM_HOME="${os.homedir()}/Library/pnpm"`)
-    await FileUtils.removeFromFile(path.join(os.homedir(), '.zshrc'),
+    await FileUtils.removeFromFile(shellRc,
 `case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;

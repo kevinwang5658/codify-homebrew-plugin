@@ -32,3 +32,15 @@ integration_individual_test_task:
   test_script:
     - echo $FILE_NAME
     - npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism
+
+integration_individual_test_linux_task:
+  arm_container:
+    image: node:22
+#  node_modules_cache:
+#    folder: node_modules
+#    fingerprint_script: cat package-lock.json
+#    populate_script: npm ci
+  test_script:
+    - npm install
+    - echo $FILE_NAME
+    - npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism

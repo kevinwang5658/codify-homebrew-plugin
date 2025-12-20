@@ -96,7 +96,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
     await codifySpawn(`rm -rf ${temporaryDir}`)
 
     if (!await Utils.isDirectoryOnPath(directory)) {
-      await codifySpawn(`echo 'export PATH=$PATH:${directory}' >> $HOME/.zshrc`);
+      await FileUtils.addToStartupFile(`export PATH=$PATH:${directory}`);
     }
   }
 
@@ -112,7 +112,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
     }
 
     await codifySpawn(`rm ${installLocationQuery.data}`, { requiresRoot: true });
-    await FileUtils.removeLineFromZshrc(`echo 'export PATH=$PATH:${installLocationQuery.data}' >> $HOME/.zshrc`);
+    await FileUtils.removeLineFromZshrc(`export PATH=$PATH:${installLocationQuery.data}`);
   }
 
   private async getLatestTerraformInfo(): Promise<HashicorpReleaseInfo> {

@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { FileUtils } from '../../../utils/file-utils.js';
+import { Utils } from '../../../utils/index.js';
 import { untildify } from '../../../utils/untildify.js';
 import Schema from './path-schema.json';
 
@@ -26,11 +27,7 @@ export interface PathConfig extends StringIndexedObject {
 export class PathResource extends Resource<PathConfig> {
   private readonly PATH_DECLARATION_REGEX = /((export PATH=)|(path+=\()|(path=\())(.+?)[\n;]/g;
   private readonly PATH_REGEX = /(?<=[="':(])([^"'\n\r]+?)(?=["':)\n;])/g
-  private readonly filePaths = [
-    path.join(os.homedir(), '.zshrc'),
-    path.join(os.homedir(), '.zprofile'),
-    path.join(os.homedir(), '.zshenv'),
-  ]
+  private readonly filePaths = Utils.getShellRcFiles()
 
   getSettings(): ResourceSettings<PathConfig> {
     return {
@@ -115,15 +112,26 @@ export class PathResource extends Resource<PathConfig> {
     }
 
     // MacOS defines system paths in /etc/paths and inside the /etc/paths.d folders
-    const systemPaths = (await fs.readFile('/etc/paths', 'utf8'))
-      .split(/\n/)
-      .filter(Boolean);
+    // Linux doesn't have this structure, so we skip it on Linux
+    const systemPaths: string[] = [];
+    if (Utils.isMacOS()) {
+      try {
+        systemPaths.push(...(await fs.readFile('/etc/paths', 'utf8'))
+          .split(/\n/)
+          .filter(Boolean));
 
-    for (const pathFile of await fs.readdir('/etc/paths.d')) {
-      systemPaths.push(...(await fs.readFile(path.join('/etc/paths.d', pathFile), 'utf8'))
-        .split(/\n/)
-        .filter(Boolean)
-      );
+        const pathsDir = '/etc/paths.d';
+        if (await FileUtils.dirExists(pathsDir)) {
+          for (const pathFile of await fs.readdir(pathsDir)) {
+            systemPaths.push(...(await fs.readFile(path.join(pathsDir, pathFile), 'utf8'))
+              .split(/\n/)
+              .filter(Boolean)
+            );
+          }
+        }
+      } catch {
+        // Ignore errors if /etc/paths doesn't exist
+      }
     }
 
     const userPaths = existingPaths.split(':')

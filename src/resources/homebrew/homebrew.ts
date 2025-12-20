@@ -7,6 +7,7 @@ import path from 'node:path';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
+import { Utils } from '../../utils/index.js';
 import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
@@ -65,7 +66,9 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`, { requestsTTY: true })
-    await codifySpawn('(echo; echo \'eval "$(/opt/homebrew/bin/brew shellenv)"\') >> /Users/$USER/.zshrc'); // TODO: may need to support non zsh shells here
+
+    const brewPath = Utils.isLinux() ? '/home/linuxbrew/.linuxbrew/bin/brew' : '/opt/homebrew/bin/brew';
+    await FileUtils.addToStartupFile(`eval "$(${brewPath} shellenv)"`);
 
     // TODO: Add a check here to see if homebrew is writable
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
@@ -105,7 +108,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 ./brew config`, { cwd: path.join(absoluteDir, '/bin') })
 
     // Update shell startup scripts
-    await codifySpawn(`(echo; echo 'eval "$(${absoluteDir}/bin/brew shellenv)"') >> /Users/$USER/.zshrc`);
+    await FileUtils.addToStartupFile(`eval "$(${absoluteDir}/bin/brew shellenv)"`);
   }
 
   // Ex:
@@ -129,12 +132,31 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     await mkdir(path.dirname(fullPath), { recursive: true });
-    await codifySpawn(`cat << 'EOF' > ${SUDO_ASKPASS_PATH}
-#!/bin/bash    
+
+    if (Utils.isMacOS()) {
+      // macOS: Use osascript for password prompt
+      await codifySpawn(`cat << 'EOF' > ${SUDO_ASKPASS_PATH}
+#!/bin/bash
 osascript -e 'display dialog "Enter user password:" default answer "" with hidden answer with icon file "System:Library:Frameworks:SecurityInterface.framework:Versions:A:Resources:Lock_Locked State@2x.png" with title "sudo"'\\
 | grep 'text returned:' \\
 | sed 's/^.*text returned:\\(.*\\).*$/\\1/'
 EOF`);
+    } else {
+      // Linux: Use zenity if available, otherwise systemd-ask-password
+      await codifySpawn(`cat << 'EOF' > ${SUDO_ASKPASS_PATH}
+#!/bin/bash
+if command -v zenity &> /dev/null; then
+  zenity --password --title="sudo"
+elif command -v systemd-ask-password &> /dev/null; then
+  systemd-ask-password "Enter user password:"
+else
+  # Fallback: use terminal-based prompt
+  read -s -p "Enter user password: " password
+  echo "$password"
+fi
+EOF`);
+    }
+
     await codifySpawn(`chmod +x ${SUDO_ASKPASS_PATH}`);
   }
 }

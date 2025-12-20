@@ -4,6 +4,7 @@ import * as os from 'node:os';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
+import { Utils } from '../../../utils/index.js';
 import { NvmGlobalParameter } from './global-parameter.js';
 import { NvmNodeVersionsParameter } from './node-versions-parameter.js';
 import Schema from './nvm-schema.json';
@@ -48,7 +49,8 @@ export class NvmResource extends Resource<NvmConfig> {
 
     // Nvm doesn't handle if the init string is commented out
     // This check first checks that nvm detects the init string is there but nvm itself is still not present
-    if (installResult.includes('nvm source string already in /Users/kevinwang/.zshrc')
+    const shellRc = Utils.getPrimaryShellRc();
+    if (installResult.includes(`nvm source string already in ${shellRc}`)
       && (await codifySpawn('which nvm', { throws: false })).status === SpawnStatus.ERROR
     ) {
       await FileUtils.addToStartupFile('export NVM_DIR="$HOME/.nvm"')

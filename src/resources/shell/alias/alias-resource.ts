@@ -73,19 +73,19 @@ export class AliasResource extends Resource<AliasConfig> {
   }
 
   override async create(plan: CreatePlan<AliasConfig>): Promise<void> {
-    const zshrcPath = path.join(os.homedir(), '.zshrc');
+    const shellRcPath = Utils.getPrimaryShellRc();
 
-    if (!(await FileUtils.fileExists(zshrcPath))) {
-      await fs.writeFile(zshrcPath, '', { encoding: 'utf8' });
+    if (!(await FileUtils.fileExists(shellRcPath))) {
+      await fs.writeFile(shellRcPath, '', { encoding: 'utf8' });
     }
 
     const { alias, value } = plan.desiredConfig;
     const aliasString = this.aliasString(alias, value);
 
-    const file = await fs.readFile(zshrcPath, 'utf8');
+    const file = await fs.readFile(shellRcPath, 'utf8');
     const fileWithAlias = FileUtils.appendToFileWithSpacing(file, aliasString);
 
-    await fs.writeFile(zshrcPath, fileWithAlias, { encoding: 'utf8' });
+    await fs.writeFile(shellRcPath, fileWithAlias, { encoding: 'utf8' });
   }
 
   async modify(pc: ParameterChange<AliasConfig>, plan: ModifyPlan<AliasConfig>): Promise<void> {
@@ -131,11 +131,7 @@ export class AliasResource extends Resource<AliasConfig> {
   }
 
   private async findAlias(alias: string, value: string): Promise<{ path: string; contents: string; } | null> {
-    const paths = [
-      path.join(os.homedir(), '.zshrc'),
-      path.join(os.homedir(), '.zprofile'),
-      path.join(os.homedir(), '.zshenv'),
-    ];
+    const paths = Utils.getShellRcFiles();
 
     const aliasString = this.aliasString(alias, value);
     const aliasStringShort = this.aliasStringShort(alias, value);
