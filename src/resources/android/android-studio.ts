@@ -1,10 +1,10 @@
-import { CreatePlan, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
-import * as fs from 'node:fs';
+import { CreatePlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
+import * as fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import plist from 'plist';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
 import { Utils } from '../../utils/index.js';
 import Schema from './android-studio-schema.json';
 import { AndroidStudioPlist, AndroidStudioVersionData } from './types.js';
@@ -21,6 +21,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
   override getSettings(): ResourceSettings<AndroidStudioConfig> {
     return {
       id: 'android-studio',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       parameterSettings: {
         directory: { type: 'directory', default: '/Applications' },
@@ -50,6 +51,8 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
   }
 
   override async create(plan: CreatePlan<AndroidStudioConfig>): Promise<void> {
+    const $ = getPty();
+
     if (!this.allAndroidStudioVersions) {
       this.allAndroidStudioVersions = await this.fetchAllAndroidStudioVersions()
     }
@@ -64,16 +67,14 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       : versionToDownload.download.find((v) => v.link.includes('mac.dmg'))!
 
     // Create a temporary tmp dir
-    const temporaryDirQuery = await codifySpawn('mktemp -d');
-    const temporaryDir = temporaryDirQuery.data.trim();
+    const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codify-android-'))
 
     try {
 
       // Download and unzip the terraform binary
-      await codifySpawn(`curl -fsSL --progress-bar ${downloadLink.link} -o android-studio.dmg`, { cwd: temporaryDir });
+      await $.spawn(`curl -fsSL ${downloadLink.link} -o android-studio.dmg`, { cwd: temporaryDir });
 
-
-      const { data } = await codifySpawn('hdiutil attach android-studio.dmg', { cwd: temporaryDir });
+      const { data } = await $.spawn('hdiutil attach android-studio.dmg', { cwd: temporaryDir });
       const mountedDir = data.split(/\n/)
         .find((l) => l.includes('/Volumes/'))
         ?.split('                 ')
@@ -85,28 +86,27 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       }
 
       try {
-        const { data: contents } = await codifySpawn('ls', { cwd: mountedDir })
+        const contents = await fs.readdir(mountedDir);
 
         // Depending on it's preview or regular the name is different
-        const appName = contents.split(/\n/)
+        const appName = contents
           .find((l) => l.includes('Android'))
 
-        await codifySpawn(`rsync -rl "${appName}" Applications/`, { cwd: mountedDir, requiresRoot: true })
-
-
+        // Must rsync because mounted dirs are read-only (can't delete via mv)
+        await $.spawn(`rsync -rl "${appName}" Applications/`, { cwd: mountedDir })
       } finally {
         // Unmount
-        await codifySpawn(`hdiutil detach "${mountedDir}"`)
+        await $.spawnSafe(`hdiutil detach "${mountedDir}"`)
       }
 
     } finally {
       // Delete the tmp directory
-      await codifySpawn(`rm -r ${temporaryDir}`)
+      await fs.rm(temporaryDir, { recursive: true, force: true });
     }
   }
 
   override async destroy(): Promise<void> {
-    await codifySpawn('rm -r "/Applications/Android Studio.app"', { requiresRoot: true })
+    await fs.rm('/Applications/Android Studio.app', { force: true, recursive: true });
   }
 
   private async fetchAllAndroidStudioVersions(): Promise<AndroidStudioVersionData[]> {
@@ -121,7 +121,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
 
   private async addPlistData(location: string): Promise<{ location: string, plist: AndroidStudioPlist } | null> {
     try {
-      const file = fs.readFileSync(path.join(location, '/Contents/Info.plist'), 'utf8');
+      const file = await fs.readFile(path.join(location, '/Contents/Info.plist'), 'utf8');
       const plistData = plist.parse(file) as unknown as AndroidStudioPlist;
 
       return { location, plist: plistData };

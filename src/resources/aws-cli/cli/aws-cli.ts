@@ -1,7 +1,7 @@
-import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { Resource, ResourceSettings, getPty, SpawnStatus } from 'codify-plugin-lib';
+import { OS, StringIndexedObject } from 'codify-schemas';
+import fs from 'node:fs/promises';
 
-import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { Utils } from '../../../utils/index.js';
 import Schema from './aws-cli-schema.json';
 
@@ -16,6 +16,7 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
   getSettings(): ResourceSettings<AwsCliConfig> {
     return {
       schema: Schema,
+      operatingSystems: [OS.Darwin],
       id: 'aws-cli',
     };
   }
@@ -25,6 +26,8 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
     const $ = getPty();
 
     const awsCliInfo = await $.spawnSafe('which aws');
+    console.log('Spawn result', awsCliInfo);
+
     if (awsCliInfo.status === SpawnStatus.ERROR) {
       return null;
     }
@@ -33,6 +36,8 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
   }
 
   override async create(): Promise<void> {
+    const $ = getPty();
+
     // Amazon has not released a standalone way to install arm aws-cli. See: https://github.com/aws/aws-cli/issues/7252
     // Prefer the homebrew version on M1
     const isArmArch = await Utils.isArmArch();
@@ -41,13 +46,13 @@ export class AwsCliResource extends Resource<AwsCliConfig> {
 
     if (isArmArch && isHomebrewInstalled) {
       console.log('Resource: \'aws-cli\'. Detected that mac is aarch64. Installing AWS-CLI via homebrew')
-      await codifySpawn('brew install awscli')
+      await $.spawn('HOMEBREW_NO_AUTO_UPDATE=1 brew install awscli', { interactive: true })
 
     } else if (!isArmArch || isRosettaInstalled) {
       console.log('Resource: \'aws-cli\'. Detected that mac is not ARM or Rosetta is installed. Installing AWS-CLI standalone version')
-      await codifySpawn('curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"');
-      await codifySpawn('installer -pkg ./AWSCLIV2.pkg -target /', { requiresRoot: true })
-      await codifySpawn('rm -rf ./AWSCLIV2.pkg')
+      await $.spawn('curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"');
+      await $.spawn('installer -pkg ./AWSCLIV2.pkg -target /', { requiresRoot: true })
+      await fs.rm('./AWSCLIV2.pkg', { recursive: true, force: true });
 
     } else {
       // This covers arm arch + Homebrew is not installed
@@ -67,24 +72,26 @@ softwareupdate --install-rosetta
   }
 
   override async destroy(): Promise<void> {
+    const $ = getPty();
+
     const installLocation = await this.findInstallLocation();
     if (!installLocation) {
       return;
     }
     
     if (installLocation.includes('homebrew')) {
-      await codifySpawn('brew uninstall awscli');
+      await $.spawn('brew uninstall awscli', { interactive: true, env: { HOMEBREW_NO_AUTO_UPDATE: 1 } });
       return;
     }
     
-    await codifySpawn(`rm ${installLocation}`, { requiresRoot: true });
-    await codifySpawn(`rm ${installLocation}_completer`, { requiresRoot: true });
-    await codifySpawn('rm -rf /usr/local/aws-cli', { requiresRoot: true });
-    await codifySpawn('rm -rf $HOME/.aws/', { requiresRoot: true });
+    await $.spawn(`rm ${installLocation}`, { requiresRoot: true });
+    await $.spawn(`rm ${installLocation}_completer`, { requiresRoot: true });
+    await $.spawn('rm -rf $HOME/.aws/');
   }
   
   private async findInstallLocation(): Promise<null | string> {
-    const query = await codifySpawn('which aws', { throws: false });
+    const $ = getPty();
+    const query = await $.spawnSafe('which aws', { interactive: true });
     if (query.status === SpawnStatus.ERROR) {
       return null;
     }

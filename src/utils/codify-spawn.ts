@@ -1,11 +1,9 @@
 import { Ajv } from 'ajv';
 import { SudoError, VerbosityLevel } from 'codify-plugin-lib';
 import {
-  IpcMessage,
+  CommandRequestResponseData, CommandRequestResponseDataSchema,
   IpcMessageV2,
   MessageCmd,
-  SudoRequestResponseData,
-  SudoRequestResponseDataSchema
 } from 'codify-schemas';
 import { nanoid } from 'nanoid';
 import { SpawnOptions, spawn } from 'node:child_process';
@@ -16,7 +14,7 @@ import { Utils } from './index.js';
 const ajv = new Ajv({
   strict: true,
 });
-const validateSudoRequestResponse = ajv.compile(SudoRequestResponseDataSchema);
+const validateSudoRequestResponse = ajv.compile(CommandRequestResponseDataSchema);
 
 export enum SpawnStatus {
   SUCCESS = 'success',
@@ -175,14 +173,14 @@ async function externalSpawnWithSudo(
           throw new Error(`Invalid response for sudo request: ${JSON.stringify(validateSudoRequestResponse.errors, null, 2)}`);
         }
 
-        resolve(data.data as unknown as SudoRequestResponseData);
+        resolve(data.data as unknown as CommandRequestResponseData);
       }
     }
 
     process.on('message', listener);
 
     process.send!(<IpcMessageV2>{
-      cmd: MessageCmd.SUDO_REQUEST,
+      cmd: MessageCmd.COMMAND_REQUEST,
       data: {
         command: cmd,
         options: opts ?? {},

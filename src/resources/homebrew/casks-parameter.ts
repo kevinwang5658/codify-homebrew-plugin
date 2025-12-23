@@ -1,11 +1,8 @@
-import { getPty, ParameterSetting, Plan, SpawnStatus, StatefulParameter } from 'codify-plugin-lib';
+import { ParameterSetting, Plan, SpawnStatus, StatefulParameter, getPty } from 'codify-plugin-lib';
 import path from 'node:path';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { HomebrewConfig } from './homebrew.js';
-
-const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 
 export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> {
 
@@ -84,6 +81,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       return;
     }
 
+    const $ = getPty();
     const conflicts = await this.findConflicts(casks);
     const casksToInstall = casks.filter((c) => !conflicts.includes(c))
 
@@ -99,7 +97,11 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       return;
     }
 
-    const result = await codifySpawn(`HOMEBREW_NO_AUTO_UPDATE=1 SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew install --casks ${casksToInstall.join(' ')}`, { throws: false })
+    const result = await $.spawnSafe(`brew install --casks ${casksToInstall.join(' ')}`, {
+      interactive: true,
+      env: { HOMEBREW_NO_AUTO_UPDATE: 1 }
+    })
+
     if (result.status === SpawnStatus.SUCCESS) {
       // Casks can't detect if a program was installed by other means. If it returns this message, throw an error
       if (result.data.includes('It seems there is already an App at')) {
@@ -117,7 +119,11 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
       return;
     }
 
-    const result = await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} brew uninstall ${casks.join(' ')}`, { throws: false })
+    const $ = getPty();
+    const result = await $.spawnSafe(`brew uninstall ${casks.join(' ')}`, {
+      interactive: true,
+      env: { HOMEBREW_NO_AUTO_UPDATE: 1 }
+    })
 
     if (result.status === SpawnStatus.SUCCESS) {
       console.log(`Uninstalled casks: ${casks.join(' ')}`);
@@ -129,12 +135,14 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   private async findConflicts(casks: string[]): Promise<string[]> {
     const $ = getPty();
 
-    let result: string;
-    if ($) {
-      result = (await $.spawnSafe(`brew info -q --json=v2 ${casks.map((c) => `"${c}"`).join(' ')}`)).data.replaceAll('\n', '')
-    } else {
-      result = (await codifySpawn(`brew info -q --json=v2 ${casks.map((c) => `"${c}"`).join(' ')}`)).data.replaceAll('\n', '')
-    }
+    const result = (await $.spawn(
+      `brew info -q --json=v2 ${casks.map((c) => `"${c}"`).join(' ')}`, {
+        interactive: true,
+        env: { HOMEBREW_NO_AUTO_UPDATE: 1 }
+      })
+    )
+      .data
+      .replaceAll('\n', '')
 
     const brewInfo = JSON.parse(result);
     const casksWithConflicts = new Array<string>();

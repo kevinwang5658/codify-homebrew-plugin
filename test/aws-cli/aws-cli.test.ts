@@ -12,12 +12,13 @@ describe('Test aws-cli', async () => {
       { type: 'homebrew' },
       { type: 'aws-cli' },
     ], {
+      // skipUninstall: true,
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which aws;'))).to.not.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which aws'))).to.not.throw;
 
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which aws;'))).to.throw;
+        expect(() => cp.execSync(TestUtils.getShellCommand('which aws'))).to.throw;
       }
     })
   })

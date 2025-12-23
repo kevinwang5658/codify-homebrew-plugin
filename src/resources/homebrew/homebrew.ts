@@ -1,20 +1,21 @@
-import { CreatePlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
-import * as fsSync from 'node:fs';
+import {
+  CreatePlan,
+  FileUtils,
+  Resource,
+  ResourceSettings,
+  SpawnStatus,
+  Utils,
+  getPty,
+} from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
-import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
-import { FileUtils } from '../../utils/file-utils.js';
-import { Utils } from '../../utils/index.js';
 import { untildify } from '../../utils/untildify.js';
 import { CasksParameter } from './casks-parameter.js'
 import { FormulaeParameter } from './formulae-parameter.js';
 import HomebrewSchema from './homebrew-schema.json'
 import { TapsParameter } from './tap-parameter.js';
-
-const SUDO_ASKPASS_PATH = '~/Library/Caches/codify/homebrew/sudo_prompt.sh'
 
 export interface HomebrewConfig extends ResourceConfig {
   casks?: string[];
@@ -30,6 +31,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   override getSettings(): ResourceSettings<HomebrewConfig> {
     return {
       schema: HomebrewSchema,
+      operatingSystems: [OS.Darwin, OS.Linux],
       id: 'homebrew',
       parameterSettings: {
         taps: { type: 'stateful', definition: new TapsParameter(), order: 1 },
@@ -59,13 +61,16 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   }
 
   override async create(plan: CreatePlan<HomebrewConfig>): Promise<void> {
-    await this.saveSudoAskpassIfNotExists();
+    const $ = getPty();
 
     if (plan.desiredConfig.directory) {
       return this.installBrewInCustomDir(plan.desiredConfig.directory)
     }
 
-    await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`, { requestsTTY: true })
+    await $.spawn(
+      '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+      { stdin: true, env: { NONINTERACTIVE: 1 } }
+    )
 
     const brewPath = Utils.isLinux() ? '/home/linuxbrew/.linuxbrew/bin/brew' : '/opt/homebrew/bin/brew';
     await FileUtils.addToStartupFile(`eval "$(${brewPath} shellenv)"`);
@@ -75,37 +80,43 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
   }
 
   override async destroy(): Promise<void> {
-    const homebrewInfo = await codifySpawn('brew config');
+    const $ = getPty();
+    const homebrewInfo = await $.spawn('brew config', { interactive: true });
     const homebrewDirectory = this.getCurrentLocation(homebrewInfo.data)
 
     if (homebrewDirectory === '/opt/homebrew') {
-      await codifySpawn(
-        `SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"`,
-        { throws: false, requestsTTY: true }
+      await $.spawnSafe(
+        '/bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"',
+        { stdin: true, env: { NONINTERACTIVE: 1 } }
       )
+    } else {
+      await $.spawn(`rm -rf ${homebrewDirectory}`, { requiresRoot: true });
     }
 
-    await codifySpawn(`sudo rm -rf ${homebrewDirectory}`);
-
     // Delete eval from .zshrc
-    await FileUtils.removeLineFromZshrc(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`)
+    await FileUtils.removeLineFromPrimaryShellRc(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`)
   }
 
   private async installBrewInCustomDir(dir: string): Promise<void> {
+    const $ = getPty();
     const absoluteDir = path.resolve(untildify(dir))
 
     try {
       await fs.access(absoluteDir)
     } catch {
-      await codifySpawn(`mkdir ${absoluteDir}`)
+      await fs.mkdir(absoluteDir, { recursive: true });
     }
 
     // Un-tar brew in a custom dir: https://github.com/Homebrew/brew/blob/664d0c67d5947605c914c4c56ebcfaa80cb6eca0/docs/Installation.md#untar-anywhere
     // the location where brew is first activated is where it will be installed
-    await codifySpawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', { cwd: absoluteDir })
+    await $.spawn('curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1', { cwd: absoluteDir })
 
     // Activate brew to install it in the directory
-    await codifySpawn(`SUDO_ASKPASS=${SUDO_ASKPASS_PATH} NONINTERACTIVE=1 ./brew config`, { cwd: path.join(absoluteDir, '/bin') })
+    await $.spawn(
+      './brew config', {
+        cwd: path.join(absoluteDir, '/bin'),
+        interactive: true
+      })
 
     // Update shell startup scripts
     await FileUtils.addToStartupFile(`eval "$(${absoluteDir}/bin/brew shellenv)"`);
@@ -122,41 +133,5 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     return homebrewPrefix.split(':')[1].trim()
-  }
-
-  private async saveSudoAskpassIfNotExists(): Promise<void> {
-    const fullPath = untildify(SUDO_ASKPASS_PATH);
-    const exists = fsSync.existsSync(fullPath)
-    if (exists) {
-      return;
-    }
-
-    await mkdir(path.dirname(fullPath), { recursive: true });
-
-    if (Utils.isMacOS()) {
-      // macOS: Use osascript for password prompt
-      await codifySpawn(`cat << 'EOF' > ${SUDO_ASKPASS_PATH}
-#!/bin/bash
-osascript -e 'display dialog "Enter user password:" default answer "" with hidden answer with icon file "System:Library:Frameworks:SecurityInterface.framework:Versions:A:Resources:Lock_Locked State@2x.png" with title "sudo"'\\
-| grep 'text returned:' \\
-| sed 's/^.*text returned:\\(.*\\).*$/\\1/'
-EOF`);
-    } else {
-      // Linux: Use zenity if available, otherwise systemd-ask-password
-      await codifySpawn(`cat << 'EOF' > ${SUDO_ASKPASS_PATH}
-#!/bin/bash
-if command -v zenity &> /dev/null; then
-  zenity --password --title="sudo"
-elif command -v systemd-ask-password &> /dev/null; then
-  systemd-ask-password "Enter user password:"
-else
-  # Fallback: use terminal-based prompt
-  read -s -p "Enter user password: " password
-  echo "$password"
-fi
-EOF`);
-    }
-
-    await codifySpawn(`chmod +x ${SUDO_ASKPASS_PATH}`);
   }
 }

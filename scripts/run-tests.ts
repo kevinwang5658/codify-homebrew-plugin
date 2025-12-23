@@ -39,7 +39,7 @@ async function launchTestAll(debug: boolean): Promise<void> {
 
 async function launchSingleTest(test: string, debug: boolean) {
   console.log(`Running test: ${test}`)
-  await run(`cirrus run --lazy-pull integration_individual_test_linux -e FILE_NAME="${test}" -o simple`, debug)
+  await run(`cirrus run --lazy-pull integration_individual_test -e FILE_NAME="${test}" -o simple`, debug)
 }
 
 async function run(cmd: string, debug: boolean, simple = true) {

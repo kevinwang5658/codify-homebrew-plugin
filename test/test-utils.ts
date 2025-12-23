@@ -27,8 +27,6 @@ export class TestUtils {
     const shell = TestUtils.getShell();
     const homeDir = os.homedir();
 
-    console.log('Home dir', homeDir)
-
     if (shell === 'bash') {
       return path.join(homeDir, '.bashrc')
     }

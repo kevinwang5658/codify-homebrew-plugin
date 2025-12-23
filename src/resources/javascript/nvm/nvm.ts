@@ -1,5 +1,5 @@
 import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as os from 'node:os';
 
 import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
@@ -19,6 +19,7 @@ export class NvmResource extends Resource<NvmConfig> {
   getSettings(): ResourceSettings<NvmConfig> {
     return {
       id: 'nvm',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       parameterSettings: {
         global: { type: 'stateful', definition: new NvmGlobalParameter(), order: 2 },

@@ -30,7 +30,7 @@ describe('Homebrew main resource integration tests', () => {
             'libxau',
             'sshpass',
             'jenv',
-            'cirruslabs/cli/softnet', // Test that it can handle a fully qualified name (tap + name)
+            'hashicorp/tap/hcp', // Test that it can handle a fully qualified name (tap + name)
           ],
         }],
         validateModify: () => {
@@ -38,14 +38,14 @@ describe('Homebrew main resource integration tests', () => {
           expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.not.throw;
           expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.not.throw;
           expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which softnet'))).to.not.throw;
+          expect(() => execSync(TestUtils.getShellCommand('which hcp'))).to.not.throw;
         }
       },
       validateDestroy: () => {
         expect(() => execSync(TestUtils.getShellCommand('which libxau'))).to.throw;
         expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.throw;
         expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which softnet'))).to.throw;
+        expect(() => execSync(TestUtils.getShellCommand('which hcp'))).to.throw;
         expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.throw;
       }
     });
@@ -79,6 +79,7 @@ describe('Homebrew main resource integration tests', () => {
           "parameters": [
             {
               "name": "casks",
+              "isSensitive": false,
               "previousValue": [
                 "visual-studio-code"
               ],
@@ -89,12 +90,14 @@ describe('Homebrew main resource integration tests', () => {
             },
             {
               "name": "skipAlreadyInstalledCasks",
+              "isSensitive": false,
               "previousValue": null,
               "newValue": true,
               "operation": "noop"
             },
             {
               "name": "onlyPlanUserInstalled",
+              "isSensitive": false,
               "newValue": true,
               "operation": "noop",
               "previousValue": null,
@@ -146,6 +149,7 @@ describe('Homebrew main resource integration tests', () => {
           "parameters": expect.arrayContaining([
             {
               "name": "casks",
+              "isSensitive": false,
               "previousValue": null,
               "newValue": ["visual-studio-code"],
               "operation": "add"
