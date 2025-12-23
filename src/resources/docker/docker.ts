@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
+import { SpawnStatus } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { Utils } from '../../utils/index.js';
 import Schema from './docker-schema.json';
@@ -67,6 +67,7 @@ export class DockerResource extends Resource<DockerConfig> {
    * @param plan
    */
   async create(plan: CreatePlan<DockerConfig>): Promise<void> {
+    const $ = getPty();
     const downloadLink = await Utils.isArmArch() ? ARM_DOWNLOAD_LINK : INTEL_DOWNLOAD_LINK;
 
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codify-docker'))
@@ -74,27 +75,28 @@ export class DockerResource extends Resource<DockerConfig> {
     const user = Utils.getUser();
 
     try {
-      await codifySpawn('hdiutil attach Docker.dmg', { cwd: tmpDir, requiresRoot: true })
+      await $.spawn('hdiutil attach Docker.dmg', { cwd: tmpDir })
 
       console.log('Running Docker installer. This may take a couple of minutes to complete...')
-      await codifySpawn(`/Volumes/Docker/Docker.app/Contents/MacOS/install ${plan.desiredConfig.acceptLicense ? '--accept-license' : ''} ${plan.desiredConfig.useCurrentUser ? `--user ${user}` : ''}`,
+      await $.spawn(`/Volumes/Docker/Docker.app/Contents/MacOS/install ${plan.desiredConfig.acceptLicense ? '--accept-license' : ''} ${plan.desiredConfig.useCurrentUser ? `--user ${user}` : ''}`,
         { requiresRoot: true }
       )
-      await codifySpawn('hdiutil detach /Volumes/Docker', { cwd: tmpDir, requiresRoot: true })
+      await $.spawn('hdiutil detach /Volumes/Docker', { cwd: tmpDir })
     } finally {
       await fs.rm(tmpDir, { recursive: true, force: true })
     }
 
-    await codifySpawn('xattr -r -d com.apple.quarantine /Applications/Docker.app', { requiresRoot: true });
+    await $.spawn('xattr -r -d com.apple.quarantine /Applications/Docker.app', { requiresRoot: true });
     await FileUtils.addPathToZshrc('/Applications/Docker.app/Contents/Resources/bin', false);
   }
 
   async destroy(plan: DestroyPlan<DockerConfig>): Promise<void> {
-    await codifySpawn('/Applications/Docker.app/Contents/MacOS/uninstall', { throws: false })
+    const $ = getPty();
+    await $.spawnSafe('/Applications/Docker.app/Contents/MacOS/uninstall')
     await fs.rm(path.join(os.homedir(), 'Library/Group\\ Containers/group.com.docker'), { recursive: true, force: true });
     await fs.rm(path.join(os.homedir(), 'Library/Containers/com.docker.docker/Data'), { recursive: true, force: true });
     await fs.rm(path.join(os.homedir(), '.docker'), { recursive: true, force: true });
-    await codifySpawn('rm -rf /Applications/Docker.app', { requiresRoot: true })
+    await $.spawn('rm -rf /Applications/Docker.app')
 
     await FileUtils.removeLineFromZshrc('/Applications/Docker.app/Contents/Resources/bin')
   }

@@ -10,8 +10,6 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
-
 export interface WaitGithubSshKeyConfig extends ResourceConfig {}
 
 export class WaitGithubSshKey extends Resource<WaitGithubSshKeyConfig> {
@@ -84,7 +82,8 @@ For additional information visit: ${chalk.underline('https://docs.github.com/en/
   }
 
   private async isConnectedToGithub(): Promise<boolean> {
-    const { data: githubConnectionStatus } = await codifySpawn('ssh -o StrictHostKeychecking=no -T git@github.com 2>&1', { throws: false })
+    const $ = getPty();
+    const { data: githubConnectionStatus } = await $.spawnSafe('ssh -o StrictHostKeychecking=no -T git@github.com 2>&1')
     return githubConnectionStatus.includes('You\'ve successfully authenticated, but GitHub does not provide shell access.')
   }
 }

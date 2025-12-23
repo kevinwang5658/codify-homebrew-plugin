@@ -2,7 +2,6 @@ import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-l
 import { ResourceConfig } from 'codify-schemas';
 import * as os from 'node:os';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import Schema from './git-lfs-schema.json';
 
 export interface GitLfsConfig extends ResourceConfig {
@@ -36,27 +35,29 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
 
   // FYI: This create might be called if git-lfs is installed but not initialized.
   override async create(): Promise<void> {
+    const $ = getPty();
     await this.assertBrewInstalled();
 
-    const gitLfsCheck = await codifySpawn('git lfs', { throws: false });
+    const gitLfsCheck = await $.spawnSafe('git lfs', { interactive: true });
     if (gitLfsCheck.status === SpawnStatus.ERROR) {
-      await codifySpawn('brew install git-lfs');
+      await $.spawn('brew install git-lfs', { interactive: true });
     }
 
-    await codifySpawn('git lfs install', { cwd: os.homedir() });
+    await $.spawn('git lfs install', { cwd: os.homedir(), interactive: true });
   }
 
   override async destroy(): Promise<void> {
+    const $ = getPty();
     await this.assertBrewInstalled();
 
-    await codifySpawn('git lfs uninstall', { cwd: os.homedir() });
-    await codifySpawn('brew uninstall git-lfs');
+    await $.spawn('git lfs uninstall', { cwd: os.homedir(), interactive: true });
+    await $.spawn('brew uninstall git-lfs', { interactive: true });
   }
 
   private async checkIfGitLfsIsInstalled(): Promise<boolean> {
     const $ = getPty();
 
-    const gitLfsStatus = await $.spawn('git lfs env', { cwd: os.homedir() });
+    const gitLfsStatus = await $.spawn('git lfs env', { cwd: os.homedir(), interactive: true });
     const lines = gitLfsStatus.data.split('\n');
 
     // When git lfs exists but git lfs install hasn't been called then git lfs env returns:
@@ -71,7 +72,8 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   }
 
   private async assertBrewInstalled(): Promise<void> {
-    const brewCheck = await codifySpawn('which brew', { throws: false });
+    const $ = getPty();
+    const brewCheck = await $.spawnSafe('which brew', { interactive: true });
     if (brewCheck.status === SpawnStatus.ERROR) {
       throw new Error(
         `Homebrew is not installed. Cannot install git-lfs without Homebrew installed.

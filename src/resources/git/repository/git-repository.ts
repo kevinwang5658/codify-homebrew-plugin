@@ -2,7 +2,6 @@ import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty } from 'cod
 import { ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import Schema from './git-repository-schema.json';
 
@@ -108,6 +107,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
 
 
   override async create(plan: CreatePlan<GitCloneConfig>): Promise<void> {
+    const $ = getPty();
     const config = plan.desiredConfig;
 
     if (plan.desiredConfig.autoVerifySSH) {
@@ -117,10 +117,10 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
     if (config.parentDirectory) {
       const parentDirectory = path.resolve(config.parentDirectory);
       await FileUtils.createDirIfNotExists(parentDirectory);
-      await codifySpawn(`git clone ${config.repository}`, { cwd: parentDirectory });
+      await $.spawn(`git clone ${config.repository}`, { cwd: parentDirectory });
     } else {
       const directory = path.resolve(config.directory!);
-      await codifySpawn(`git clone ${config.repository} ${directory}`);
+      await $.spawn(`git clone ${config.repository} ${directory}`);
     }
   }
 
@@ -142,6 +142,8 @@ Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.parentDirect
   }
 
   private async autoVerifySSHForFirstAttempt(url: string): Promise<void> {
+    const $ = getPty();
+
     if (!(url.includes('@') || url.includes('ssh://'))) {
       // Not an ssh url
       return;
@@ -156,10 +158,10 @@ Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.parentDirect
     }
 
     // Create known hosts file it doesn't exist
-    await codifySpawn('touch ~/.ssh/known_hosts', { throws: false })
+    await $.spawnSafe('touch ~/.ssh/known_hosts')
 
     const baseUrl = groups!.url!
-    const { data: existingKey } = await codifySpawn(`ssh-keygen -F ${baseUrl}`, { throws: false })
+    const { data: existingKey } = await $.spawnSafe(`ssh-keygen -F ${baseUrl}`)
     console.log(`Is key blank: ${this.isBlank(existingKey)}`)
     if (!this.isBlank(existingKey)) {
       // An existing key is already in the file. Skipping..
@@ -167,7 +169,7 @@ Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.parentDirect
     }
 
     // TODO: Add fingerprint verification here
-    await codifySpawn(`ssh-keyscan ${baseUrl} >> ~/.ssh/known_hosts `)
+    await $.spawn(`ssh-keyscan ${baseUrl} >> ~/.ssh/known_hosts `)
   }
 
   isBlank(str: string): boolean {
