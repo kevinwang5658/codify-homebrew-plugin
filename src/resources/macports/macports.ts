@@ -1,11 +1,9 @@
 import { CreatePlan, Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
-import * as fsSync from 'node:fs';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { Utils } from '../../utils/index.js';
 import { MacportsInstallParameter, PortPackage } from './install-parameter.js';
@@ -33,6 +31,7 @@ export class MacportsResource extends Resource<MacportsConfig> {
   override getSettings(): ResourceSettings<MacportsConfig> {
     return {
       id: 'macports',
+      operatingSystems: [OS.Darwin],
       schema,
       parameterSettings: {
         install: { type: 'stateful', definition: new MacportsInstallParameter() }
@@ -52,7 +51,8 @@ export class MacportsResource extends Resource<MacportsConfig> {
   }
 
   override async create(plan: CreatePlan<MacportsConfig>): Promise<void> {
-    const macOSVersion = (await codifySpawn('sw_vers --productVersion'))?.data?.split('.')?.at(0);
+    const $ = getPty();
+    const macOSVersion = (await $.spawn('sw_vers --productVersion'))?.data?.split('.')?.at(0);
     if (!macOSVersion) {
       throw new Error('Unable to determine macOS version');
     }
@@ -68,17 +68,18 @@ export class MacportsResource extends Resource<MacportsConfig> {
     console.log(`Downloading macports installer ${installerUrl}`)
     await Utils.downloadUrlIntoFile(installerPath, installerUrl);
 
-    await codifySpawn(`installer -pkg "${installerPath}" -target /;`, { requiresRoot: true })
+    await $.spawn(`installer -pkg "${installerPath}" -target /;`, { requiresRoot: true })
 
     await FileUtils.addToStartupFile('')
     await FileUtils.addToStartupFile('export PATH=/opt/local/bin:/opt/local/sbin:$PATH')
   }
 
   override async destroy(): Promise<void> {
-    await codifySpawn('port -fp uninstall installed', { requiresRoot: true, throws: false });
-    await codifySpawn('dscl . -delete /Users/macports', { requiresRoot: true, throws: false });
-    await codifySpawn('dscl . -delete /Groups/macports', { requiresRoot: true, throws: false });
-    await codifySpawn('rm -rf \\\n' +
+    const $ = getPty();
+    await $.spawnSafe('port -fp uninstall installed', { requiresRoot: true, interactive: true });
+    await $.spawnSafe('dscl . -delete /Users/macports', { requiresRoot: true });
+    await $.spawnSafe('dscl . -delete /Groups/macports', { requiresRoot: true });
+    await $.spawnSafe('rm -rf \\\n' +
       '    /opt/local \\\n' +
       '    /Applications/DarwinPorts \\\n' +
       '    /Applications/MacPorts \\\n' +
@@ -88,7 +89,7 @@ export class MacportsResource extends Resource<MacportsConfig> {
       '    /Library/StartupItems/DarwinPortsStartup \\\n' +
       '    /Library/Tcl/darwinports1.0 \\\n' +
       '    /Library/Tcl/macports1.0 \\\n' +
-      '    ~/.macports', { requiresRoot: true, throws: false })
+      '    ~/.macports', { requiresRoot: true })
 
     await FileUtils.removeLineFromZshrc('export PATH=/opt/local/bin:/opt/local/sbin:$PATH');
 

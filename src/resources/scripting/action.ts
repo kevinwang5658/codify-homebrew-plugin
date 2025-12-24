@@ -1,8 +1,7 @@
-import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { RefreshContext } from 'codify-plugin-lib/src/resource/resource.js';
 import { StringIndexedObject } from 'codify-schemas';
 
-import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import schema from './action-schema.json'
 
 export interface ActionConfig extends StringIndexedObject {
@@ -48,7 +47,8 @@ export class ActionResource extends Resource<ActionConfig> {
   }
   
   async create(plan: CreatePlan<ActionConfig>): Promise<void> {
-    await codifySpawn(plan.desiredConfig.action, { cwd: plan.desiredConfig.cwd ?? undefined });
+    const $ = getPty();
+    await $.spawn(plan.desiredConfig.action, { cwd: plan.desiredConfig.cwd ?? undefined, interactive: true });
   }
   
   async destroy(plan: DestroyPlan<ActionConfig>): Promise<void> {}

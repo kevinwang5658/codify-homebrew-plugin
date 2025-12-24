@@ -1,18 +1,18 @@
 import {
   CreatePlan,
-  DestroyPlan, getPty,
+  DestroyPlan,
+  getPty,
   ModifyPlan,
   ParameterChange,
   Resource,
   ResourceSettings,
 } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as fsSync from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import schema from './npm-login-schema.json';
 
 export interface NpmLoginConfig extends ResourceConfig {
@@ -25,6 +25,7 @@ export class NpmLoginResource extends Resource<NpmLoginConfig> {
   getSettings(): ResourceSettings<NpmLoginConfig> {
     return {
       id: 'npm-login',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       isSensitive: true,
       dependencies: ['npm'],
@@ -215,7 +216,8 @@ export class NpmLoginResource extends Resource<NpmLoginConfig> {
   }
 
   private async ensureNpmAvailable(): Promise<void> {
-    await codifySpawn('which npm');
+    const $ = getPty();
+    await $.spawn('which npm', { interactive: true });
   }
 
   private async ensureFile(filePath: string): Promise<void> {

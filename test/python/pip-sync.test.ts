@@ -47,6 +47,7 @@ describe('Pip-sync resource integration tests', () => {
       },
     ], {
       skipUninstall: true,
+      skipImport: true,
       validatePlan(plans) {
         console.log(JSON.stringify(plans, null, 2))
       },

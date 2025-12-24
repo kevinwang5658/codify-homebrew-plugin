@@ -1,7 +1,6 @@
-import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
 import Schema from './pgcli-schema.json';
 
 export interface PgcliConfig extends ResourceConfig {}
@@ -10,6 +9,7 @@ export class PgcliResource extends Resource<PgcliConfig> {
   getSettings(): ResourceSettings<PgcliConfig> {
     return {
       id: 'pgcli',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       dependencies: ['homebrew'],
     }
@@ -27,9 +27,10 @@ export class PgcliResource extends Resource<PgcliConfig> {
   }
 
   override async create(): Promise<void> {
+    const $ = getPty();
     const isBrewInstalled = await this.isBrewInstalled();
     if (isBrewInstalled) {
-      await codifySpawn('brew install pgcli');
+      await $.spawn('brew install pgcli', { interactive: true });
       return;
     }
 
@@ -39,7 +40,7 @@ export class PgcliResource extends Resource<PgcliConfig> {
     // TODO: Add the ability to choose a pip install in the future.
 
     throw new Error(`Unable to install pgcli because homebrew is not installed on the system.
-    
+
 Brew can be installed using Codify:
 {
   "type": "homebrew",
@@ -48,17 +49,19 @@ Brew can be installed using Codify:
   }
 
   override async destroy(): Promise<void> {
+    const $ = getPty();
     const isBrewInstalled = await this.isBrewInstalled();
     if (!isBrewInstalled) {
       console.log('Unable to uninstall pgcli because homebrew is not installed');
       return;
     }
 
-    await codifySpawn('brew uninstall pgcli');
+    await $.spawn('brew uninstall pgcli', { interactive: true });
   }
 
   private async isBrewInstalled(): Promise<boolean> {
-    const brewCheck = await codifySpawn('which brew', { throws: false });
+    const $ = getPty();
+    const brewCheck = await $.spawnSafe('which brew', { interactive: true });
     return brewCheck.status === SpawnStatus.SUCCESS;
   }
 }

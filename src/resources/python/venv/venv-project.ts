@@ -3,12 +3,12 @@ import {
   DestroyPlan,
   Resource,
   ResourceSettings,
+  getPty
 } from 'codify-plugin-lib';
 import { ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import schema from './venv-project-schema.json';
 
@@ -68,6 +68,7 @@ export class VenvProject extends Resource<VenvProjectConfig> {
   }
 
   async create(plan: CreatePlan<VenvProjectConfig>): Promise<void> {
+    const $ = getPty();
     const desired = plan.desiredConfig;
 
     const command = 'python -m venv ' +
@@ -81,10 +82,10 @@ export class VenvProject extends Resource<VenvProjectConfig> {
       (desired.upgradeDeps ? '--upgradeDeps ' : '') +
       desired.envDir;
 
-    await codifySpawn(command, { cwd: desired.cwd ?? undefined });
+    await $.spawn(command, { cwd: desired.cwd ?? undefined, interactive: true });
 
     if (desired.automaticallyInstallRequirementsTxt) {
-      await codifySpawn(`source ${desired.envDir}/bin/activate; pip install -r requirements.txt`, { cwd: desired.cwd });
+      await $.spawn(`source ${desired.envDir}/bin/activate; pip install -r requirements.txt`, { cwd: desired.cwd, interactive: true });
     }
   }
 

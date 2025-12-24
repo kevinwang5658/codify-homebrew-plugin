@@ -7,7 +7,6 @@ import { ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import schema from './virtualenv-project-schema.json';
 
@@ -61,6 +60,7 @@ export class VirtualenvProject extends Resource<VirtualenvProjectConfig> {
   }
 
   async create(plan: CreatePlan<VirtualenvProjectConfig>): Promise<void> {
+    const $ = getPty();
     const desired = plan.desiredConfig;
 
     const command = 'virtualenv ' +
@@ -70,10 +70,10 @@ export class VirtualenvProject extends Resource<VirtualenvProjectConfig> {
       (desired.symlinks ? `--symlinks=${desired.symlinks} ` : '') +
       desired.dest;
 
-    await codifySpawn(command, { cwd: desired.cwd ?? undefined });
+    await $.spawn(command, { cwd: desired.cwd ?? undefined, interactive: true });
 
     if (desired.automaticallyInstallRequirementsTxt) {
-      await codifySpawn(`source ${desired.dest}/bin/activate; pip install -r requirements.txt`, { cwd: desired.cwd });
+      await $.spawn(`source ${desired.dest}/bin/activate; pip install -r requirements.txt`, { cwd: desired.cwd, interactive: true });
     }
   }
 

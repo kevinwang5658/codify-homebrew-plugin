@@ -5,14 +5,12 @@ import {
   ModifyPlan,
   ParameterChange,
   Resource,
-  ResourceSettings
+  ResourceSettings,
+  SpawnStatus
 } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { OS, StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 
-import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { Utils } from '../../../utils/index.js';
 import Schema from './alias-schema.json';
@@ -26,6 +24,7 @@ export class AliasResource extends Resource<AliasConfig> {
   getSettings(): ResourceSettings<AliasConfig> {
     return {
       id: 'alias',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       parameterSettings: {
         value: { canModify: true }

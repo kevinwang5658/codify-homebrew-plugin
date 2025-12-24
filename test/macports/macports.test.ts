@@ -14,7 +14,7 @@ describe('Macports resource integration tests', () => {
     await PluginTester.fullTest(pluginPath, [{
       type: 'macports',
       install: [
-        { name: 'libelf', version: '@0.8.13_2' },
+        { name: 'libelf', version: '@0.8.13_4' },
         'aom'
       ]
     }], {

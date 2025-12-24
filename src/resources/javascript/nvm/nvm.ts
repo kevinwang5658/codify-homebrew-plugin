@@ -1,8 +1,7 @@
-import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { OS, ResourceConfig } from 'codify-schemas';
 import * as os from 'node:os';
 
-import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { Utils } from '../../../utils/index.js';
 import { NvmGlobalParameter } from './global-parameter.js';
@@ -40,19 +39,20 @@ export class NvmResource extends Resource<NvmConfig> {
   }
 
   override async create(): Promise<void> {
+    const $ = getPty();
     // Node installer was previously used.
-    const { data } = await codifySpawn('echo $npm_config_prefix')
+    const { data } = await $.spawn('echo $npm_config_prefix', { interactive: true })
     if (data.trim() !== '') {
       await FileUtils.addToStartupFile('unset npm_config_prefix');
     }
 
-    const { data: installResult } = await codifySpawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash')
+    const { data: installResult } = await $.spawn('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash', { interactive: true })
 
     // Nvm doesn't handle if the init string is commented out
     // This check first checks that nvm detects the init string is there but nvm itself is still not present
     const shellRc = Utils.getPrimaryShellRc();
     if (installResult.includes(`nvm source string already in ${shellRc}`)
-      && (await codifySpawn('which nvm', { throws: false })).status === SpawnStatus.ERROR
+      && (await $.spawnSafe('which nvm', { interactive: true })).status === SpawnStatus.ERROR
     ) {
       await FileUtils.addToStartupFile('export NVM_DIR="$HOME/.nvm"')
       await FileUtils.addToStartupFile('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" ');
@@ -60,10 +60,11 @@ export class NvmResource extends Resource<NvmConfig> {
   }
 
   override async destroy(): Promise<void> {
+    const $ = getPty();
     // eslint-disable-next-line no-template-curly-in-string
-    const { data: nvmDir } = await codifySpawn('echo "${NVM_DIR:-~/.nvm}"');
-    await codifySpawn('nvm unload');
-    await codifySpawn(`rm -rf ${nvmDir.trim()}`, { cwd: os.homedir() });
+    const { data: nvmDir } = await $.spawn('echo "${NVM_DIR:-~/.nvm}"', { interactive: true });
+    await $.spawn('nvm unload', { interactive: true });
+    await $.spawn(`rm -rf ${nvmDir.trim()}`, { cwd: os.homedir() });
 
     await FileUtils.removeLineFromZshrc('export NVM_DIR="$HOME/.nvm"')
     await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"  # This loads nvm')

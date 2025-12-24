@@ -4,7 +4,6 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { Utils } from '../../../utils/index.js';
 import { PnpmGlobalEnvStatefulParameter } from './pnpm-global-env-stateful-parameter.js';
@@ -46,20 +45,22 @@ export class Pnpm extends Resource<PnpmConfig> {
   }
 
   async create(plan: CreatePlan<PnpmConfig>): Promise<void> {
+    const $ = getPty();
     const specificVersion = plan.desiredConfig.version;
 
     specificVersion
-      ? await codifySpawn(`curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=${specificVersion} sh -`)
-      : await codifySpawn('curl -fsSL https://get.pnpm.io/install.sh | sh -')
+      ? await $.spawn(`curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=${specificVersion} sh -`, { interactive: true })
+      : await $.spawn('curl -fsSL https://get.pnpm.io/install.sh | sh -', { interactive: true })
   }
 
   async destroy(plan: DestroyPlan<PnpmConfig>): Promise<void> {
-    const { data: pnpmLocation } = await codifySpawn('which pnpm');
+    const $ = getPty();
+    const { data: pnpmLocation } = await $.spawn('which pnpm', { interactive: true });
     if (pnpmLocation.trim().toLowerCase() !== path.join(os.homedir(), 'Library', 'pnpm', 'pnpm').trim().toLowerCase()) {
       throw new Error('pnpm was installed outside of Codify. Please uninstall manually and re-run Codify');
     }
 
-    const { data: pnpmHome } = await codifySpawn('echo $PNPM_HOME', { throws: false });
+    const { data: pnpmHome } = await $.spawnSafe('echo $PNPM_HOME', { interactive: true });
     if (!pnpmHome) {
       throw new Error('$PNPM_HOME variable is not set. Unable to determine how to uninstall pnpm. Please uninstall manually and re-run Codify.')
     }

@@ -1,10 +1,9 @@
-import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { FileUtils } from '../../../utils/file-utils.js';
 import { PyenvGlobalParameter } from './global-parameter.js';
 import Schema from './pyenv-schema.json';
@@ -20,6 +19,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
   getSettings(): ResourceSettings<PyenvConfig> {
     return {
       id: 'pyenv',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       parameterSettings: {
         global: { type: 'stateful', definition: new PyenvGlobalParameter(), order: 2 },
@@ -40,9 +40,11 @@ export class PyenvResource extends Resource<PyenvConfig> {
   }
 
   override async create(): Promise<void> {
+    const $ = getPty();
+
     // Pyenv directory exists already but PYENV_ROOT variable is not set. Most likely pyenv is installed but not initialized
     if (fs.existsSync(path.join(os.homedir(), '.pyenv'))
-      && (await codifySpawn('[ -z $PYENV_ROOT ]', { throws: false })).status === SpawnStatus.SUCCESS
+      && (await $.spawnSafe('[ -z $PYENV_ROOT ]', { interactive: true })).status === SpawnStatus.SUCCESS
     ) {
       await this.addPyenvInitialization();
 
@@ -54,16 +56,18 @@ export class PyenvResource extends Resource<PyenvConfig> {
         await this.destroy();
       }
     }
-    
-    await codifySpawn('curl https://pyenv.run | bash')
+
+    await $.spawn('curl https://pyenv.run | bash', { interactive: true })
 
     // Add to startup script
     await this.addPyenvInitialization();
   }
 
   override async destroy(): Promise<void> {
-    await codifySpawn('rm -rf $(pyenv root)', { requiresRoot: true });
-    await codifySpawn('rm -rf $HOME/.pyenv', { requiresRoot: true });
+    const $ = getPty();
+
+    await $.spawn('rm -rf $(pyenv root)', { interactive: true });
+    await $.spawn('rm -rf $HOME/.pyenv');
 
     await FileUtils.removeLineFromZshrc('export PYENV_ROOT="$HOME/.pyenv"')
     await FileUtils.removeLineFromZshrc('[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
@@ -80,7 +84,8 @@ export class PyenvResource extends Resource<PyenvConfig> {
 
   // TODO: Need to support bash in addition to zsh here
   private async isValidInstall(): Promise<boolean> {
-    const { data: doctor } = await codifySpawn('pyenv doctor', { throws: false })
+    const $ = getPty();
+    const { data: doctor } = await $.spawnSafe('pyenv doctor', { interactive: true })
     return doctor.includes('Congratulations! You are ready to build pythons!');
   }
 }

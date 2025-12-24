@@ -3,13 +3,14 @@ import {
   DestroyPlan,
   getPty,
   ModifyPlan,
-  ParameterChange, RefreshContext, resolvePathWithVariables,
+  ParameterChange,
+  RefreshContext,
+  resolvePathWithVariables,
   Resource,
   ResourceSettings
 } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { OS, StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 
 import { FileUtils } from '../../../utils/file-utils.js';
@@ -32,6 +33,7 @@ export class PathResource extends Resource<PathConfig> {
   getSettings(): ResourceSettings<PathConfig> {
     return {
       id: 'path',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       parameterSettings: {
         path: { type: 'directory' },
