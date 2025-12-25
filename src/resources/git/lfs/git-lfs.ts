@@ -1,5 +1,5 @@
 import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as os from 'node:os';
 
 import Schema from './git-lfs-schema.json';
@@ -12,6 +12,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   getSettings(): ResourceSettings<GitLfsConfig> {
     return {
       id: 'git-lfs',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       dependencies: ['homebrew'],
     }

@@ -1,6 +1,6 @@
 import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
 import { RefreshContext } from 'codify-plugin-lib/src/resource/resource.js';
-import { StringIndexedObject } from 'codify-schemas';
+import { OS, StringIndexedObject } from 'codify-schemas';
 
 import schema from './action-schema.json'
 
@@ -15,6 +15,7 @@ export class ActionResource extends Resource<ActionConfig> {
   getSettings(): ResourceSettings<ActionConfig> {
     return {
       id: 'action',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       parameterSettings: {
         cwd: { type: 'directory' },

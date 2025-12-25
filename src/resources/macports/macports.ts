@@ -91,7 +91,7 @@ export class MacportsResource extends Resource<MacportsConfig> {
       '    /Library/Tcl/macports1.0 \\\n' +
       '    ~/.macports', { requiresRoot: true })
 
-    await FileUtils.removeLineFromZshrc('export PATH=/opt/local/bin:/opt/local/sbin:$PATH');
+    await FileUtils.removeLineFromStartupFile('export PATH=/opt/local/bin:/opt/local/sbin:$PATH');
 
   }
 

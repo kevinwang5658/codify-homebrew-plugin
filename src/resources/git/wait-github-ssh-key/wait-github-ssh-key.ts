@@ -5,7 +5,7 @@ import {
   ResourceSettings,
   getPty
 } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -16,6 +16,7 @@ export class WaitGithubSshKey extends Resource<WaitGithubSshKeyConfig> {
   getSettings(): ResourceSettings<WaitGithubSshKeyConfig> {
     return {
       id: 'wait-github-ssh-key',
+      operatingSystems: [OS.Darwin, OS.Linux],
       dependencies: [
         'ssh-key',
         'ssh-add',

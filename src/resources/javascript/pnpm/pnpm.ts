@@ -1,5 +1,5 @@
 import { CreatePlan, DestroyPlan, RefreshContext, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -18,6 +18,7 @@ export class Pnpm extends Resource<PnpmConfig> {
   getSettings(): ResourceSettings<PnpmConfig> {
     return {
       id: 'pnpm',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       parameterSettings: {
         version: { type: 'version' },
@@ -69,13 +70,13 @@ export class Pnpm extends Resource<PnpmConfig> {
     console.log('Successfully uninstalled pnpm');
 
     const shellRc = Utils.getPrimaryShellRc();
-    await FileUtils.removeLineFromZshrc('# pnpm')
-    await FileUtils.removeLineFromZshrc(`export PNPM_HOME="${os.homedir()}/Library/pnpm"`)
+    await FileUtils.removeLineFromStartupFile('# pnpm')
+    await FileUtils.removeLineFromStartupFile(`export PNPM_HOME="${os.homedir()}/Library/pnpm"`)
     await FileUtils.removeFromFile(shellRc,
 `case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac`)
-    await FileUtils.removeLineFromZshrc('# pnpm end')
+    await FileUtils.removeLineFromStartupFile('# pnpm end')
   }
 }

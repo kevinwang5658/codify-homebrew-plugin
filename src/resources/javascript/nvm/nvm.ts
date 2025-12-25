@@ -66,8 +66,8 @@ export class NvmResource extends Resource<NvmConfig> {
     await $.spawn('nvm unload', { interactive: true });
     await $.spawn(`rm -rf ${nvmDir.trim()}`, { cwd: os.homedir() });
 
-    await FileUtils.removeLineFromZshrc('export NVM_DIR="$HOME/.nvm"')
-    await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"  # This loads nvm')
-    await FileUtils.removeLineFromZshrc('[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion')
+    await FileUtils.removeLineFromStartupFile('export NVM_DIR="$HOME/.nvm"')
+    await FileUtils.removeLineFromStartupFile('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"  # This loads nvm')
+    await FileUtils.removeLineFromStartupFile('[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion')
   }
 }

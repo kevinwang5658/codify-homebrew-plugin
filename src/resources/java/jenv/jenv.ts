@@ -90,8 +90,8 @@ export class JenvResource extends Resource<JenvConfig> {
     const $ = getPty();
     await $.spawn('rm -rf $HOME/.jenv');
 
-    await FileUtils.removeLineFromZshrc('export PATH="$HOME/.jenv/bin:$PATH"')
-    await FileUtils.removeLineFromZshrc('eval "$(jenv init -)"')
+    await FileUtils.removeLineFromStartupFile('export PATH="$HOME/.jenv/bin:$PATH"')
+    await FileUtils.removeLineFromStartupFile('eval "$(jenv init -)"')
   }
 
   private async assertBrewInstalled(): Promise<void> {

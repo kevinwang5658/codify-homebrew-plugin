@@ -1,8 +1,11 @@
-import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
+import fs from 'node:fs/promises';
+import os, { homedir } from 'node:os';
+import path from 'node:path';
 
-import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
+import { Utils } from '../../utils/index.js';
 import AsdfSchema from './asdf-schema.json';
 import { AsdfPluginsParameter } from './plugins-parameter.js';
 
@@ -14,6 +17,7 @@ export class AsdfResource extends Resource<AsdfConfig> {
     getSettings(): ResourceSettings<AsdfConfig> {
       return {
         id: 'asdf',
+        operatingSystems: [OS.Darwin],
         schema: AsdfSchema,
         parameterSettings: {
           plugins: { type: 'stateful', definition: new AsdfPluginsParameter() },
@@ -29,27 +33,28 @@ export class AsdfResource extends Resource<AsdfConfig> {
     }
 
     async create(plan: CreatePlan<AsdfConfig>): Promise<void> {
-      await codifySpawn('git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1');
+      const $ = getPty();
+
+      if (!(await Utils.isHomebrewInstalled())) {
+        throw new Error('Homebrew is not installed. Please install Homebrew before installing asdf.');
+      }
+
+      await $.spawn('brew install asdf', { interactive: true, env: { HOMEBREW_NO_AUTO_UPDATE: 1 } });
 
       await FileUtils.addAllToStartupFile([
-        '# Asdf setup',
-        '. "$HOME/.asdf/asdf.sh"',
-        '# append completions to fpath',
-        'fpath=(${ASDF_DIR}/completions $fpath)',
-        '# initialise completions with ZSH\'s compinit',
-        'autoload -Uz compinit && compinit'
+        'export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"',
       ]);
     }
 
     async destroy(plan: DestroyPlan<AsdfConfig>): Promise<void> {
-      await FileUtils.removeLineFromZshrc('# Asdf setup')
-      await FileUtils.removeLineFromZshrc('. "$HOME/.asdf/asdf.sh"');
-      await FileUtils.removeLineFromZshrc('# append completions to fpath');
-      await FileUtils.removeLineFromZshrc('fpath=(${ASDF_DIR}/completions $fpath)');
-      await FileUtils.removeLineFromZshrc('# initialise completions with ZSH\'s compinit');
-      await FileUtils.removeLineFromZshrc('autoload -Uz compinit && compinit');
+      if (!(await Utils.isHomebrewInstalled())) {
+        return;
+      }
 
-      await codifySpawn('rm -rf ~/.asdf');
+      const $ = getPty();
+      await $.spawn('brew uninstall asdf', { interactive: true, env: { HOMEBREW_NO_AUTO_UPDATE: 1 } });
+      await FileUtils.removeLineFromStartupFile('export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"')
+      await fs.rm(path.join(os.homedir(), '.asdf'), { recursive: true, force: true });
     }
 
 }

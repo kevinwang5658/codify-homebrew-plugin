@@ -1,8 +1,9 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
-import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import Schema from './vscode-schema.json';
 
 const VSCODE_APPLICATION_NAME = 'Visual Studio Code.app';
@@ -16,6 +17,7 @@ export class VscodeResource extends Resource<VscodeConfig> {
   getSettings(): ResourceSettings<VscodeConfig> {
     return {
       id: 'vscode',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       parameterSettings: {
         directory: { type: 'directory', default: '/Applications' }
@@ -35,35 +37,31 @@ export class VscodeResource extends Resource<VscodeConfig> {
   }
 
   override async create(plan: CreatePlan<VscodeConfig>): Promise<void> {
+    const $ = getPty();
+    
     // Create a temporary tmp dir
-    const temporaryDirQuery = await codifySpawn('mktemp -d');
-    const temporaryDir = temporaryDirQuery.data.trim();
+    const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
 
     // Download vscode
-    await codifySpawn(`curl -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36" -SL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
-
-    // Unzip
-    await codifySpawn('unzip -q vscode.zip', { cwd: temporaryDir });
+    await $.spawn(`curl -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36" -SL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
+    await $.spawn('unzip -q vscode.zip', { cwd: temporaryDir });
 
     // Move VSCode to the applications folder
     const { directory } = plan.desiredConfig;
-    await codifySpawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir })
-    await codifySpawn(`rm -rf ${temporaryDir}`)
+    await $.spawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir })
+    await $.spawn(`rm -rf ${temporaryDir}`)
   }
 
   override async destroy(plan: DestroyPlan<VscodeConfig>): Promise<void> {
     const { directory } = plan.currentConfig;
     const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
-    await codifySpawn(`rm -rf ${location}`, { throws: false });
+    const $ = getPty();
+    await $.spawn(`rm -rf ${location}`);
   }
 
   private async isVscodeInstalled(directory: string): Promise<boolean> {
-    const query = await codifySpawn(`ls ${directory}`, { throws: false });
-    if (query.status === SpawnStatus.ERROR) {
-      return false;
-    }
-
-    return query.data.split('\n')
+    const files = await fs.readdir(directory);
+    return files
       .includes(VSCODE_APPLICATION_NAME);
   }
 }

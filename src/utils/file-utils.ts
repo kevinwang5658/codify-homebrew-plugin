@@ -155,7 +155,7 @@ ${lines.join('\n')}`)
     console.log(`Removed line: ${search} from ${filePath}`)
   }
 
-  static async removeLineFromZshrc(search: RegExp | string): Promise<void> {
+  static async removeLineFromStartupFile(search: RegExp | string): Promise<void> {
     return FileUtils.removeLineFromFile(Utils.getPrimaryShellRc(), search);
   }
 

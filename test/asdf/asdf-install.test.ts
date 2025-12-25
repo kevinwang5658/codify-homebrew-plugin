@@ -19,6 +19,9 @@ describe('Asdf install tests', async () => {
 
     await PluginTester.fullTest(pluginPath, [
       {
+        type: 'homebrew',
+      },
+      {
         type: 'asdf',
       },
       {
@@ -42,6 +45,7 @@ describe('Asdf install tests', async () => {
 
   it('Can install a plugin and then a version', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
+      { type: 'homebrew' },
       {
         type: 'asdf',
         plugins: ['nodejs']

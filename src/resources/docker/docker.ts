@@ -1,5 +1,5 @@
 import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { OS, StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,6 +21,7 @@ export class DockerResource extends Resource<DockerConfig> {
   getSettings(): ResourceSettings<DockerConfig> {
     return {
       id: 'docker',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       parameterSettings: {
         acceptLicense: {
@@ -98,7 +99,7 @@ export class DockerResource extends Resource<DockerConfig> {
     await fs.rm(path.join(os.homedir(), '.docker'), { recursive: true, force: true });
     await $.spawn('rm -rf /Applications/Docker.app')
 
-    await FileUtils.removeLineFromZshrc('/Applications/Docker.app/Contents/Resources/bin')
+    await FileUtils.removeLineFromStartupFile('/Applications/Docker.app/Contents/Resources/bin')
   }
 
 }

@@ -7,7 +7,7 @@ import {
   ResourceSettings,
   getPty
 } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 
 import schema from './pip-schema.json';
 import { PipInstallFilesParameter } from './install-files.js';
@@ -28,6 +28,7 @@ export class Pip extends Resource<PipResourceConfig> {
   getSettings(): ResourceSettings<PipResourceConfig> {
     return {
       id: 'pip',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       parameterSettings: {
         install: {

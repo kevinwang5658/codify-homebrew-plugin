@@ -1,5 +1,5 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, untildify } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, SpawnStatus, untildify } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
 
 import { codifySpawn } from '../../utils/codify-spawn.js';
 import AsdfPluginSchema from './asdf-plugin-schema.json';
@@ -11,12 +11,13 @@ export interface AsdfPluginConfig extends ResourceConfig {
   versions: string[];
 }
 
-const PLUGIN_LIST_REGEX = /^([^ ]+) +([^ ]+)$/
+const PLUGIN_LIST_REGEX = /^([^ ]+?)\s+([^ ]+)/
 
 export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
   getSettings(): ResourceSettings<AsdfPluginConfig> {
     return {
       id: 'asdf-plugin',
+      operatingSystems: [OS.Darwin, OS.Linux],
       dependencies: ['asdf'],
       schema: AsdfPluginSchema,
       parameterSettings: {
@@ -26,18 +27,20 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
   }
 
   async refresh(parameters: Partial<AsdfPluginConfig>): Promise<Partial<AsdfPluginConfig> | Partial<AsdfPluginConfig>[] | null> {
-    if ((await codifySpawn('which asdf', { throws: false })).status === SpawnStatus.ERROR) {
+    const $ = getPty();
+    if ((await $.spawnSafe('which asdf')).status === SpawnStatus.ERROR) {
       return null;
     }
 
-    const installedVersions = (await codifySpawn('asdf plugin list --urls'))
+    const installedVersions = (await $.spawn('asdf plugin list --urls'))
       .data
       .split(/\n/)
       .filter(Boolean)
-      .map((l) => l.trim())
-      .map((l) => l.replaceAll('*', ''))
       .map((l) => {
+        console.log('line', l);
         const matches = l.match(PLUGIN_LIST_REGEX)
+        console.log('matches', matches);
+
         if (!matches) {
           return null;
         }
@@ -60,11 +63,13 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
   }
 
   async create(plan: CreatePlan<AsdfPluginConfig>): Promise<void> {
-    await codifySpawn(`asdf plugin add ${plan.desiredConfig.plugin} ${plan.desiredConfig.gitUrl ?? ''}`);
+    const $ = getPty();
+    await $.spawn(`asdf plugin add ${plan.desiredConfig.plugin} ${plan.desiredConfig.gitUrl ?? ''}`, { interactive: true });
   }
 
   async destroy(plan: DestroyPlan<AsdfPluginConfig>): Promise<void> {
-    await codifySpawn(`asdf plugin remove ${plan.currentConfig.plugin} ${plan.currentConfig.gitUrl ?? ''}`)
+    const $ = getPty();
+    await $.spawn(`asdf plugin remove ${plan.currentConfig.plugin} ${plan.currentConfig.gitUrl ?? ''}`, { interactive: true });
   }
 }
 

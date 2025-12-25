@@ -12,6 +12,7 @@ describe('Asdf tests', async () => {
 
   it('Can install asdf and plugins', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
+      { type: 'homebrew' },
       {
         type: 'asdf',
         plugins: ['nodejs', 'ruby']
@@ -20,11 +21,6 @@ describe('Asdf tests', async () => {
         type: 'asdf-plugin',
         plugin: 'nodejs',
         versions: ['latest', '18.20.4']
-      },
-      {
-        type: 'asdf-global',
-        plugin: 'nodejs',
-        version: 'latest',
       }
     ], {
       validateApply: async () => {
@@ -40,6 +36,7 @@ describe('Asdf tests', async () => {
 
   it('Support plugins resource', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
+      { type: 'homebrew' },
       {
         type: 'asdf',
       },
@@ -62,6 +59,7 @@ describe('Asdf tests', async () => {
 
   it('Can install custom gitUrls', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
+      { type: 'homebrew' },
       {
         type: 'asdf',
       },
@@ -76,6 +74,7 @@ describe('Asdf tests', async () => {
     });
 
     await PluginTester.fullTest(pluginPath, [
+      { type: 'homebrew' },
       {
         type: 'asdf',
       },
@@ -97,61 +96,5 @@ describe('Asdf tests', async () => {
         expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
       }
     });
-  })
-
-  it('Can install a local version', { timeout: 300000 }, async () => {
-    await fs.mkdir(path.join(os.homedir(), 'localDir'));
-
-    await PluginTester.fullTest(pluginPath, [
-      {
-        type: 'asdf',
-        plugins: ['nodejs'],
-      },
-      {
-        type: 'asdf-plugin',
-        plugin: 'nodejs',
-        versions: ['20.18.0']
-      },
-      {
-        type: 'asdf-local',
-        plugin: 'nodejs',
-        version: '20.18.0',
-        directory: '~/localDir'
-      }
-    ]);
-  })
-
-  it('Can uninstall asdf-plugin-version separately from asdf-plugin', { timeout: 300000 }, async () => {
-    // localDir1 is created in the previous test
-    await fs.mkdir(path.join(os.homedir(), 'localDir2'));
-
-    await PluginTester.fullTest(pluginPath, [
-      {
-        type: 'asdf',
-        plugins: ['nodejs'],
-      },
-      {
-        type: 'asdf-plugin',
-        plugin: 'golang',
-        versions: ['latest'],
-      },
-      {
-        type: 'asdf-local',
-        plugin: 'golang',
-        version: 'latest',
-        directories: ['~/localDir', '~/localDir2']
-      }
-    ], {
-      skipUninstall: true,
-    });
-
-    await PluginTester.uninstall(pluginPath, [
-      {
-        type: 'asdf-local',
-        plugin: 'golang',
-        version: 'latest',
-        directories: ['~/localDir', '~/localDir2']
-      }
-    ])
   })
 })

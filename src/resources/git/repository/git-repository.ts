@@ -1,5 +1,5 @@
 import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import path from 'node:path';
 
 import { FileUtils } from '../../../utils/file-utils.js';
@@ -16,6 +16,7 @@ export class GitCloneResource extends Resource<GitCloneConfig> {
   getSettings(): ResourceSettings<GitCloneConfig> {
     return {
       id: 'git-repository',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       parameterSettings: {
         parentDirectory: { type: 'directory' },

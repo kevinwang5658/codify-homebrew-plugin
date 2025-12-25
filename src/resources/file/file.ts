@@ -1,5 +1,5 @@
 import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { OS, StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -16,6 +16,7 @@ export class FileResource extends Resource<FileConfig> {
   getSettings(): ResourceSettings<FileConfig> {
     return {
       id: 'file',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       parameterSettings: {
         path: { type: 'directory' },

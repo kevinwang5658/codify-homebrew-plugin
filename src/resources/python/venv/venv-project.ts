@@ -5,7 +5,7 @@ import {
   ResourceSettings,
   getPty
 } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -31,6 +31,7 @@ export class VenvProject extends Resource<VenvProjectConfig> {
   getSettings(): ResourceSettings<VenvProjectConfig> {
     return {
       id: 'venv-project',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       parameterSettings: {
         envDir: { type: 'directory' },

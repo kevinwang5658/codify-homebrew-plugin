@@ -2,9 +2,7 @@ import { Plugin, runPlugin } from 'codify-plugin-lib';
 
 import { AndroidStudioResource } from './resources/android/android-studio.js';
 import { AsdfResource } from './resources/asdf/asdf.js';
-import { AsdfGlobalResource } from './resources/asdf/asdf-global.js';
 import { AsdfInstallResource } from './resources/asdf/asdf-install.js';
-import { AsdfLocalResource } from './resources/asdf/asdf-local.js';
 import { AsdfPluginResource } from './resources/asdf/asdf-plugin.js';
 import { AwsCliResource } from './resources/aws-cli/cli/aws-cli.js';
 import { AwsProfileResource } from './resources/aws-cli/profile/aws-profile.js';
@@ -60,8 +58,6 @@ runPlugin(Plugin.create(
     new AndroidStudioResource(),
     new AsdfResource(),
     new AsdfPluginResource(),
-    new AsdfGlobalResource(),
-    new AsdfLocalResource(),
     new AsdfInstallResource(),
     new SshKeyResource(),
     new SshConfigFileResource(),

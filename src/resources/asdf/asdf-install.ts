@@ -1,12 +1,17 @@
-import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, untildify, } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import {
+  CreatePlan,
+  DestroyPlan,
+  Resource,
+  ResourceSettings,
+  SpawnStatus,
+  getPty,
+} from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { SpawnStatus, codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import AsdfInstallSchema from './asdf-install-schema.json';
-import { AsdfPluginVersionsParameter } from './version-parameter.js';
 
 export interface AsdfInstallConfig extends ResourceConfig {
   plugin?: string;
@@ -14,7 +19,7 @@ export interface AsdfInstallConfig extends ResourceConfig {
   directory?: string;
 }
 
-const CURRENT_VERSION_REGEX = /[^ ]+ +([^ ]+).*/;
+const CURRENT_VERSION_REGEX = /^([^ ]+?)\s+([^ ]+?)\s+.*/;
 const TOOL_VERSIONS_REGEX = /^([^ ]+) +([^ ]+)$/;
 
 
@@ -22,6 +27,7 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
   getSettings(): ResourceSettings<AsdfInstallConfig> {
     return {
       id: 'asdf-install',
+      operatingSystems: [OS.Darwin, OS.Linux],
       dependencies: ['asdf'],
       schema: AsdfInstallSchema,
       parameterSettings: {
@@ -60,13 +66,13 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       const desiredTools = await this.getToolVersions(parameters.directory);
 
       for (const { plugin, version } of desiredTools) {
-        const { status, data } = await $.spawnSafe(`asdf current ${plugin}`, { cwd: parameters.directory });
+        const { status, data } = await $.spawnSafe(`asdf current ${plugin} --no-header`, { cwd: parameters.directory });
         if (status === SpawnStatus.ERROR || data.trim() === '') {
           return null;
         }
 
-        const [_, currentVersion] = data.match(CURRENT_VERSION_REGEX)!;
-        if (currentVersion !== version) {
+        const [_, currentPlugin, currentVersion] = data.match(CURRENT_VERSION_REGEX)!;
+        if (currentPlugin !== plugin || currentVersion !== version) {
           return null;
         }
       }
@@ -78,12 +84,12 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
 
     // Directly check plugin version
     const versionsQuery = await $.spawnSafe(`asdf list ${parameters.plugin}`);
-    if (versionsQuery.status === SpawnStatus.ERROR || versionsQuery.data.trim() === 'No versions installed') {
+    if (versionsQuery.status === SpawnStatus.ERROR || versionsQuery.data.trim().includes('No compatible versions installed')) {
       return null;
     }
 
     const latest = parameters.versions?.includes('latest')
-      ? (await codifySpawn(`asdf latest ${parameters.plugin}`)).data.trim()
+      ? (await $.spawnSafe(`asdf latest ${parameters.plugin}`)).data.trim()
       : null;
 
     const versions = versionsQuery.data.split(/\n/)
@@ -99,37 +105,40 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
   }
 
   async create(plan: CreatePlan<AsdfInstallConfig>): Promise<void> {
+    const $ = getPty();
+
     if (plan.desiredConfig.directory) {
       const desiredTools = await this.getToolVersions(plan.desiredConfig.directory);
 
       // Make sure all of the plugins are installed. If not installed, then install them
       for (const { plugin } of desiredTools) {
-        if ((await codifySpawn(`asdf list ${plugin}`, { throws: false })).status === SpawnStatus.ERROR) {
-          await codifySpawn(`asdf plugin add ${plugin}`);
+        if ((await $.spawnSafe(`asdf list ${plugin}`)).status === SpawnStatus.ERROR) {
+          await $.spawn(`asdf plugin add ${plugin}`, { interactive: true });
         }
       }
 
-      await codifySpawn('asdf install', { cwd: plan.desiredConfig.directory });
+      await $.spawn('asdf install', { cwd: plan.desiredConfig.directory, interactive: true });
       return;
     }
 
-    await codifySpawn(`asdf install ${plan.desiredConfig?.plugin} ${plan.desiredConfig.versions?.join(' ')}`);
+    await $.spawn(`asdf install ${plan.desiredConfig?.plugin} ${plan.desiredConfig.versions?.join(' ')}`, { interactive: true });
   }
 
   async destroy(plan: DestroyPlan<AsdfInstallConfig>): Promise<void> {
+    const $ = getPty();
     if (plan.currentConfig.directory) {
       const desiredTools = await this.getToolVersions(plan.currentConfig.directory);
 
       // Uninstall plugin versions listed in .tool-versions
       for (const { plugin, version } of desiredTools) {
-        await codifySpawn(`asdf uninstall ${plugin} ${version}`);
+        await $.spawn(`asdf uninstall ${plugin} ${version}`, { interactive: true });
       }
 
       return;
     }
 
     // Other path is uninstalled through the stateful parameter
-    await codifySpawn(`asdf uninstall ${plan.currentConfig?.plugin} ${plan.currentConfig.versions?.join(' ')}`);
+    await $.spawn(`asdf uninstall ${plan.currentConfig?.plugin} ${plan.currentConfig.versions?.join(' ')}`, { interactive: true });
   }
 
   private async getToolVersions(directory: string): Promise<Array<{ plugin: string; version: string }>> {

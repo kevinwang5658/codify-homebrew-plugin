@@ -3,7 +3,7 @@ import {
   ResourceSettings,
   getPty
 } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { OS, ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -26,6 +26,7 @@ export class VirtualenvProject extends Resource<VirtualenvProjectConfig> {
   getSettings(): ResourceSettings<VirtualenvProjectConfig> {
     return {
       id: 'virtualenv-project',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema,
       parameterSettings: {
         dest: { type: 'directory' },

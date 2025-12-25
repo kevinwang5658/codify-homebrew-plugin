@@ -69,9 +69,9 @@ export class PyenvResource extends Resource<PyenvConfig> {
     await $.spawn('rm -rf $(pyenv root)', { interactive: true });
     await $.spawn('rm -rf $HOME/.pyenv');
 
-    await FileUtils.removeLineFromZshrc('export PYENV_ROOT="$HOME/.pyenv"')
-    await FileUtils.removeLineFromZshrc('[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
-    await FileUtils.removeLineFromZshrc('eval "$(pyenv init -)"')
+    await FileUtils.removeLineFromStartupFile('export PYENV_ROOT="$HOME/.pyenv"')
+    await FileUtils.removeLineFromStartupFile('[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"')
+    await FileUtils.removeLineFromStartupFile('eval "$(pyenv init -)"')
   }
 
   private async addPyenvInitialization(): Promise<void> {

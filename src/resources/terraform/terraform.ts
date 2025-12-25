@@ -1,12 +1,14 @@
 import { CreatePlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { OS, StringIndexedObject } from 'codify-schemas';
 import semver from 'semver';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
 import { FileUtils } from '../../utils/file-utils.js';
 import { Utils } from '../../utils/index.js';
 import Schema from './terraform-schema.json';
 import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 
 const TERRAFORM_RELEASES_API_URL = 'https://api.releases.hashicorp.com/v1/releases/terraform';
 const TERRAFORM_RELEASE_INFO_API_URL = (version: string) => `https://api.releases.hashicorp.com/v1/releases/terraform/${version}`;
@@ -23,6 +25,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
   getSettings(): ResourceSettings<TerraformConfig> {
     return {
       id: 'terraform',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       parameterSettings: {
         directory: {
@@ -68,6 +71,7 @@ export class TerraformResource extends Resource<TerraformConfig> {
     const { version } = plan.desiredConfig;
     const isArm = await Utils.isArmArch()
     const directory = plan.desiredConfig.directory ?? '/usr/local/bin';
+    const $ = getPty();
 
     const releaseInfo = await (version ? this.getReleaseInfo(version) : this.getLatestTerraformInfo());
     if (!releaseInfo) {
@@ -82,18 +86,17 @@ ${JSON.stringify(releaseInfo, null, 2)}
     }
     
     // Create a temporary tmp dir
-    const temporaryDirQuery = await codifySpawn('mktemp -d');
-    const temporaryDir = temporaryDirQuery.data.trim();
+    const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'terraform-'));
 
     // Download and unzip the terraform binary
-    await codifySpawn(`curl -fsSL ${downloadUrl} -o terraform.zip`, { cwd: temporaryDir });
-    await codifySpawn('unzip -q terraform.zip', { cwd: temporaryDir });
+    await $.spawn(`curl -fsSL ${downloadUrl} -o terraform.zip`, { cwd: temporaryDir });
+    await $.spawn('unzip -q terraform.zip', { cwd: temporaryDir });
 
     // Ensure that /usr/local/bin exists. If not then create it
     await (directory === '/usr/local/bin' ? Utils.createBinDirectoryIfNotExists() : Utils.createDirectoryIfNotExists(directory));
 
-    await codifySpawn(`mv ./terraform ${directory}`, { cwd: temporaryDir, requiresRoot: true })
-    await codifySpawn(`rm -rf ${temporaryDir}`)
+    await $.spawn(`mv ./terraform ${directory}`, { cwd: temporaryDir, requiresRoot: true })
+    await $.spawn(`rm -rf ${temporaryDir}`)
 
     if (!await Utils.isDirectoryOnPath(directory)) {
       await FileUtils.addToStartupFile(`export PATH=$PATH:${directory}`);
@@ -101,18 +104,19 @@ ${JSON.stringify(releaseInfo, null, 2)}
   }
 
   override async destroy(): Promise<void> {
-    const installLocationQuery = await codifySpawn('which terraform', { throws: false });
+    const $ = getPty();
+    const installLocationQuery = await $.spawnSafe('which terraform', { interactive: true });
     if (installLocationQuery.status === SpawnStatus.ERROR) {
       return;
     }
 
     if (installLocationQuery.data.includes('homebrew')) {
-      await codifySpawn('brew uninstall terraform');
+      await $.spawn('brew uninstall terraform', { interactive: true });
       return;
     }
 
-    await codifySpawn(`rm ${installLocationQuery.data}`, { requiresRoot: true });
-    await FileUtils.removeLineFromZshrc(`export PATH=$PATH:${installLocationQuery.data}`);
+    await $.spawn(`rm ${installLocationQuery.data}`, { requiresRoot: true });
+    await FileUtils.removeLineFromStartupFile(`export PATH=$PATH:${installLocationQuery.data}`);
   }
 
   private async getLatestTerraformInfo(): Promise<HashicorpReleaseInfo> {
