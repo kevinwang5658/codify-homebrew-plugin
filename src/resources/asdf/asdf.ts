@@ -65,12 +65,8 @@ export class AsdfResource extends Resource<AsdfConfig> {
       // eslint-disable-next-line no-template-curly-in-string
       await FileUtils.addToShellRc('export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"')
 
-      // TODO: Add filtering to resources for operating systems
-      // os parameter
-      // TODO: Move all utils to codify-plugin-lib
       // TODO: Move OsUtils to a separate name space? All things that have to do with the os.
       // TODO: Add a way to run multiple commands in sequence
-      // TODO: Add a easier way to make sure path is on the path
       // TODO: Change all plugins to install to ~/.local/bin
 
       await $.spawnSafe('which asdf', { interactive: true });

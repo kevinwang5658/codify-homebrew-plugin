@@ -1,10 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
-import os from 'node:os';
 import * as cp from 'child_process'
-import { PlanRequestDataSchema, PlanResponseDataSchema } from 'codify-schemas';
 import { TestUtils } from '../test-utils.js';
 
 describe('Asdf tests', async () => {
@@ -12,7 +9,7 @@ describe('Asdf tests', async () => {
 
   it('Can install asdf and plugins', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      // { type: 'homebrew' },
+      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'asdf',
         plugins: ['nodejs', 'ruby']
@@ -36,7 +33,7 @@ describe('Asdf tests', async () => {
 
   it('Support plugins resource', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      // { type: 'homebrew' },
+      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'asdf',
       },
@@ -59,7 +56,7 @@ describe('Asdf tests', async () => {
 
   it('Can install custom gitUrls', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      // { type: 'homebrew' },
+      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'asdf',
       },
@@ -74,7 +71,7 @@ describe('Asdf tests', async () => {
     });
 
     await PluginTester.fullTest(pluginPath, [
-      // { type: 'homebrew' },
+      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'asdf',
       },

@@ -25,7 +25,7 @@ describe('Ssh Add tests', () => {
       },
       {
         type: 'ssh-add',
-        path: '~/.ssh/id_ed25519'
+        path: '~/.ssh/id_ed25519',
       }
     ])
   })

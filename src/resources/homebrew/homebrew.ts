@@ -73,7 +73,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     )
 
     const brewPath = Utils.isLinux() ? '/home/linuxbrew/.linuxbrew/bin/brew' : '/opt/homebrew/bin/brew';
-    await FileUtils.addToStartupFile(`eval "$(${brewPath} shellenv)"`);
+    await FileUtils.addToShellRc(`eval "$(${brewPath} shellenv)"`);
 
     // TODO: Add a check here to see if homebrew is writable
     //  Either add a warning or a parameter to edit the permissions on /opt/homebrew
@@ -94,7 +94,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
     }
 
     // Delete eval from .zshrc
-    await FileUtils.removeLineFromPrimaryShellRc(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`)
+    await FileUtils.removeLineFromShellRc(`eval "$(${homebrewDirectory}/bin/brew shellenv)"`)
   }
 
   private async installBrewInCustomDir(dir: string): Promise<void> {
@@ -119,7 +119,7 @@ export class HomebrewResource extends Resource<HomebrewConfig> {
       })
 
     // Update shell startup scripts
-    await FileUtils.addToStartupFile(`eval "$(${absoluteDir}/bin/brew shellenv)"`);
+    await FileUtils.addToShellRc(`eval "$(${absoluteDir}/bin/brew shellenv)"`);
   }
 
   // Ex:

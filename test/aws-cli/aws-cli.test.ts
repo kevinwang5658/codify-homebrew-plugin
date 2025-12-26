@@ -3,13 +3,14 @@ import { PluginTester } from 'codify-plugin-test';
 import * as path from 'node:path';
 import cp from 'child_process';
 import { TestUtils } from '../test-utils.js';
+import { Utils } from 'codify-plugin-lib';
 
 describe('Test aws-cli', async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install aws-cli', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
+      { type: 'homebrew', os: ['macOS'] },
       { type: 'aws-cli' },
     ], {
       // skipUninstall: true,

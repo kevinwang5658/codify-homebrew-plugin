@@ -48,7 +48,7 @@ integration_individual_test_task:
 
 integration_individual_test_linux_task:
   arm_container:
-    image: node:22
+    image: kevinwang5658/codify-test-linux:latest
 #  node_modules_cache:
 #    folder: node_modules
 #    fingerprint_script: cat package-lock.json

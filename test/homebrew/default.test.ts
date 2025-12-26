@@ -5,11 +5,14 @@ import { execSync } from 'child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import { TestUtils } from '../test-utils.js';
+import { Utils } from 'codify-plugin-lib';
 
 describe('Homebrew main resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Creates brew and can install formulas', { timeout: 300000 }, async () => {
+    console.log('Is macOS', Utils.isMacOS());
+
     // Plans correctly and detects that brew is not installed
     await PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
@@ -52,6 +55,10 @@ describe('Homebrew main resource integration tests', () => {
   });
 
   it('Can handle casks that were already installed by skipping in the plan', { timeout: 300000 }, async () => {
+    if (!Utils.isMacOS()) {
+      return;
+    }
+
     // Install vscode outside of cask
     await PluginTester.fullTest(pluginPath, [{
       type: 'vscode',
@@ -60,9 +67,13 @@ describe('Homebrew main resource integration tests', () => {
     }], {
       skipUninstall: true,
       validateApply: async () => {
-        const programPath = '/Applications/Visual Studio Code.app'
-        const lstat = await fs.lstat(programPath);
-        expect(lstat.isDirectory()).to.be.true;
+        console.log('Is macOS', Utils.isMacOS());
+
+        if (Utils.isMacOS()) {
+          const programPath = '/Applications/Visual Studio Code.app'
+          const lstat = await fs.lstat(programPath);
+          expect(lstat.isDirectory()).to.be.true;
+        }
       }
     })
 
@@ -105,13 +116,17 @@ describe('Homebrew main resource integration tests', () => {
           ]
         })
 
-        const programPath = '/Applications/Visual Studio Code.app'
-        const lstat = await fs.lstat(programPath);
-        expect(lstat.isDirectory()).to.be.true;
+        if (Utils.isMacOS()) {
+          const programPath = '/Applications/Visual Studio Code.app'
+          const lstat = await fs.lstat(programPath);
+          expect(lstat.isDirectory()).to.be.true;
+        }
       }, validateDestroy: async () => {
-        const programPath = '/Applications/Visual Studio Code.app'
-        const lstat = await fs.lstat(programPath);
-        expect(lstat.isDirectory()).to.be.true;
+        if (Utils.isMacOS()) {
+          const programPath = '/Applications/Visual Studio Code.app'
+          const lstat = await fs.lstat(programPath);
+          expect(lstat.isDirectory()).to.be.true;
+        }
       }
     })
 
@@ -129,6 +144,10 @@ describe('Homebrew main resource integration tests', () => {
   })
 
   it('Can handle casks that were already installed by skipping in the install (only applicable to the initial)', { timeout: 300000 }, async () => {
+    if (!Utils.isMacOS()) {
+      return;
+    }
+
     // Install vscode outside of cask
     await PluginTester.fullTest(pluginPath, [{
       type: 'vscode',
@@ -157,13 +176,17 @@ describe('Homebrew main resource integration tests', () => {
           ])
         })
 
-        const programPath = '/Applications/Visual Studio Code.app'
-        const lstat = await fs.lstat(programPath);
-        expect(lstat.isDirectory()).to.be.true;
+        if (Utils.isMacOS()) {
+          const programPath = '/Applications/Visual Studio Code.app'
+          const lstat = await fs.lstat(programPath);
+          expect(lstat.isDirectory()).to.be.true;
+        }
       },
       validateDestroy: async () => {
-        const programPath = '/Applications/Visual Studio Code.app'
-        expect(async () => await fs.lstat(programPath)).to.throw;
+        if (Utils.isMacOS()) {
+          const programPath = '/Applications/Visual Studio Code.app'
+          expect(async () => await fs.lstat(programPath)).to.throw;
+        }
         expect((await fs.readFile(TestUtils.getPrimaryShellRc())).toString('utf-8')).to.not.include('homebrew')
       }
     })

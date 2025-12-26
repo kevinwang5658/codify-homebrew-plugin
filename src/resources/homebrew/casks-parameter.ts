@@ -1,4 +1,4 @@
-import { ParameterSetting, Plan, SpawnStatus, StatefulParameter, getPty } from 'codify-plugin-lib';
+import { ParameterSetting, Plan, SpawnStatus, StatefulParameter, Utils, getPty } from 'codify-plugin-lib';
 import path from 'node:path';
 
 import { FileUtils } from '../../utils/file-utils.js';
@@ -42,7 +42,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
 
       // This serves a secondary purpose as well. It checks that each cask to install is valid (alerting the user
       // in the plan instead of in the apply)
-      const casksWithConflicts = await this.findConflicts(notInstalledCasks);
+      const casksWithConflicts = await this.findConflictsOnMacOs(notInstalledCasks);
       if (casksWithConflicts.length > 0) {
         // To avoid errors, we pretend that those programs were already installed by homebrew (even though it was installed outside)
         if (config?.skipAlreadyInstalledCasks) {
@@ -82,7 +82,7 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     }
 
     const $ = getPty();
-    const conflicts = await this.findConflicts(casks);
+    const conflicts = await this.findConflictsOnMacOs(casks);
     const casksToInstall = casks.filter((c) => !conflicts.includes(c))
 
     if (conflicts.length > 0) {
@@ -132,9 +132,13 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
     }
   }
 
-  private async findConflicts(casks: string[]): Promise<string[]> {
-    const $ = getPty();
+  private async findConflictsOnMacOs(casks: string[]): Promise<string[]> {
+    // if (!Utils.isMacOS()) {
+      return [];
+    // }
 
+
+    const $ = getPty();
     const result = (await $.spawn(
       `brew info -q --json=v2 ${casks.map((c) => `"${c}"`).join(' ')}`, {
         interactive: true,
