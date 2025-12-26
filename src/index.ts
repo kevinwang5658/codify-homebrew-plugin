@@ -38,6 +38,7 @@ import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 import { AptResource } from './resources/apt/apt.js';
 import { YumResource } from './resources/yum/yum.js';
+import { DnfResource } from './resources/dnf/dnf.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -80,5 +81,6 @@ runPlugin(Plugin.create(
     new DockerResource(),
     new AptResource(),
     new YumResource(),
+    new DnfResource(),
   ])
 )
