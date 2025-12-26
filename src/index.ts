@@ -39,6 +39,7 @@ import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
 import { AptResource } from './resources/apt/apt.js';
 import { YumResource } from './resources/yum/yum.js';
 import { DnfResource } from './resources/dnf/dnf.js';
+import { SnapResource } from './resources/snap/snap.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -82,5 +83,6 @@ runPlugin(Plugin.create(
     new AptResource(),
     new YumResource(),
     new DnfResource(),
+    new SnapResource(),
   ])
 )
