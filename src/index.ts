@@ -36,6 +36,8 @@ import { SshKeyResource } from './resources/ssh/ssh-key.js';
 import { TerraformResource } from './resources/terraform/terraform.js';
 import { VscodeResource } from './resources/vscode/vscode.js';
 import { XcodeToolsResource } from './resources/xcode-tools/xcode-tools.js';
+import { AptResource } from './resources/apt/apt.js';
+import { YumResource } from './resources/yum/yum.js';
 
 runPlugin(Plugin.create(
   'default',
@@ -76,5 +78,7 @@ runPlugin(Plugin.create(
     new Npm(),
     new NpmLoginResource(),
     new DockerResource(),
+    new AptResource(),
+    new YumResource(),
   ])
 )
