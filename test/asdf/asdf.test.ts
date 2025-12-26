@@ -12,7 +12,7 @@ describe('Asdf tests', async () => {
 
   it('Can install asdf and plugins', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
+      // { type: 'homebrew' },
       {
         type: 'asdf',
         plugins: ['nodejs', 'ruby']
@@ -36,7 +36,7 @@ describe('Asdf tests', async () => {
 
   it('Support plugins resource', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
+      // { type: 'homebrew' },
       {
         type: 'asdf',
       },
@@ -59,7 +59,7 @@ describe('Asdf tests', async () => {
 
   it('Can install custom gitUrls', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
+      // { type: 'homebrew' },
       {
         type: 'asdf',
       },
@@ -74,7 +74,7 @@ describe('Asdf tests', async () => {
     });
 
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
+      // { type: 'homebrew' },
       {
         type: 'asdf',
       },

@@ -1,11 +1,10 @@
-import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
-import { ResourceConfig } from 'codify-schemas';
+import { Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
+import { OS, ResourceConfig } from 'codify-schemas';
 import * as fs from 'node:fs';
 
 import { FileUtils } from '../../../utils/file-utils.js';
 import { JenvGlobalParameter } from './global-parameter.js';
 import {
-  JAVA_VERSION_INTEGER,
   JenvAddParameter,
   OPENJDK_SUPPORTED_VERSIONS
 } from './java-versions-parameter.js';
@@ -20,6 +19,7 @@ export class JenvResource extends Resource<JenvConfig> {
   getSettings(): ResourceSettings<JenvConfig> {
     return {
       id: 'jenv',
+      operatingSystems: [OS.Darwin],
       schema: Schema,
       dependencies: ['homebrew'],
       parameterSettings: {

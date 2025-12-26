@@ -28,8 +28,8 @@ export class FileUtils {
     }
   }
 
-  static async addAllToStartupFile(lines: string[]): Promise<void> {
-    const formattedLines = '\n' + lines.join('\n') + '\n';
+  static async addAllToStartupFile(lines: (string | undefined)[]): Promise<void> {
+    const formattedLines = '\n' + lines.filter(Boolean).join('\n') + '\n';
     const shellRc = Utils.getPrimaryShellRc();
 
     console.log(`Adding to ${path.basename(shellRc)}:
@@ -38,7 +38,7 @@ ${lines.join('\n')}`)
     await fs.appendFile(shellRc, formattedLines)
   }
 
-  static async addPathToZshrc(value: string, prepend: boolean): Promise<void> {
+  static async addPathToPrimaryShellRc(value: string, prepend: boolean): Promise<void> {
     const shellRc = Utils.getPrimaryShellRc();
     console.log(`Saving path: ${value} to ${shellRc}`);
 

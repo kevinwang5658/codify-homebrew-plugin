@@ -193,7 +193,7 @@ export class PathResource extends Resource<PathConfig> {
 
   private async addPath(path: string, prepend = false): Promise<void> {
     // Escaping is done within file utils
-    await FileUtils.addPathToZshrc(path, prepend);
+    await FileUtils.addPathToPrimaryShellRc(path, prepend);
   }
   
   private async removePath(pathValue: string): Promise<void> {

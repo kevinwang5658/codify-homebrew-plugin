@@ -98,7 +98,7 @@ ${JSON.stringify(releaseInfo, null, 2)}
     await $.spawn(`mv ./terraform ${directory}`, { cwd: temporaryDir, requiresRoot: true })
     await $.spawn(`rm -rf ${temporaryDir}`)
 
-    if (!await Utils.isDirectoryOnPath(directory)) {
+    if (!(await Utils.isDirectoryOnPath(directory))) {
       await FileUtils.addToStartupFile(`export PATH=$PATH:${directory}`);
     }
   }

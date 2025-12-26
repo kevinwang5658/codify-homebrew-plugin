@@ -1,3 +1,4 @@
+import { getPty } from 'codify-plugin-lib';
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
@@ -83,8 +84,10 @@ export const Utils = {
   },
 
   async isDirectoryOnPath(directory: string): Promise<boolean> {
-    const pathQuery = await codifySpawn('echo $PATH');
-    return pathQuery.data.includes(directory);
+    const $ = getPty();
+    const { data: pathQuery } = await $.spawn('echo $PATH', { interactive: true });
+    const lines = pathQuery.split(':');
+    return lines.includes(directory);
   },
 
   async isHomebrewInstalled(): Promise<boolean> {

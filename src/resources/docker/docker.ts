@@ -88,7 +88,7 @@ export class DockerResource extends Resource<DockerConfig> {
     }
 
     await $.spawn('xattr -r -d com.apple.quarantine /Applications/Docker.app', { requiresRoot: true });
-    await FileUtils.addPathToZshrc('/Applications/Docker.app/Contents/Resources/bin', false);
+    await FileUtils.addPathToPrimaryShellRc('/Applications/Docker.app/Contents/Resources/bin', false);
   }
 
   async destroy(plan: DestroyPlan<DockerConfig>): Promise<void> {
