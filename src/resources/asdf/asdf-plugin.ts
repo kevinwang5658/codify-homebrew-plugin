@@ -1,15 +1,22 @@
-import { CreatePlan, DestroyPlan, getPty, Resource, ResourceSettings, SpawnStatus, untildify } from 'codify-plugin-lib';
-import { OS, ResourceConfig } from 'codify-schemas';
+import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, getPty, untildify } from 'codify-plugin-lib';
+import { OS } from 'codify-schemas';
+import z from 'zod';
 
-import { codifySpawn } from '../../utils/codify-spawn.js';
-import AsdfPluginSchema from './asdf-plugin-schema.json';
 import { AsdfPluginVersionsParameter } from './version-parameter.js';
 
-export interface AsdfPluginConfig extends ResourceConfig {
-  plugin: string;
-  gitUrl: string;
-  versions: string[];
-}
+const schema = z
+  .object({
+    plugin: z.string().describe('Asdf plugin name'),
+    versions: z
+      .array(z.string())
+      .describe('A list of versions to install')
+      .optional(),
+    gitUrl: z
+      .string()
+      .describe('The gitUrl of the plugin')
+      .optional()
+  })
+export type AsdfPluginConfig = z.infer<typeof schema>;
 
 const PLUGIN_LIST_REGEX = /^([^ ]+?)\s+([^ ]+)/
 
@@ -19,7 +26,7 @@ export class AsdfPluginResource extends Resource<AsdfPluginConfig> {
       id: 'asdf-plugin',
       operatingSystems: [OS.Darwin, OS.Linux],
       dependencies: ['asdf'],
-      schema: AsdfPluginSchema,
+      schema,
       parameterSettings: {
         versions: { type: 'stateful', definition: new AsdfPluginVersionsParameter() }
       },

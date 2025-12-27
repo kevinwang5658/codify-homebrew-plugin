@@ -6,19 +6,29 @@ import {
   SpawnStatus,
   getPty,
 } from 'codify-plugin-lib';
-import { OS, ResourceConfig } from 'codify-schemas';
+import { OS } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
+import z from 'zod';
 
 import { FileUtils } from '../../utils/file-utils.js';
-import AsdfInstallSchema from './asdf-install-schema.json';
 
-export interface AsdfInstallConfig extends ResourceConfig {
-  plugin?: string;
-  versions?: string[];
-  directory?: string;
-}
+const schema = z.object({
+  plugin: z
+    .string()
+    .describe('Asdf plugin name')
+    .optional(),
+  versions: z
+    .array(z.string())
+    .describe('A list of versions to install')
+    .optional(),
+  directory: z
+    .string()
+    .describe('The directory to run the install command')
+    .optional(),
+});
 
+export type AsdfInstallConfig = z.infer<typeof schema>;
 const CURRENT_VERSION_REGEX = /^([^ ]+?)\s+([^ ]+?)\s+.*/;
 const TOOL_VERSIONS_REGEX = /^([^ ]+) +([^ ]+)$/;
 
@@ -29,7 +39,7 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
       id: 'asdf-install',
       operatingSystems: [OS.Darwin, OS.Linux],
       dependencies: ['asdf'],
-      schema: AsdfInstallSchema,
+      schema,
       parameterSettings: {
         directory: { type: 'directory' },
         versions: { type: 'array' }
@@ -51,7 +61,7 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
     }
 
     if (parameters.directory && !(await FileUtils.checkDirExistsOrThrowIfFile(parameters.directory))) {
-      throw new Error(`Directory ${parameters.local} does not exist`);
+      throw new Error(`Directory ${parameters.directory} does not exist`);
     }
   }
 
