@@ -1,8 +1,7 @@
-import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings } from 'codify-plugin-lib';
+import { CreatePlan, DestroyPlan, ModifyPlan, ParameterChange, Resource, ResourceSettings, z } from 'codify-plugin-lib';
 import { OS } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import z from 'zod';
 
 import { FileUtils } from '../../utils/file-utils.js';
 

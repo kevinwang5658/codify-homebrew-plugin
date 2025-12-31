@@ -1,9 +1,8 @@
-import { CreatePlan, FileUtils, Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
+import { CreatePlan, FileUtils, Resource, ResourceSettings, SpawnStatus, getPty, z } from 'codify-plugin-lib';
 import { OS } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import z from 'zod';
 
 import { Utils } from '../../utils/index.js';
 import { AsdfPluginsParameter } from './plugins-parameter.js';

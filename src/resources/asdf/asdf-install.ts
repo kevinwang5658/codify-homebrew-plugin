@@ -5,11 +5,11 @@ import {
   ResourceSettings,
   SpawnStatus,
   getPty,
+  z,
 } from 'codify-plugin-lib';
 import { OS } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import z from 'zod';
 
 import { FileUtils } from '../../utils/file-utils.js';
 

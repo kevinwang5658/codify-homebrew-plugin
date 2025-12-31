@@ -1,18 +1,28 @@
-import { CreatePlan, Resource, ResourceSettings, getPty } from 'codify-plugin-lib';
-import { OS, ResourceConfig } from 'codify-schemas';
+import { CreatePlan, Resource, ResourceSettings, getPty, z } from 'codify-plugin-lib';
+import { OS } from 'codify-schemas';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import plist from 'plist';
 
 import { Utils } from '../../utils/index.js';
-import Schema from './android-studio-schema.json';
 import { AndroidStudioPlist, AndroidStudioVersionData } from './types.js';
 
-export interface AndroidStudioConfig extends ResourceConfig {
-  version?: string;
-  directory?: string;
-}
+export const schema = z.object({
+  version: z
+    .string()
+    .describe(
+      'Android studios version. Visit: https://developer.android.com/studio/releases for version info'
+    )
+    .optional(),
+  directory: z
+    .string()
+    .describe(
+      'The directory to install Android Studios into. Defaults to /Applications'
+    )
+    .optional(),
+})
+export type AndroidStudioConfig = z.infer<typeof schema>;
 
 export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
 
@@ -22,7 +32,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
     return {
       id: 'android-studio',
       operatingSystems: [OS.Darwin],
-      schema: Schema,
+      schema,
       parameterSettings: {
         directory: { type: 'directory', default: '/Applications' },
         version: { type: 'version' }
@@ -125,7 +135,7 @@ export class AndroidStudioResource extends Resource<AndroidStudioConfig> {
       const plistData = plist.parse(file) as unknown as AndroidStudioPlist;
 
       return { location, plist: plistData };
-    } catch(error) {
+    } catch (error) {
       console.log(error)
       return null;
     }
