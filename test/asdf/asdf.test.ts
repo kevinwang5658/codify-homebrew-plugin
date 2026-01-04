@@ -22,12 +22,12 @@ describe('Asdf tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })
@@ -45,12 +45,12 @@ describe('Asdf tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which asdf;')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which asdf;')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })
@@ -84,14 +84,14 @@ describe('Asdf tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(testSpawn('which zig;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which zig')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(testSpawn('which zig;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which zig')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })

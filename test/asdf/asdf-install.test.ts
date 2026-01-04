@@ -30,15 +30,15 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS })
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which golang')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which asdf;')).toMatchObject({ status: SpawnStatus.SUCCESS })
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which golang')).toMatchObject({ status: SpawnStatus.SUCCESS });
 
       },
       validateDestroy: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which golang')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which golang')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })
@@ -57,12 +57,12 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which asdf;')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })

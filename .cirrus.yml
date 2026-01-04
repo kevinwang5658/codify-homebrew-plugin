@@ -13,6 +13,7 @@ run_dev_task:
     - sleep 2000
 
 integration_test_dev_macos_task:
+  timeout_in: 120m
   macos_instance:
     image: codify-test-vm
   node_modules_cache:

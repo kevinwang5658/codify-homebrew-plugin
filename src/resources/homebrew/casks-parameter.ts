@@ -133,9 +133,9 @@ export class CasksParameter extends StatefulParameter<HomebrewConfig, string[]> 
   }
 
   private async findConflictsOnMacOs(casks: string[]): Promise<string[]> {
-    // if (!Utils.isMacOS()) {
+    if (!Utils.isMacOS()) {
       return [];
-    // }
+    }
 
 
     const $ = getPty();

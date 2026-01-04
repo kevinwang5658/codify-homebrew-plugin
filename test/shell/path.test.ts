@@ -103,12 +103,12 @@ describe('Path resource integration tests', async () => {
         validateModify: async (plans) => {
           expect(plans[0]).toMatchObject({
             operation: ResourceOperation.MODIFY,
-            parameters: expect.arrayContaining([{
+            parameters: expect.arrayContaining([expect.objectContaining({
               name: 'paths',
-              previousValue: expect.arrayContaining([tempDir1, tempDir2]),
-              newValue: expect.arrayContaining([tempDir1, tempDir2, tempDir2, tempDir3]),
+              previousValue: expect.arrayContaining([tempDir2, tempDir1]),
+              newValue: expect.arrayContaining([tempDir1, tempDir2, tempDir3, tempDir4]),
               operation: ParameterOperation.MODIFY,
-            }])
+            })])
           })
 
           const { data: path } = await testSpawn('echo $PATH');

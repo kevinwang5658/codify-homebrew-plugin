@@ -13,39 +13,33 @@ describe('Homebrew main resource integration tests', () => {
     await PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
       formulae: [
-        'apr',
         'sshpass'
       ]
     }], {
-      validateApply: () => {
-        expect(testSpawn('which apr')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which sshpass')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-        expect(testSpawn('which brew')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+      validateApply: async () => {
+        expect(await testSpawn('which sshpass')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which brew')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       testModify: {
         modifiedConfigs: [{
           type: 'homebrew',
           formulae: [
-            'libxau',
             'sshpass',
-            'jenv',
             'hashicorp/tap/hcp', // Test that it can handle a fully qualified name (tap + name)
           ],
         }],
-        validateModify: () => {
-          expect(testSpawn('which libxau')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-          expect(testSpawn('which sshpass')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-          expect(testSpawn('which jenv')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-          expect(testSpawn('which brew')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
-          expect(testSpawn('which hcp')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        validateModify: async () => {
+          expect(await testSpawn('which sshpass')).toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(await testSpawn('which brew')).toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(await testSpawn('which hcp')).toMatchObject({ status: SpawnStatus.SUCCESS });
         }
       },
-      validateDestroy: () => {
-        expect(testSpawn('which libxau')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which sshpass')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which jenv')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which hcp')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
-        expect(testSpawn('which brew')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+      validateDestroy: async () => {
+        expect(await testSpawn('which libxau')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which sshpass')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which jenv')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which hcp')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which brew')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   });

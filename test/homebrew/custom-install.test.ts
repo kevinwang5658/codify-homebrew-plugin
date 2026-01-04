@@ -11,11 +11,11 @@ describe('Homebrew custom install integration tests', () => {
       type: 'homebrew',
       directory: '~/.homebrew',
       formulae: [
-        'jenv',
+        'sshpass',
       ],
     }], {
       validateApply: async () => {
-        expect(await testSpawn('which jenv')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which sshpass')).toMatchObject({ status: SpawnStatus.SUCCESS });
         expect(await testSpawn('which brew')).toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     })

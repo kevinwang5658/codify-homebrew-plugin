@@ -10,6 +10,7 @@ import { MacportsInstallParameter, PortPackage } from './install-parameter.js';
 import schema from './macports-schema.json';
 
 const MACPORTS_DOWNLOAD_LINKS: Record<string, string> = {
+  '26': 'https://github.com/macports/macports-base/releases/download/v2.11.6/MacPorts-2.11.6-26-Tahoe.pkg',
   '15': 'https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-15-Sequoia.pkg',
   '14': 'https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-14-Sonoma.pkg',
   '13': 'https://github.com/macports/macports-base/releases/download/v2.10.5/MacPorts-2.10.5-13-Ventura.pkg',

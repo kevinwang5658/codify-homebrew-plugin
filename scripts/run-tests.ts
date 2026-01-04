@@ -3,6 +3,7 @@ import { glob } from 'glob';
 import { spawn, spawnSync } from 'node:child_process';
 import * as inspector from 'node:inspector';
 import os from 'node:os';
+import { OS } from 'codify-schemas';
 
 const IP_REGEX = /VM was assigned with (.*) IP/;
 
@@ -14,31 +15,31 @@ program
   .action(main)
   .parse()
 
-async function main(argument: string, operatingSystem: string): Promise<void> {
+async function main(argument: string, args: { operatingSystem: string }): Promise<void> {
   const debug = isInDebugMode();
   if (debug) {
     console.log('Running in debug mode!')
   }
 
   if (!argument) {
-    await launchTestAll(debug, operatingSystem)
+    await launchTestAll(debug, args.operatingSystem)
     return process.exit(0);
   }
 
-  await launchSingleTest(argument, debug, operatingSystem);
+  await launchSingleTest(argument, debug, args.operatingSystem);
   process.exit(0);
 }
 
 async function launchTestAll(debug: boolean, operatingSystem: string): Promise<void> {
-  const image = operatingSystem === 'darwin' ? 'integration_individual_test_macos' : 'integration_individual_test_linux';
+  const image = operatingSystem === 'darwin' ? 'integration_test_dev_macos' : 'integration_test_dev_linux';
 
-  const tests = await glob('./test/**/*.test.ts');
-  for (const test of tests) {
-    console.log(`Running test ${test}`)
-    await run(`cirrus run --lazy-pull ${image} -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
-  }
+  // const tests = await glob('./test/**/*.test.ts');
+  // for (const test of tests) {
+  //   console.log(`Running test ${test}`)
+  //   await run(`cirrus run --lazy-pull ${image} -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
+  // }
 
-  // await run('cirrus run --lazy-pull integration_test_dev -o simple', debug, false);
+  await run(`cirrus run --lazy-pull ${image} -o simple`, debug, false);
 }
 
 async function launchSingleTest(test: string, debug: boolean, operatingSystem: string) {
