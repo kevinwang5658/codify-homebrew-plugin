@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import * as cp from 'child_process';
-import { TestUtils } from '../test-utils.js';
+import { SpawnStatus, Utils } from 'codify-plugin-lib';
 
-describe('Tart VM tests', async () => {
+describe('Tart VM tests', { skip: !Utils.isMacOS() }, async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can create a tart VM with memory and CPU settings', { timeout: 1200000 }, async () => {
@@ -22,13 +21,13 @@ describe('Tart VM tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).not.toThrow();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.SUCCESS });
         // Check if the VM was created
-        const vms = cp.execSync(TestUtils.getShellCommand('tart list')).toString().trim();
+        const vms = (await testSpawn('tart list')).data;
         expect(vms).toContain('test-vm-resources');
 
         // Check VM configuration
-        const vmInfo = cp.execSync(TestUtils.getShellCommand('tart get test-vm-resources')).toString();
+        const vmInfo = (await testSpawn('tart get test-vm-resources')).data;
         expect(vmInfo).toContain('memory:');
         expect(vmInfo).toContain('cpu:');
       },
@@ -43,7 +42,7 @@ describe('Tart VM tests', async () => {
       },
       validateDestroy: async () => {
         // VM should be deleted
-        const vms = cp.execSync(TestUtils.getShellCommand('tart list')).toString().trim();
+        const vms = await testSpawn('tart list')
         expect(vms).not.toContain('test-vm-resources');
       }
     });

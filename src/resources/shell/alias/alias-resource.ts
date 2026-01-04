@@ -49,25 +49,24 @@ export class AliasResource extends Resource<AliasConfig> {
       .find((l) => {
         const firstEqualIndex = l.indexOf('=');
         const name = l.slice(0, firstEqualIndex);
-        return name === desired;
+        return name.endsWith(desired!);
       });
 
     if (!matchedAlias) {
       return null;
     }
 
-    const firstEqualIndex = matchedAlias.indexOf('=');
-    const name = matchedAlias.slice(0, firstEqualIndex);
-    const value = matchedAlias.slice(firstEqualIndex + 1);
-
-    let processedValue = value.trim()
-    if ((processedValue.startsWith('\'') && processedValue.endsWith('\'')) || (processedValue.startsWith('"') && processedValue.endsWith('"'))) {
-      processedValue = processedValue.slice(1, -1)
+    const aliasMatch = matchedAlias.match(/^(?:alias\s+)?([^=]+)='?(.*?)'?$/);
+    if (!aliasMatch) {
+      return null;
     }
+
+    const name = aliasMatch[1].trim();
+    const value = aliasMatch[2].trim();
 
     return {
       alias: name,
-      value: processedValue,
+      value,
     }
   }
 
@@ -81,10 +80,7 @@ export class AliasResource extends Resource<AliasConfig> {
     const { alias, value } = plan.desiredConfig;
     const aliasString = this.aliasString(alias, value);
 
-    const file = await fs.readFile(shellRcPath, 'utf8');
-    const fileWithAlias = FileUtils.appendToFileWithSpacing(file, aliasString);
-
-    await fs.writeFile(shellRcPath, fileWithAlias, { encoding: 'utf8' });
+    await FileUtils.addToStartupFile(aliasString);
   }
 
   async modify(pc: ParameterChange<AliasConfig>, plan: ModifyPlan<AliasConfig>): Promise<void> {

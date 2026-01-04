@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
 import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Dnf resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -13,10 +13,7 @@ describe('Dnf resource integration tests', () => {
       return;
     }
 
-    // Check if dnf is available
-    try {
-      execSync('which dnf');
-    } catch {
+    if ((await testSpawn('which dnf')).status !== SpawnStatus.SUCCESS) {
       console.log('Skipping dnf test - dnf not available on this system');
       return;
     }
@@ -32,10 +29,10 @@ describe('Dnf resource integration tests', () => {
     }], {
       skipUninstall: true,
       validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which wget'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which vim'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which dnf'))).to.not.throw;
+        expect(testSpawn('which curl')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which wget')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which vim')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which dnf')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       testModify: {
         modifiedConfigs: [{
@@ -46,16 +43,16 @@ describe('Dnf resource integration tests', () => {
           ],
         }],
         validateModify: () => {
-          expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which git'))).to.not.throw;
+          expect(testSpawn('which curl')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(testSpawn('which git')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
           // wget and vim should be removed
-          expect(() => execSync(TestUtils.getShellCommand('which wget'))).to.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which vim'))).to.throw;
+          expect(testSpawn('which wget')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+          expect(testSpawn('which vim')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
         }
       },
       validateDestroy: () => {
         // dnf should still exist as it's a core system component
-        expect(() => execSync(TestUtils.getShellCommand('which dnf'))).to.not.throw;
+        expect(testSpawn('which dnf')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     });
   });
@@ -67,15 +64,13 @@ describe('Dnf resource integration tests', () => {
     }
 
     // Check if dnf is available
-    try {
-      execSync('which dnf');
-    } catch {
+    if ((await testSpawn('which dnf')).status !== SpawnStatus.SUCCESS) {
       console.log('Skipping dnf test - dnf not available on this system');
       return;
     }
 
     // Get available version of a package
-    const availableVersions = execSync('dnf list available curl | tail -1 | awk \'{print $2}\'').toString().trim();
+    const { data: availableVersions } = await testSpawn('dnf list available curl | tail -1 | awk \'{print $2}\'')
 
     await PluginTester.fullTest(pluginPath, [{
       type: 'dnf',
@@ -84,9 +79,9 @@ describe('Dnf resource integration tests', () => {
       ]
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
-        const installedVersion = execSync('rpm -q --queryformat \'%{VERSION}-%{RELEASE}\' curl').toString().trim();
+      validateApply: async () => {
+        expect(await testSpawn('which curl')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        const installedVersion = (await testSpawn('rpm -q --queryformat \'%{VERSION}-%{RELEASE}\' curl')).data;
         expect(installedVersion).toBe(availableVersions);
       },
     });
@@ -99,9 +94,7 @@ describe('Dnf resource integration tests', () => {
     }
 
     // Check if dnf is available
-    try {
-      execSync('which dnf');
-    } catch {
+    if ((await testSpawn('which dnf')).status !== SpawnStatus.SUCCESS) {
       console.log('Skipping dnf test - dnf not available on this system');
       return;
     }
@@ -113,7 +106,7 @@ describe('Dnf resource integration tests', () => {
     }], {
       skipUninstall: true,
       validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
+        expect(testSpawn('which curl')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
       },
     });
   });

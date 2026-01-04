@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
 import os from 'node:os';
 import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Alias resource integration tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -17,12 +17,12 @@ describe('Alias resource integration tests', async () => {
       }
     ], {
       validateApply: async () => {
-        const aliasOutput = execSync(TestUtils.getShellCommand('alias')).toString('utf-8');
+        const { data: aliasOutput } = await testSpawn('alias')
         expect(aliasOutput).to.include('my-alias');
         expect(aliasOutput).to.include('ls -l');
 
         // Alias expansion only happens in an interactive shell.
-        expect(execSync(TestUtils.getInteractiveCommand('my-alias -a')).toString('utf-8')).to.include('src')
+        expect((await testSpawn(TestUtils.getInteractiveCommand('my-alias -a'))).data).to.include('src')
       },
       testModify: {
         modifiedConfigs: [{
@@ -30,19 +30,19 @@ describe('Alias resource integration tests', async () => {
           alias: 'my-alias',
           value: 'pwd'
         }],
-        validateModify: () => {
-          const aliasOutput = execSync(TestUtils.getShellCommand('alias')).toString('utf-8');
+        validateModify: async () => {
+          const { data: aliasOutput } = await testSpawn('alias')
           expect(aliasOutput).to.include('my-alias');
           expect(aliasOutput).to.include('pwd');
-
-          const homeDir = os.homedir();
-          expect(execSync(TestUtils.getInteractiveCommand('my-alias'), { cwd: homeDir }).toString('utf-8').trim()).to.eq(homeDir)
+          expect(aliasOutput).to.include('my-alias');
+          expect(aliasOutput).to.include('pwd');
+          expect((await testSpawn('my-alias')).data).to.eq((await testSpawn('pwd')).data)
         }
       },
-      validateDestroy: () => {
-        const aliasOutput = execSync(TestUtils.getShellCommand('alias')).toString('utf-8');
+      validateDestroy: async () => {
+        const { data: aliasOutput } = await testSpawn('alias');
         expect(aliasOutput).to.not.include('my-alias');
-        expect(() => execSync(TestUtils.getInteractiveCommand('my-alias -a')).toString('utf-8')).to.throw;
+        expect(await testSpawn('my-alias')).toMatchObject({ status: SpawnStatus.ERROR });
       },
     });
   })

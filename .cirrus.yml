@@ -12,7 +12,7 @@ run_dev_task:
   run_script:
     - sleep 2000
 
-integration_test_dev_task:
+integration_test_dev_macos_task:
   macos_instance:
     image: codify-test-vm
   node_modules_cache:
@@ -24,7 +24,7 @@ integration_test_dev_task:
 
 integration_test_dev_linux_task:
   arm_container:
-    image: node:22
+    image: kevinwang5658/codify-test-linux:latest
 #  node_modules_cache:
 #    folder: node_modules
 #    fingerprint_script: cat package-lock.json
@@ -35,7 +35,7 @@ integration_test_dev_linux_task:
     - npm ci
     - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
 
-integration_individual_test_task:
+integration_individual_test_macos_task:
   macos_instance:
     image: codify-test-vm
   node_modules_cache:

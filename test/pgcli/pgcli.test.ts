@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
-import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Pgcli integration tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -12,13 +11,13 @@ describe('Pgcli integration tests', async () => {
       { type: 'homebrew' },
       { type: 'pgcli' }
     ], {
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which pgcli'), { shell: TestUtils.getShellName() })).to.not.throw();
-        expect(() => execSync(TestUtils.getShellCommand('pgcli -v'), { shell: TestUtils.getShellName() })).to.not.throw();
+      validateApply: async () => {
+        expect(await testSpawn('which pgcli')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('pgcli -v')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
-      validateDestroy: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which pgcli'), { shell: TestUtils.getShellName() })).to.throw();
-        expect(() => execSync(TestUtils.getShellCommand('pgcli -v'), { shell: TestUtils.getShellName() })).to.throw();
+      validateDestroy: async () => {
+        expect(await testSpawn('which pgcli')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('pgcli -v')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     })
   })

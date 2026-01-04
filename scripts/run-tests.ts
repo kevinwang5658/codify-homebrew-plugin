@@ -2,44 +2,50 @@ import { Command } from 'commander';
 import { glob } from 'glob';
 import { spawn, spawnSync } from 'node:child_process';
 import * as inspector from 'node:inspector';
+import os from 'node:os';
 
 const IP_REGEX = /VM was assigned with (.*) IP/;
 
 const program = new Command();
 
 program
+  .option('--operatingSystem <operatingSystem>', 'Operating system to run tests on', os.platform())
   .argument('[file]', 'File to run')
   .action(main)
   .parse()
 
-async function main(argument: string): Promise<void> {
+async function main(argument: string, operatingSystem: string): Promise<void> {
   const debug = isInDebugMode();
   if (debug) {
     console.log('Running in debug mode!')
   }
 
   if (!argument) {
-    await launchTestAll(debug)
+    await launchTestAll(debug, operatingSystem)
     return process.exit(0);
   }
 
-  await launchSingleTest(argument, debug);
+  await launchSingleTest(argument, debug, operatingSystem);
   process.exit(0);
 }
 
-async function launchTestAll(debug: boolean): Promise<void> {
+async function launchTestAll(debug: boolean, operatingSystem: string): Promise<void> {
+  const image = operatingSystem === 'darwin' ? 'integration_individual_test_macos' : 'integration_individual_test_linux';
+
   const tests = await glob('./test/**/*.test.ts');
   for (const test of tests) {
     console.log(`Running test ${test}`)
-    await run(`cirrus run --lazy-pull integration_individual_test_linux -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
+    await run(`cirrus run --lazy-pull ${image} -e FILE_NAME="${test}" ${ debug ? '-o simple' : ''}`, debug, false)
   }
 
   // await run('cirrus run --lazy-pull integration_test_dev -o simple', debug, false);
 }
 
-async function launchSingleTest(test: string, debug: boolean) {
+async function launchSingleTest(test: string, debug: boolean, operatingSystem: string) {
+  const image = operatingSystem === 'darwin' ? 'integration_individual_test_macos' : 'integration_individual_test_linux';
+
   console.log(`Running test: ${test}`)
-  await run(`cirrus run --lazy-pull integration_individual_test -e FILE_NAME="${test}" -o simple`, debug)
+  await run(`cirrus run --lazy-pull ${image} -e FILE_NAME="${test}" -o simple`, debug)
 }
 
 async function run(cmd: string, debug: boolean, simple = true) {

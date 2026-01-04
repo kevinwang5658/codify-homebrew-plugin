@@ -1,14 +1,14 @@
-import { CreatePlan, getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
 import { OS, StringIndexedObject } from 'codify-schemas';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import semver from 'semver';
 
 import { FileUtils } from '../../utils/file-utils.js';
 import { Utils } from '../../utils/index.js';
 import Schema from './terraform-schema.json';
 import { HashicorpReleaseInfo, HashicorpReleasesAPIResponse, TerraformVersionInfo } from './terraform-types.js';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import os from 'node:os';
 
 const TERRAFORM_RELEASES_API_URL = 'https://api.releases.hashicorp.com/v1/releases/terraform';
 const TERRAFORM_RELEASE_INFO_API_URL = (version: string) => `https://api.releases.hashicorp.com/v1/releases/terraform/${version}`;
@@ -146,9 +146,9 @@ ${JSON.stringify(releaseInfo, null, 2)}
 
   private async getDownloadUrl(releaseInfo: HashicorpReleaseInfo, isArm: boolean): Promise<null | string> {
     const arch = isArm ? 'arm64' : 'amd64';
-    const os = 'darwin';
+    const osParam = os.platform() === 'darwin' ? 'darwin' : 'linux';
 
-    const build = releaseInfo.builds.find((b) => b.arch === arch && b.os === os);
+    const build = releaseInfo.builds.find((b) => b.arch === arch && b.os === osParam);
     if (!build) {
       return null;
     }

@@ -19,7 +19,7 @@ export class PyenvResource extends Resource<PyenvConfig> {
   getSettings(): ResourceSettings<PyenvConfig> {
     return {
       id: 'pyenv',
-      operatingSystems: [OS.Darwin],
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       parameterSettings: {
         global: { type: 'stateful', definition: new PyenvGlobalParameter(), order: 2 },

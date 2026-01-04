@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import path from 'node:path';
-import { execSync } from 'child_process';
-import { TestUtils } from '../../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 // Example test suite
 describe('Npm tests', () => {
@@ -20,11 +19,12 @@ describe('Npm tests', () => {
         globalInstall: ['pnpm'],
       }
     ], {
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which nvm'), { shell: TestUtils.getShellName() })).to.not.throw();
-        expect(execSync(TestUtils.getShellCommand('node --version'), { shell: TestUtils.getShellName() }).toString('utf-8').trim()).to.include('20');
+      validateApply: async () => {
+        expect(await testSpawn('which nvm')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('node --version')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('nvm list')).toMatchObject({ status: SpawnStatus.SUCCESS });
 
-        const installedVersions = execSync(TestUtils.getShellCommand('nvm list'), { shell: TestUtils.getShellName() }).toString('utf-8').trim();
+        const { data: installedVersions } = await testSpawn('nvm list')
         expect(installedVersions).to.include('20');
         expect(installedVersions).to.include('18');
       },

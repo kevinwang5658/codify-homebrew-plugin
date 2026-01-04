@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import * as cp from 'child_process';
-import { TestUtils } from '../test-utils.js';
+import { SpawnStatus, Utils } from 'codify-plugin-lib';
 
-describe('Tart tests', async () => {
+describe('Tart tests', { skip: !Utils.isMacOS() }, async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install tart', { timeout: 300000 }, async () => {
@@ -15,10 +14,10 @@ describe('Tart tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).not.toThrow();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).toThrow();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   });
@@ -34,13 +33,13 @@ describe('Tart tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).not.to.throw();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.SUCCESS });
         // Check if TART_HOME is set in shell
-        const tartHome = cp.execSync(TestUtils.getShellCommand('echo $TART_HOME')).toString().trim();
+        const tartHome = (await testSpawn('echo $TART_HOME')).data.trim();
         expect(tartHome).toBe(customTartHome);
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).toThrow();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   });
@@ -55,13 +54,13 @@ describe('Tart tests', async () => {
       }
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).not.toThrow();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.SUCCESS });
         // Check if the VM was cloned
-        const vms = cp.execSync(TestUtils.getShellCommand('tart list')).toString().trim();
+        const vms = (await testSpawn('tart list')).data.trim();
         expect(vms).toContain('my-custom-vm');
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which tart'))).toThrow();
+        expect(await testSpawn('which tart')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   });

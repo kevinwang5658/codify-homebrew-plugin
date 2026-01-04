@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { describe, expect, it } from 'vitest'
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Pyenv resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -18,7 +18,7 @@ describe('Pyenv resource integration tests', () => {
     ], {
       skipUninstall: true,
       validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which pyenv'), { shell: TestUtils.getShellName() })).to.not.throw();
+        expect(testSpawn('which pyenv')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     });
   });
@@ -27,7 +27,8 @@ describe('Pyenv resource integration tests', () => {
     await PluginTester.fullTest(pluginPath, [
       {
         type: 'homebrew',
-        formulae: ['readline', 'openssl@3']
+        formulae: ['readline', 'openssl@3'],
+        os: ['macOS'],
       },
       {
         type: 'pyenv',
@@ -35,17 +36,17 @@ describe('Pyenv resource integration tests', () => {
         global: '3.12',
       }
     ], {
-      validateApply: () => {
-        expect(execSync(TestUtils.getShellCommand('python --version'), { shell: TestUtils.getShellName() }).toString('utf-8')).to.include('3.12');
+      validateApply: async () => {
+        expect(testSpawn('python --version')).resolves.toMatchObject({ data: expect.stringContaining('3.12') });
 
-        const versions = execSync(TestUtils.getShellCommand('pyenv versions'), { shell: TestUtils.getShellName() }).toString('utf-8')
+        const { data: versions } = await testSpawn('pyenv versions')
         expect(versions).to.include('3.12')
         expect(versions).to.include('3.11')
       },
       validateDestroy: () => {
         expect(fs.existsSync(path.resolve(os.homedir(), '.pyenv'))).to.be.false;
         expect(fs.readFileSync(TestUtils.getPrimaryShellRc(), 'utf-8')).to.not.contain('pyenv');
-        expect(() => execSync(TestUtils.getShellCommand('which pyenv'), { shell: TestUtils.getShellName() })).to.throw();
+        expect(testSpawn('which pyenv')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
       }
     })
   })

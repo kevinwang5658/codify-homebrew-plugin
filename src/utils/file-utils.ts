@@ -13,7 +13,11 @@ export class FileUtils {
       addTrailingSpacer(line)
     );
 
-    await fs.appendFile(Utils.getPrimaryShellRc(), lineToInsert)
+    const shellRc = Utils.getPrimaryShellRc()
+
+    console.log(`Adding to ${path.basename(shellRc)}: ${lineToInsert}`)
+
+    await fs.appendFile(shellRc, lineToInsert)
 
     function addLeadingSpacer(line: string): string {
       return line.startsWith('\n')

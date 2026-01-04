@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { describe, expect, it } from 'vitest'
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
 import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 // Currently need to figure out a way to test snap. It requires system ctl
 describe('Snap resource integration tests', { skip: true }, () => {
@@ -15,12 +15,10 @@ describe('Snap resource integration tests', { skip: true }, () => {
     }
 
     // Check if snap is available
-    // try {
-    //   execSync('which snap');
-    // } catch {
-    //   console.log('Skipping snap test - snap not available on this system');
-    //   return;
-    // }
+    if ((await testSpawn('which snap')).status !== SpawnStatus.SUCCESS) {
+      console.log('Skipping snap test - snap not available on this system');
+      return;
+    }
 
     // Plans correctly and detects that snap is available
     await PluginTester.fullTest(pluginPath, [{
@@ -31,11 +29,11 @@ describe('Snap resource integration tests', { skip: true }, () => {
       ]
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        const snapList = execSync('snap list').toString();
+      validateApply: async () => {
+        const snapList = (await testSpawn('snap list')).data;
         expect(snapList).toContain('hello-world');
         expect(snapList).toContain('curl');
-        expect(() => execSync(TestUtils.getShellCommand('which snap'))).to.not.throw;
+        expect(await testSpawn('which snap')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       testModify: {
         modifiedConfigs: [{
@@ -45,17 +43,17 @@ describe('Snap resource integration tests', { skip: true }, () => {
             'jq',
           ],
         }],
-        validateModify: () => {
-          const snapList = execSync('snap list').toString();
+        validateModify: async () => {
+          const snapList = (await testSpawn('snap list')).data;
           expect(snapList).toContain('hello-world');
           expect(snapList).toContain('jq');
           // curl should be removed
           expect(snapList).not.toContain('curl');
         }
       },
-      validateDestroy: () => {
+      validateDestroy: async () => {
         // snap should still exist as it's a core system component
-        expect(() => execSync(TestUtils.getShellCommand('which snap'))).to.not.throw;
+        expect(await testSpawn('which snap')).toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     });
   });
@@ -67,9 +65,7 @@ describe('Snap resource integration tests', { skip: true }, () => {
     }
 
     // Check if snap is available
-    // try {
-    //   execSync('which snap');
-    // } catch {
+    // if ((await testSpawn('which snap')).status !== SpawnStatus.SUCCESS) {
     //   console.log('Skipping snap test - snap not available on this system');
     //   return;
     // }
@@ -81,8 +77,8 @@ describe('Snap resource integration tests', { skip: true }, () => {
       ]
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        const snapList = execSync('snap list').toString();
+      validateApply: async () => {
+        const snapList = (await testSpawn('snap list')).data;
         expect(snapList).toContain('hello-world');
       },
     });
@@ -95,9 +91,7 @@ describe('Snap resource integration tests', { skip: true }, () => {
     }
 
     // Check if snap is available
-    // try {
-    //   execSync('which snap');
-    // } catch {
+    // if ((await testSpawn('which snap')).status !== SpawnStatus.SUCCESS) {
     //   console.log('Skipping snap test - snap not available on this system');
     //   return;
     // }
@@ -109,8 +103,8 @@ describe('Snap resource integration tests', { skip: true }, () => {
       ]
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        const snapList = execSync('snap list').toString();
+      validateApply: async () => {
+        const snapList = (await testSpawn('snap list')).data;
         expect(snapList).toContain('code');
       },
     });

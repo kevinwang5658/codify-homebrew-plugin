@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
-import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Homebrew custom install integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -15,9 +14,9 @@ describe('Homebrew custom install integration tests', () => {
         'jenv',
       ],
     }], {
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.not.throw;
+      validateApply: async () => {
+        expect(await testSpawn('which jenv')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which brew')).toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     })
   })

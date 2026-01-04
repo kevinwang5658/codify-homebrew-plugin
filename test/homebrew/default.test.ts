@@ -1,18 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import { TestUtils } from '../test-utils.js';
-import { Utils } from 'codify-plugin-lib';
+import { SpawnStatus, Utils } from 'codify-plugin-lib';
 
 describe('Homebrew main resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Creates brew and can install formulas', { timeout: 300000 }, async () => {
-    console.log('Is macOS', Utils.isMacOS());
-
     // Plans correctly and detects that brew is not installed
     await PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
@@ -22,9 +18,9 @@ describe('Homebrew main resource integration tests', () => {
       ]
     }], {
       validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which apr'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.not.throw;
+        expect(testSpawn('which apr')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which sshpass')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which brew')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       testModify: {
         modifiedConfigs: [{
@@ -37,19 +33,19 @@ describe('Homebrew main resource integration tests', () => {
           ],
         }],
         validateModify: () => {
-          expect(() => execSync(TestUtils.getShellCommand('which libxau'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which hcp'))).to.not.throw;
+          expect(testSpawn('which libxau')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(testSpawn('which sshpass')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(testSpawn('which jenv')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(testSpawn('which brew')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(testSpawn('which hcp')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
         }
       },
       validateDestroy: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which libxau'))).to.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which sshpass'))).to.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which jenv'))).to.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which hcp'))).to.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which brew'))).to.throw;
+        expect(testSpawn('which libxau')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which sshpass')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which jenv')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which hcp')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which brew')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   });

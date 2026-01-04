@@ -18,7 +18,7 @@ export class NvmResource extends Resource<NvmConfig> {
   getSettings(): ResourceSettings<NvmConfig> {
     return {
       id: 'nvm',
-      operatingSystems: [OS.Darwin],
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       parameterSettings: {
         global: { type: 'stateful', definition: new NvmGlobalParameter(), order: 2 },
@@ -54,8 +54,10 @@ export class NvmResource extends Resource<NvmConfig> {
     if (installResult.includes(`nvm source string already in ${shellRc}`)
       && (await $.spawnSafe('which nvm', { interactive: true })).status === SpawnStatus.ERROR
     ) {
-      await FileUtils.addToStartupFile('export NVM_DIR="$HOME/.nvm"')
-      await FileUtils.addToStartupFile('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh" ');
+      await FileUtils.addAllToStartupFile([
+        'export NVM_DIR="$HOME/.nvm"',
+        '[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"'
+      ])
     }
   }
 

@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Macports resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -18,8 +15,8 @@ describe('Macports resource integration tests', () => {
         'aom'
       ]
     }], {
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which port'))).to.not.throw;
+      validateApply: async () => {
+        expect(await testSpawn('which port')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
     });
   });

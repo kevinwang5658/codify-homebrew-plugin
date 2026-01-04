@@ -20,10 +20,10 @@ describe('Ssh key tests', () => {
         expect(fs.existsSync(path.resolve(os.homedir(), '.ssh', 'id_ed25519.pub'))).to.be.true;
 
         expect(execSync(`ls -l ${path.resolve(os.homedir(), '.ssh', 'id_ed25519')}`).toString('utf-8'))
-          .to.include('-rw-------  1 admin') // 600 permissions. Only owner can read and write
+          .to.include('-rw-------  1 node') // 600 permissions. Only owner can read and write
 
         expect(execSync(`ls -l ${path.resolve(os.homedir(), '.ssh', 'id_ed25519.pub')}`).toString('utf-8'))
-          .to.include('-rw-r--r--  1 admin ') // 644 permissions. Only owner can read and write. Everyone else can read.
+          .to.include('-rw-r--r--  1 node ') // 644 permissions. Only owner can read and write. Everyone else can read.
 
         expect(() => execSync(`ssh-keygen -y -f ${path.resolve(os.homedir(), '.ssh', 'id_ed25519')}`))
           .to.not.throw;

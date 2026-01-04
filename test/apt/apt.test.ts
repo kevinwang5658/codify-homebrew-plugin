@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
 import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Apt resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -23,11 +23,11 @@ describe('Apt resource integration tests', () => {
       ]
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which wget'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which vim'))).to.not.throw;
-        expect(() => execSync(TestUtils.getShellCommand('which apt-get'))).to.not.throw;
+      validateApply: async () => {
+        expect(await testSpawn('which curl')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which wget')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which vim')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which apt-get')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       testModify: {
         modifiedConfigs: [{
@@ -38,18 +38,18 @@ describe('Apt resource integration tests', () => {
             { name: 'htop' }
           ],
         }],
-        validateModify: () => {
-          expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which git'))).to.not.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which htop'))).to.not.throw;
+        validateModify: async () => {
+          expect(await testSpawn('which curl')).toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(await testSpawn('which git')).toMatchObject({ status: SpawnStatus.SUCCESS });
+          expect(await testSpawn('which htop')).toMatchObject({ status: SpawnStatus.SUCCESS });
           // wget and vim should be removed
-          expect(() => execSync(TestUtils.getShellCommand('which wget'))).to.throw;
-          expect(() => execSync(TestUtils.getShellCommand('which vim'))).to.throw;
+          expect(await testSpawn('which wget')).toMatchObject({ status: SpawnStatus.ERROR });
+          expect(await testSpawn('which vim')).toMatchObject({ status: SpawnStatus.ERROR });
         }
       },
-      validateDestroy: () => {
+      validateDestroy: async () => {
         // apt-get should still exist as it's a core system component
-        expect(() => execSync(TestUtils.getShellCommand('which apt-get'))).to.not.throw;
+        expect(await testSpawn('which apt-get')).toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     });
   });
@@ -61,7 +61,7 @@ describe('Apt resource integration tests', () => {
     }
 
     // Get available version of a package
-    const availableVersions = execSync('apt-cache madison curl | head -1 | awk \'{print $3}\'').toString().trim();
+    const { data: availableVersions } = await testSpawn('apt-cache madison curl | head -1 | awk \'{print $3}\'');
 
     await PluginTester.fullTest(pluginPath, [{
       type: 'apt',
@@ -70,9 +70,9 @@ describe('Apt resource integration tests', () => {
       ]
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
-        const installedVersion = execSync('dpkg-query -W -f=\'${Version}\' curl').toString().trim();
+      validateApply: async () => {
+        expect(await testSpawn('which curl')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        const { data: installedVersion } = await testSpawn('dpkg-query -W -f=\'${Version}\' curl');
         expect(installedVersion).toBe(availableVersions);
       },
     });
@@ -90,8 +90,8 @@ describe('Apt resource integration tests', () => {
       update: false
     }], {
       skipUninstall: true,
-      validateApply: () => {
-        expect(() => execSync(TestUtils.getShellCommand('which curl'))).to.not.throw;
+      validateApply: async () => {
+        expect(await testSpawn('which curl')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
     });
   });

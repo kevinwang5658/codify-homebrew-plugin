@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import path from 'node:path';
 import fs from 'node:fs';
-import os from 'node:os';
-import { codifySpawn } from '../../../src/utils/codify-spawn';
 import { TestUtils } from '../../test-utils.js';
 
 describe('Pnpm tests', () => {
@@ -25,8 +23,8 @@ describe('Pnpm tests', () => {
       { type: 'pnpm', globalEnvNodeVersion: '20' },
     ], {
       validateApply: async () => {
-        const result = await codifySpawn('node -v');
-        expect(result.data.trim()).to.include('20')
+        const result = await testSpawn('node -v');
+        expect(result.data).to.include('20')
       },
       validateDestroy: async () => {
         const shellRcFile = fs.readFileSync(TestUtils.getPrimaryShellRc(), 'utf8')

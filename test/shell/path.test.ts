@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import { ParameterOperation, ResourceOperation } from 'codify-schemas';
-import { execSync } from 'child_process';
 import { TestUtils } from '../test-utils.js';
 
 describe('Path resource integration tests', async () => {
@@ -18,11 +17,11 @@ describe('Path resource integration tests', async () => {
         path: tempDir1,
       }
     ], {
-      validateApply: () => {
-        expect(execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()).to.include(tempDir1);
+      validateApply: async () => {
+        expect((await testSpawn(TestUtils.getShellCommand('echo $PATH'))).data).to.include(tempDir1);
       },
-      validateDestroy: () => {
-        expect(execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()).to.not.include(tempDir1);
+      validateDestroy: async () => {
+        expect((await testSpawn(TestUtils.getShellCommand('echo $PATH'))).data).to.not.include(tempDir1);
       }
     });
   })
@@ -40,13 +39,13 @@ describe('Path resource integration tests', async () => {
       validatePlan: (plan) => {
         console.log(JSON.stringify(plan, null, 2));
       },
-      validateApply: () => {
-        const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
+      validateApply: async () => {
+        const { data: path } = await testSpawn('echo $PATH');
         expect(path).to.include(tempDir1);
         expect(path).to.include(tempDir2);
       },
-      validateDestroy: () => {
-        const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
+      validateDestroy: async () => {
+        const { data: path } = await testSpawn('echo $PATH')
         expect(path).to.not.include(tempDir1);
         expect(path).to.not.include(tempDir2);
       }
@@ -64,13 +63,13 @@ describe('Path resource integration tests', async () => {
         prepend: true,
       }
     ], {
-      validateApply: () => {
-        const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
+      validateApply: async () => {
+        const { data: path } = await testSpawn('echo $PATH')
         expect(path).to.include(tempDir1);
         expect(path).to.include(tempDir2);
       },
-      validateDestroy: () => {
-        const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
+      validateDestroy: async () => {
+        const { data: path } = await testSpawn('echo $PATH')
         expect(path).to.not.include(tempDir1);
         expect(path).to.not.include(tempDir2);
       }
@@ -90,8 +89,8 @@ describe('Path resource integration tests', async () => {
         prepend: true,
       }
     ], {
-      validateApply: () => {
-        const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
+      validateApply: async () => {
+        const { data: path } = await testSpawn('echo $PATH');
         expect(path).to.include(tempDir1);
         expect(path).to.include(tempDir2);
       },
@@ -101,7 +100,7 @@ describe('Path resource integration tests', async () => {
           paths: [tempDir1, tempDir2, tempDir3, tempDir4],
           prepend: true,
         }],
-        validateModify: (plans) => {
+        validateModify: async (plans) => {
           expect(plans[0]).toMatchObject({
             operation: ResourceOperation.MODIFY,
             parameters: expect.arrayContaining([{
@@ -112,16 +111,15 @@ describe('Path resource integration tests', async () => {
             }])
           })
 
-          const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
+          const { data: path } = await testSpawn('echo $PATH');
           expect(path).to.include(tempDir1);
           expect(path).to.include(tempDir2);
           expect(path).to.include(tempDir3);
           expect(path).to.include(tempDir4);
         }
       },
-      validateDestroy: () => {
-        const path = execSync(TestUtils.getShellCommand('echo $PATH')).toString('utf-8').trim()
-        console.log(path);
+      validateDestroy: async () => {
+        const { data: path } = await testSpawn('echo $PATH');
         expect(path).to.not.include(tempDir1);
         expect(path).to.not.include(tempDir2);
         expect(path).to.not.include(tempDir3);

@@ -1,10 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { describe, expect, it } from 'vitest';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-import cp from 'child_process';
-import { TestUtils } from '../test-utils.js';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Asdf install tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -31,15 +30,15 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
-        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
-        expect(() => cp.execSync(TestUtils.getShellCommand('which golang'))).to.not.throw;
+        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS })
+        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which golang')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
 
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
-        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
-        expect(() => cp.execSync(TestUtils.getShellCommand('which golang'))).to.throw;
+        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which golang')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })
@@ -58,12 +57,12 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.not.throw;
-        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.not.throw;
+        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync(TestUtils.getShellCommand('which asdf;'))).to.throw;
-        expect(() => cp.execSync(TestUtils.getShellCommand('which node'))).to.throw;
+        expect(testSpawn('which asdf;')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
+        expect(testSpawn('which node')).resolves.toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })
