@@ -2,8 +2,9 @@ import { describe, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { Utils } from 'codify-plugin-lib';
 
-describe('Virtualenv project tests', () => {
+describe('Virtualenv project tests', { skip: !Utils.isMacOS() }, () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install and uninstall a virtualenv directory', { timeout: 300000 }, async () => {

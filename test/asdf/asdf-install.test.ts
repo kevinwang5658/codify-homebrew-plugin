@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { describe, expect, it } from 'vitest';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-import cp from 'child_process';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Asdf install tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -18,6 +18,10 @@ describe('Asdf install tests', async () => {
 
     await PluginTester.fullTest(pluginPath, [
       {
+        type: 'homebrew',
+        os: ['macOS']
+      },
+      {
         type: 'asdf',
       },
       {
@@ -26,21 +30,22 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which golang')).to.not.throw;
+        expect(await testSpawn('which asdf;')).toMatchObject({ status: SpawnStatus.SUCCESS })
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which golang')).toMatchObject({ status: SpawnStatus.SUCCESS });
 
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which golang')).to.throw;
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which golang')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })
 
   it('Can install a plugin and then a version', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
+      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'asdf',
         plugins: ['nodejs']
@@ -52,12 +57,12 @@ describe('Asdf install tests', async () => {
       },
     ], {
       validateApply: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.not.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.not.throw;
+        expect(await testSpawn('which asdf;')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.SUCCESS });
       },
       validateDestroy: async () => {
-        expect(() => cp.execSync('source ~/.zshrc; which asdf;')).to.throw;
-        expect(() => cp.execSync('source ~/.zshrc; which node')).to.throw;
+        expect(await testSpawn('which asdf')).toMatchObject({ status: SpawnStatus.ERROR });
+        expect(await testSpawn('which node')).toMatchObject({ status: SpawnStatus.ERROR });
       }
     });
   })

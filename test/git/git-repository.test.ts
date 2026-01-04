@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PluginTester } from 'codify-plugin-test';
+import { describe, expect, it } from 'vitest';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
-import { execSync } from 'child_process';
 
 describe('Git repository integration tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -24,7 +23,7 @@ describe('Git repository integration tests', async () => {
         expect(lstat.isDirectory()).to.be.true;
         console.log(await fs.readdir(location));
 
-        const repoInfo = execSync('git config --get remote.origin.url', { cwd: location }).toString('utf-8').trim();
+        const { data: repoInfo } = await testSpawn('git config --get remote.origin.url', { cwd: location });
         console.log(repoInfo);
         expect(repoInfo).to.eq('https://github.com/kevinwang5658/untitled.git')
       }
@@ -46,8 +45,8 @@ describe('Git repository integration tests', async () => {
 
         expect(lstat.isDirectory()).to.be.true;
 
-        const repoInfo = execSync('git config --get remote.origin.url', { cwd: location }).toString('utf-8').trim();
-        expect(repoInfo).to.eq('https://github.com/kevinwang5658/untitled.git')
+        const { data: repoInfo } = await testSpawn('git config --get remote.origin.url', { cwd: location });
+        expect(repoInfo.trim()).to.eq('https://github.com/kevinwang5658/untitled.git')
       }
     });
   })

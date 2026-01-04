@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { PluginTester } from 'codify-plugin-test';
+import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { execSync } from 'child_process';
+import { SpawnStatus } from 'codify-plugin-lib';
 
 describe('Homebrew custom install integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
@@ -11,12 +11,12 @@ describe('Homebrew custom install integration tests', () => {
       type: 'homebrew',
       directory: '~/.homebrew',
       formulae: [
-        'jenv',
+        'sshpass',
       ],
     }], {
-      validateApply: () => {
-        expect(() => execSync('source ~/.zshrc; which jenv')).to.not.throw;
-        expect(() => execSync('source ~/.zshrc; which brew')).to.not.throw;
+      validateApply: async () => {
+        expect(await testSpawn('which sshpass')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which brew')).toMatchObject({ status: SpawnStatus.SUCCESS });
       }
     })
   })

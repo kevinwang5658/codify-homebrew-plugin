@@ -12,7 +12,8 @@ run_dev_task:
   run_script:
     - sleep 2000
 
-integration_test_dev_task:
+integration_test_dev_macos_task:
+  timeout_in: 120m
   macos_instance:
     image: codify-test-vm
   node_modules_cache:
@@ -22,7 +23,20 @@ integration_test_dev_task:
   test_script:
     - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
 
-integration_individual_test_task:
+integration_test_dev_linux_task:
+  arm_container:
+    image: kevinwang5658/codify-test-linux:latest
+#  node_modules_cache:
+#    folder: node_modules
+#    fingerprint_script: cat package-lock.json
+#    populate_script: npm ci
+  test_script:
+    - adduser --disabled-password --gecos '' newuser
+    - su - newuser
+    - npm ci
+    - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
+
+integration_individual_test_macos_task:
   macos_instance:
     image: codify-test-vm
   node_modules_cache:
@@ -32,3 +46,16 @@ integration_individual_test_task:
   test_script:
     - echo $FILE_NAME
     - npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism
+
+integration_individual_test_linux_task:
+  arm_container:
+    image: kevinwang5658/codify-test-linux:latest
+#  node_modules_cache:
+#    folder: node_modules
+#    fingerprint_script: cat package-lock.json
+#    populate_script: npm ci
+  test_script:
+    - chown -R node /tmp/cirrus-ci/working-dir
+    - su node -c "npm install"
+    - echo $FILE_NAME
+    - su node -c "npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism"
