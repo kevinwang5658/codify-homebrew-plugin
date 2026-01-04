@@ -1,24 +1,43 @@
+import { Shell, SpawnStatus, VerbosityLevel } from 'codify-plugin-lib';
+import { testSpawn } from 'codify-plugin-test';
 import { Command } from 'commander';
-import { glob } from 'glob';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import * as inspector from 'node:inspector';
 import os from 'node:os';
-import { OS } from 'codify-schemas';
+import path from 'node:path';
+
+import { codifySpawn } from '../src/utils/codify-spawn';
 
 const IP_REGEX = /VM was assigned with (.*) IP/;
 
 const program = new Command();
 
 program
+  .option('--launchPersistent', 'Launches a persistent VM for testing', false)
   .option('--operatingSystem <operatingSystem>', 'Operating system to run tests on', os.platform())
+  .option('--persistent', 'Runs tests on a persistent VM (reuse) to skip the overhead of launching a new VM each time', false)
   .argument('[file]', 'File to run')
   .action(main)
   .parse()
 
-async function main(argument: string, args: { operatingSystem: string }): Promise<void> {
+async function main(argument: string, args: { operatingSystem: string; persistent: boolean; launchPersistent: boolean }): Promise<void> {
   const debug = isInDebugMode();
   if (debug) {
     console.log('Running in debug mode!')
+  }
+
+  if (args.launchPersistent) {
+    await launchPersistentVm();
+    return process.exit(0);
+  }
+
+  if (args.persistent) {
+    if (!argument) {
+      throw new Error('No test specified for persistent mode');
+    }
+
+    await launchPersistentTest(argument, debug, args.operatingSystem);
+    return process.exit(0);
   }
 
   if (!argument) {
@@ -48,6 +67,67 @@ async function launchSingleTest(test: string, debug: boolean, operatingSystem: s
   console.log(`Running test: ${test}`)
   await run(`cirrus run --lazy-pull ${image} -e FILE_NAME="${test}" -o simple`, debug)
 }
+
+async function launchPersistentTest(test: string, debug: boolean, operatingSystem: string) {
+  if (operatingSystem === 'darwin') {
+    const { data: vmList } = await codifySpawn('tart list --format json');
+    console.log(vmList);
+
+    const parsedVmList = JSON.parse(vmList);
+    const runningVm = parsedVmList.find(vm => vm.Name.startsWith('codify-test-vm') && vm.Running === true);
+    if (!runningVm) {
+      throw new Error('No persistent VM found');
+    }
+
+    const vmName = runningVm.Name;
+    const dir = '/Users/admin/codify-homebrew-plugin';
+
+    const debugFlag = debug ? ' -e DEBUG="--inspect-brk=9229"' : ''
+
+    console.log('Refreshing files on VM...');
+    const { data: ipAddr } = await testSpawn(`tart ip ${vmName}`);
+    await testSpawn(`tart exec ${vmName} rm -rf ${dir}/src`);
+    await testSpawn(`tart exec ${vmName} rm -rf ${dir}/test`);
+    await testSpawn(`sshpass -p "admin" scp -r -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${path.join(process.cwd(), 'test')} admin@${ipAddr}:${dir}/test`);
+    await testSpawn(`sshpass -p "admin" scp -r -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${path.join(process.cwd(), 'src')} admin@${ipAddr}:${dir}/src`);
+
+    console.log('Done refreshing files on VM. Starting tests...');
+    VerbosityLevel.set(3);
+    await codifySpawn(`tart exec -i ${vmName} zsh -i -c "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`);
+  }
+}
+
+async function launchPersistentVm() {
+  const newVmName = `codify-test-vm-${Date.now()}`;
+  console.log(`Cloning new VM... ${newVmName}`);
+
+  await testSpawn(`tart clone codify-test-vm ${newVmName}`);
+  testSpawn(`tart run ${newVmName}`)
+    .then(cleanupVm)
+
+  process.on('exit', cleanupVm);
+  process.on('SIGINT', cleanupVm);
+  process.on('SIGHUP', cleanupVm);
+  process.on('SIGTERM', cleanupVm);
+
+  await sleep(5000);
+  await waitUntilVmIsReady(newVmName);
+
+  const { data: ipAddr } = await testSpawn(`tart ip ${newVmName}`);
+  await testSpawn(`sshpass -p "admin" rsync -avz -e 'ssh -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude 'node_modules' --exclude '.git' --exclude 'dist' --exclude '.fleet' ${process.cwd()} admin@${ipAddr}:~`);
+  await testSpawn(`tart exec ${newVmName} zsh -i -c "cd ~/codify-homebrew-plugin && npm ci"`);
+  console.log('Finished installing dependencies. Start tests in a new terminal window.');
+
+  await sleep(1_000_000_000);
+  // This is effective the end just without a return
+
+  async function cleanupVm() {
+    console.log('Deleting VM after...')
+    await testSpawn(`tart delete ${newVmName}`);
+    process.exit(0);
+  }
+}
+
 
 async function run(cmd: string, debug: boolean, simple = true) {
   const messageBuffer: string[] = [];
@@ -108,7 +188,22 @@ async function run(cmd: string, debug: boolean, simple = true) {
 
 }
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function isInDebugMode() {
   return inspector.url() !== undefined;
+}
+
+
+async function waitUntilVmIsReady(vmName: string): Promise<void> {
+  while (true) {
+    const result = await testSpawn(`tart exec ${vmName} pwd`, { interactive: true })
+    if (result.status === SpawnStatus.SUCCESS) {
+      return;
+    }
+
+    await sleep(1000);
+  }
 }
