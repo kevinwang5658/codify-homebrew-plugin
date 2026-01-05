@@ -7,6 +7,8 @@ describe('Homebrew custom install integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it ('Creates brew in a custom location', { timeout: 300000 }, async () => {
+    await PluginTester.uninstall(pluginPath, [{ type: 'homebrew' }])
+
     await PluginTester.fullTest(pluginPath, [{
       type: 'homebrew',
       directory: '~/.homebrew',

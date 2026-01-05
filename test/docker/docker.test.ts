@@ -11,7 +11,7 @@ describe('Test docker', async () => {
       { type: 'docker' },
     ], {
       validateApply: async () => {
-        expect(await testSpawn('which aws')).toMatchObject({ status: SpawnStatus.SUCCESS });
+        expect(await testSpawn('which docker')).toMatchObject({ status: SpawnStatus.SUCCESS });
 
       },
       validateDestroy: async () => {

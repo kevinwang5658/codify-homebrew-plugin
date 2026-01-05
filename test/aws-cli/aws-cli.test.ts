@@ -10,7 +10,6 @@ describe('Test aws-cli', async () => {
 
   it('Can install aws-cli', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew', os: ['macOS'] },
       { type: 'aws-cli' },
     ], {
       // skipUninstall: true,

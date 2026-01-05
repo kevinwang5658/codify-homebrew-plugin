@@ -8,7 +8,6 @@ describe('Jenv resource integration tests', () => {
 
   it('Installs jenv and java with homebrew', { timeout: 500000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
       {
         type: 'jenv',
         global: '17',

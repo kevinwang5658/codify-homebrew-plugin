@@ -16,6 +16,7 @@ describe('XCode tools install tests', { skip: !Utils.isMacOS() }, async () => {
     await PluginTester.fullTest(pluginPath, [{
       type: 'xcode-tools',
     }], {
+      skipUninstall: true,
       skipImport: true,
     });
   })

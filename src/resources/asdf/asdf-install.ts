@@ -141,20 +141,22 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
 
       // Uninstall plugin versions listed in .tool-versions
       for (const { plugin, version } of desiredTools) {
-        await $.spawn(`asdf uninstall ${plugin} ${version}`, { interactive: true });
+        await $.spawn(`asdf uninstall ${plugin} ${version === 'latest'? `$(asdf latest ${plugin})` : version}`, { interactive: true });
       }
 
       return;
     }
 
     // Other path is uninstalled through the stateful parameter
-    await $.spawn(`asdf uninstall ${plan.currentConfig?.plugin} ${plan.currentConfig.versions?.join(' ')}`, { interactive: true });
+    await $.spawn(`asdf uninstall ${plan.currentConfig?.plugin} ${plan.currentConfig.versions
+      ?.map(version => version === 'latest'? `$(asdf latest ${plan.currentConfig?.plugin})` : version)
+      .join(' ')}`, { interactive: true });
   }
 
   private async getToolVersions(directory: string): Promise<Array<{ plugin: string; version: string }>> {
     const toolsVersions = (await fs.readFile(path.join(directory, '.tool-versions'))).toString();
 
-    return toolsVersions.split(/\n/)
+    return toolsVersions.split(/\n/g)
       .filter(Boolean)
       .map((l) => {
         const matches = l.match(TOOL_VERSIONS_REGEX);
@@ -164,6 +166,6 @@ export class AsdfInstallResource extends Resource<AsdfInstallConfig> {
 
         return matches.slice(1, 3)
       })
-      .map(([plugin, version, file]) => ({ plugin, version, file }));
+      .map(([plugin, version]) => ({ plugin, version }));
   }
 }

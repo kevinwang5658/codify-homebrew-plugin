@@ -1,5 +1,5 @@
 import { Shell, SpawnStatus, VerbosityLevel } from 'codify-plugin-lib';
-import { testSpawn } from 'codify-plugin-test';
+import { testSpawn, TestUtils } from 'codify-plugin-test';
 import { Command } from 'commander';
 import { spawn } from 'node:child_process';
 import * as inspector from 'node:inspector';
@@ -27,7 +27,7 @@ async function main(argument: string, args: { operatingSystem: string; persisten
   }
 
   if (args.launchPersistent) {
-    await launchPersistentVm();
+    await launchPersistentVm(args.operatingSystem);
     return process.exit(0);
   }
 
@@ -69,7 +69,9 @@ async function launchSingleTest(test: string, debug: boolean, operatingSystem: s
 }
 
 async function launchPersistentTest(test: string, debug: boolean, operatingSystem: string) {
-  if (operatingSystem === 'darwin') {
+  const shell = operatingSystem === 'darwin' ? 'zsh' : 'bash';
+
+  // if (operatingSystem === 'darwin') {
     const { data: vmList } = await codifySpawn('tart list --format json');
     console.log(vmList);
 
@@ -80,7 +82,8 @@ async function launchPersistentTest(test: string, debug: boolean, operatingSyste
     }
 
     const vmName = runningVm.Name;
-    const dir = '/Users/admin/codify-homebrew-plugin';
+    const dir = '~/codify-homebrew-plugin';
+    // const dir = '/Volumes/My\\ Shared\\ Files/plugin'
 
     const debugFlag = debug ? ' -e DEBUG="--inspect-brk=9229"' : ''
 
@@ -93,15 +96,18 @@ async function launchPersistentTest(test: string, debug: boolean, operatingSyste
 
     console.log('Done refreshing files on VM. Starting tests...');
     VerbosityLevel.set(3);
-    await codifySpawn(`tart exec -i ${vmName} zsh -i -c "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`);
-  }
+    await codifySpawn(`tart exec ${vmName} ${shell} -c "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`, { throws: false });
+  // }
 }
 
-async function launchPersistentVm() {
+async function launchPersistentVm(operatingSystem: string) {
   const newVmName = `codify-test-vm-${Date.now()}`;
+  const shell = operatingSystem === 'darwin' ? 'zsh' : 'bash';
+
   console.log(`Cloning new VM... ${newVmName}`);
 
-  await testSpawn(`tart clone codify-test-vm ${newVmName}`);
+  const image = (operatingSystem === 'darwin') ? 'codify-test-vm' : 'codify-test-vm-linux';
+  await testSpawn(`tart clone ${image} ${newVmName}`);
   testSpawn(`tart run ${newVmName}`)
     .then(cleanupVm)
 
@@ -115,7 +121,7 @@ async function launchPersistentVm() {
 
   const { data: ipAddr } = await testSpawn(`tart ip ${newVmName}`);
   await testSpawn(`sshpass -p "admin" rsync -avz -e 'ssh -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --exclude 'node_modules' --exclude '.git' --exclude 'dist' --exclude '.fleet' ${process.cwd()} admin@${ipAddr}:~`);
-  await testSpawn(`tart exec ${newVmName} zsh -i -c "cd ~/codify-homebrew-plugin && npm ci"`);
+  await testSpawn(`tart exec ${newVmName} ${shell} -i -c "cd ~/codify-homebrew-plugin && npm ci"`);
   console.log('Finished installing dependencies. Start tests in a new terminal window.');
 
   await sleep(1_000_000_000);

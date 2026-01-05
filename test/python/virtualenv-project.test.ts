@@ -14,7 +14,6 @@ describe('Virtualenv project tests', { skip: !Utils.isMacOS() }, () => {
     console.log(await fs.readdir('Projects/python-project'));
 
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
       { type: 'virtualenv' },
       { type: 'pyenv', pythonVersions: ['3.11'], global: '3.11' },
       { type: 'virtualenv-project', dest: '.venv', cwd: 'Projects/python-project', automaticallyInstallRequirementsTxt: true },

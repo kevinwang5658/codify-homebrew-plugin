@@ -93,7 +93,7 @@ export class DockerResource extends Resource<DockerConfig> {
 
   async destroy(plan: DestroyPlan<DockerConfig>): Promise<void> {
     const $ = getPty();
-    await $.spawnSafe('/Applications/Docker.app/Contents/MacOS/uninstall')
+    await $.spawnSafe('/Applications/Docker.app/Contents/MacOS/uninstall', { interactive: true, requiresRoot: true })
     await fs.rm(path.join(os.homedir(), 'Library/Group\\ Containers/group.com.docker'), { recursive: true, force: true });
     await fs.rm(path.join(os.homedir(), 'Library/Containers/com.docker.docker/Data'), { recursive: true, force: true });
     await fs.rm(path.join(os.homedir(), '.docker'), { recursive: true, force: true });

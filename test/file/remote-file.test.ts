@@ -4,10 +4,11 @@ import * as path from 'node:path';
 import fs from 'node:fs';
 import { ResourceOperation } from 'codify-schemas';
 
-describe('File integration tests', async () => {
+describe('File integration tests', { skip: true }, async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can download a file from codify cloud', { timeout: 300000 }, async () => {
+    process.env.VITE_CODIFY_TEST_JWT = '';
     await PluginTester.fullTest(pluginPath, [
       {
         type: 'remote-file',

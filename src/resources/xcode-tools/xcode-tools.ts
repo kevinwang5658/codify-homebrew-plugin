@@ -45,7 +45,7 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
       const { data } = await $.spawn('softwareupdate -l', { interactive: true });
 
       // This regex will only match the label because it doesn't match commas.
-      const labelRegex = /(Command Line Tools[^,]*\d+\.\d+)/g
+      const labelRegex = /(Command Line Tools[^,]*\d+\.\d+?)(?=\s+)/g
       const xcodeToolsVersion = data.match(labelRegex);
 
       if (!xcodeToolsVersion || xcodeToolsVersion.length === 0 || !xcodeToolsVersion[0]) {
@@ -66,6 +66,8 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
           
           return compare(coerce(currentVer)!, coerce(prevVer)!) > 0 ? current : prev;
         }) : xcodeToolsVersion.at(0)!;
+
+      console.log('Latest version', latestVersion);
 
       await $.spawn(`softwareupdate -i "${latestVersion}" --verbose`, { requiresRoot: true, interactive: true });
 

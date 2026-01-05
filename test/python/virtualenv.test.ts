@@ -8,7 +8,6 @@ describe('Virtualenv tests', { skip: !Utils.isMacOS() }, () => {
 
   it('Can install and uninstall virtualenv', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
       { type: 'virtualenv' }
     ])
   })

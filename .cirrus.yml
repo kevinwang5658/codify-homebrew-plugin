@@ -24,15 +24,16 @@ integration_test_dev_macos_task:
     - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
 
 integration_test_dev_linux_task:
-  arm_container:
-    image: kevinwang5658/codify-test-linux:latest
+# trick cirrus CI to use tart here to run a linux instance
+  macos_instance:
+    image: codify-test-vm-linux
 #  node_modules_cache:
 #    folder: node_modules
 #    fingerprint_script: cat package-lock.json
 #    populate_script: npm ci
   test_script:
-    - adduser --disabled-password --gecos '' newuser
-    - su - newuser
+#    - adduser --disabled-password --gecos '' newuser
+#    - su - newuser
     - npm ci
     - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
 

@@ -46,7 +46,6 @@ export class AsdfResource extends Resource<AsdfConfig> {
       }
 
       await $.spawn('brew install asdf', { interactive: true, env: { HOMEBREW_NO_AUTO_UPDATE: 1 } });
-
     }
 
     if (Utils.isLinux()) {
@@ -65,20 +64,12 @@ export class AsdfResource extends Resource<AsdfConfig> {
       await fs.chmod(path.join(asdfDir, 'asdf'), 0o755);
 
       await fs.rm(tmpDir, { recursive: true, force: true });
+
+      await FileUtils.addPathToShellRc(path.join(os.homedir(), '.local', 'bin'), true);
     }
 
-    await FileUtils.addPathToShellRc(path.join(os.homedir(), '.local', 'bin'), true);
     // eslint-disable-next-line no-template-curly-in-string
     await FileUtils.addToShellRc('export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"')
-
-    // TODO: Move OsUtils to a separate name space? All things that have to do with the os.
-    // TODO: Add a way to run multiple commands in sequence
-    // TODO: Change all plugins to install to ~/.local/bin
-
-    await $.spawnSafe('which asdf', { interactive: true });
-    await $.spawnSafe('ls ~/.local/bin');
-    console.log((await $.spawnSafe('echo $PATH', { interactive: true })).data);
-
   }
 
   async destroy(): Promise<void> {

@@ -1,14 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
 import { SpawnStatus, Utils } from 'codify-plugin-lib';
+import fs from 'node:fs/promises';
 
 describe('Tart tests', { skip: !Utils.isMacOS() }, async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install tart', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'tart',
       }
@@ -26,7 +26,6 @@ describe('Tart tests', { skip: !Utils.isMacOS() }, async () => {
     const customTartHome = path.join(process.env.HOME || '', '.tart-custom');
 
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'tart',
         tartHome: customTartHome,
@@ -47,7 +46,6 @@ describe('Tart tests', { skip: !Utils.isMacOS() }, async () => {
   // Normally skip this test because the 30gb download can take a long time
   it('Can clone a VM', { timeout: 1000000, skip: true }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'tart',
         clone: [{ sourceName: 'ghcr.io/cirruslabs/macos-sonoma-base:latest', name: 'my-custom-vm' }],
@@ -64,4 +62,9 @@ describe('Tart tests', { skip: !Utils.isMacOS() }, async () => {
       }
     });
   });
+
+  afterAll(async () => {
+    await fs.rm('~/.tart', { recursive: true, force: true });
+    await fs.rm(path.join(process.env.HOME || '', '.tart-custom'), { recursive: true, force: true });
+  }, 300_000);
 });

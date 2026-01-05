@@ -8,7 +8,6 @@ describe('Aws profile tests', async () => {
 
   it('Can add a aws-cli profile', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
       { type: 'aws-cli' },
       {
         type: 'aws-profile',

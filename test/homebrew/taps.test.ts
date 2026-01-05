@@ -22,7 +22,7 @@ describe('Homebrew taps tests', () => {
           taps: ['hashicorp/tap'],
         }],
         validateModify: async () => {
-          const taps = (await testSpawn('brew tap')).data.split(/\n/);
+          const taps = (await testSpawn('brew tap')).data;
           expect(taps).toContain('cirruslabs/cli');
           expect(taps).toContain('hashicorp/tap');
         },

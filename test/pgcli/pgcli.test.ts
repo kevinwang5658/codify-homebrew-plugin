@@ -8,7 +8,6 @@ describe('Pgcli integration tests', async () => {
 
   it('Can install pgcli', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
       { type: 'pgcli' }
     ], {
       validateApply: async () => {

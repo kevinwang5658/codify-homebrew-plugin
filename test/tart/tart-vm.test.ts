@@ -8,7 +8,6 @@ describe('Tart VM tests', { skip: !Utils.isMacOS() }, async () => {
 
   it('Can create a tart VM with memory and CPU settings', { timeout: 1200000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew', os: ['macOS'] },
       {
         type: 'tart',
       },
