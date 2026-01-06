@@ -2,8 +2,9 @@ import { describe, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { Utils } from 'codify-plugin-lib';
 
-describe('Virtualenv project tests', () => {
+describe('Virtualenv project tests', { skip: !Utils.isMacOS() }, () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Can install and uninstall a virtualenv directory', { timeout: 300000 }, async () => {
@@ -13,7 +14,6 @@ describe('Virtualenv project tests', () => {
     console.log(await fs.readdir('Projects/python-project'));
 
     await PluginTester.fullTest(pluginPath, [
-      { type: 'homebrew' },
       { type: 'virtualenv' },
       { type: 'pyenv', pythonVersions: ['3.11'], global: '3.11' },
       { type: 'virtualenv-project', dest: '.venv', cwd: 'Projects/python-project', automaticallyInstallRequirementsTxt: true },
