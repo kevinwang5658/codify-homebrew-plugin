@@ -96,7 +96,7 @@ async function launchPersistentTest(test: string, debug: boolean, operatingSyste
 
     console.log('Done refreshing files on VM. Starting tests...');
     VerbosityLevel.set(3);
-    await codifySpawn(`tart exec ${vmName} ${shell} -c "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`, { throws: false });
+    await codifySpawn(`tart exec ${vmName} ${shell} -c ${operatingSystem === 'darwin' ? '-i' : ''} "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`, { throws: false });
   // }
 }
 

@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, it } from 'vitest';
 import { PluginTester } from 'codify-plugin-test';
 import path from 'node:path';
+import { Utils } from 'codify-plugin-lib';
 
-describe('Ssh Add tests', () => {
+describe('Ssh Add tests', { skip: Utils.isMacOS() }, () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   // Currently having a hard time testing this because it cannot start the agent and keep it alive via ssh.

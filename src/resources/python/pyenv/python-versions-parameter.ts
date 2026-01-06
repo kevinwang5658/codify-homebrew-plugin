@@ -35,11 +35,11 @@ export class PythonVersionsParameter extends ArrayStatefulParameter<PyenvConfig,
 
   override async addItem(version: string): Promise<void> {
     const $ = getPty();
-    await $.spawn(`pyenv install ${version}`, { interactive: true });
+    await $.spawn(`pyenv install ${version} -s`, { interactive: true });
   }
 
   override async removeItem(version: string): Promise<void> {
     const $ = getPty();
-    await $.spawn(`pyenv uninstall ${version}`, { interactive: true });
+    await $.spawn(`pyenv uninstall ${version} -f`, { interactive: true });
   }
 }

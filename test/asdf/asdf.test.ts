@@ -9,10 +9,6 @@ import os from 'node:os';
 describe('Asdf tests', async () => {
   const pluginPath = path.resolve('./src/index.ts');
 
-  beforeAll(async () => {
-    await TestUtils.ensureHomebrewInstalled(pluginPath);
-  }, 300000)
-
   it('Can install asdf and plugins', { timeout: 300000 }, async () => {
     await PluginTester.fullTest(pluginPath, [
       {

@@ -58,7 +58,7 @@ export class GitLfsResource extends Resource<GitLfsConfig> {
   private async checkIfGitLfsIsInstalled(): Promise<boolean> {
     const $ = getPty();
 
-    const gitLfsStatus = await $.spawn('git lfs env', { cwd: os.homedir(), interactive: true });
+    const gitLfsStatus = await $.spawn('git lfs env', { cwd: os.homedir(), interactive: true, disableWrapping: true });
     const lines = gitLfsStatus.data.split('\n');
 
     // When git lfs exists but git lfs install hasn't been called then git lfs env returns:

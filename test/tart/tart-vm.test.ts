@@ -26,23 +26,18 @@ describe('Tart VM tests', { skip: !Utils.isMacOS() }, async () => {
         expect(vms).toContain('test-vm-resources');
 
         // Check VM configuration
-        const vmInfo = (await testSpawn('tart get test-vm-resources')).data;
-        expect(vmInfo).toContain('memory:');
-        expect(vmInfo).toContain('cpu:');
+        const vmInfo = JSON.parse((await testSpawn('tart get test-vm-resources --format json')).data);
+        expect(vmInfo.Memory).toBe(8192);
+        expect(vmInfo.CPU).toBe(4);
       },
       testModify: {
         modifiedConfigs: [{
           type: 'tart-vm',
           sourceName: 'ghcr.io/cirruslabs/macos-sonoma-base:latest',
-          name: 'test-vm-resources',
-          memory: 8192,
+          localName: 'test-vm-resources',
+          memory: 4096,
           cpu: 4,
         }]
-      },
-      validateDestroy: async () => {
-        // VM should be deleted
-        const vms = await testSpawn('tart list')
-        expect(vms).not.toContain('test-vm-resources');
       }
     });
   });

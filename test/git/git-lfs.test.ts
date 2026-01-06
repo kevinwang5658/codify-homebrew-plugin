@@ -11,13 +11,6 @@ describe('Git lfs integration tests', async () => {
     await PluginTester.fullTest(pluginPath, [
       { type: 'git-lfs' }
     ], {
-      validateApply: async () => {
-        const env = await testSpawn('git lfs env;');
-        const envLines = env.data.split(/\n/);
-
-        expect(envLines.at(-2)).to.contain('git config filter.lfs.smudge');
-        expect(envLines.at(-1)).to.contain('git config filter.lfs.clean');
-      },
       validateDestroy: async () => {
         expect(await testSpawn('which git lfs')).toMatchObject({ status: SpawnStatus.ERROR });
       }

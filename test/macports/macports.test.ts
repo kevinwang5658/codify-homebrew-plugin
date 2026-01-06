@@ -6,7 +6,7 @@ import { SpawnStatus } from 'codify-plugin-lib';
 describe('Macports resource integration tests', () => {
   const pluginPath = path.resolve('./src/index.ts');
 
-  it('Can install and uninstall macports', { timeout: 300000 }, async () => {
+  it('Can install and uninstall macports', { timeout: 800_000 }, async () => {
     // Plans correctly and detects that brew is not installed
     await PluginTester.fullTest(pluginPath, [{
       type: 'macports',

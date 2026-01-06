@@ -1,4 +1,13 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, SpawnStatus, getPty, z } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  Resource,
+  ResourceSettings,
+  SpawnStatus,
+  getPty,
+  z,
+  ParameterChange, ModifyPlan
+} from 'codify-plugin-lib';
 import { OS } from 'codify-schemas';
 
 const schema = z.object({
@@ -20,10 +29,6 @@ const schema = z.object({
     .string()
     .describe('Sets the display size in format <width>x<height>. For example 1200x800')
     .optional(),
-  disk: z
-    .string()
-    .describe('The location of the disk, which is a path')
-    .optional(),
   diskSize: z
     .number()
     .describe('The disk size in GB. Disk size can only be increased and not decreased')
@@ -40,7 +45,10 @@ export class TartVmResource extends Resource<TartVmConfig> {
       dependencies: ['tart'],
       schema,
       parameterSettings: {
-        disk: { type: 'directory' },
+        diskSize: { type: 'number', canModify: true },
+        memory: { type: 'number', canModify: true },
+        cpu: { type: 'number', canModify: true },
+        display: { type: 'string', canModify: true },
       },
     };
   }
@@ -64,10 +72,18 @@ export class TartVmResource extends Resource<TartVmConfig> {
     // Parse the JSON output to get the list of VMs
     try {
       const vmList = JSON.parse(data);
+      console.log('VM list:', vmList);
+      console.log('Local name:', parameters.localName);
+      console.log('Includes VM:', vmList.some((vm: { Name: string }) => vm.Name === parameters.localName));
+
       if (!vmList.some((vm: { Name: string }) => vm.Name === parameters.localName)) {
+        console.log('Not found! returning null')
+
         return null;
       }
-    } catch {
+    } catch(e) {
+      console.error('Error parsing JSON:', e);
+
       // If JSON parsing fails, return null
       return null;
     }
@@ -77,40 +93,24 @@ export class TartVmResource extends Resource<TartVmConfig> {
       sourceName: parameters.sourceName,
     }
 
-    // Get VM configuration using tart get
-    const { status: getStatus, data: getData } = await $.spawnSafe(`tart get ${parameters.localName}`);
-    if (getStatus === SpawnStatus.SUCCESS) {
-      // Parse the output to extract configuration
-      const lines = getData.split('\n');
+    try {
+      // Get VM configuration using tart get
+      const { status: getStatus, data: getData } = await $.spawnSafe(`tart get ${parameters.localName} --format json`);
+      console.log('Get data:', getData);
+      console.log('Status:', getStatus);
 
-      for (const line of lines) {
-        if (line.includes('memory:')) {
-          const match = line.match(/memory:\s*(\d+)/);
-          if (match) {
-            result.memory = Number.parseInt(match[1], 10);
-          }
-        } else if (line.includes('cpu:')) {
-          const match = line.match(/cpu:\s*(\d+)/);
-          if (match) {
-            result.cpu = Number.parseInt(match[1], 10);
-          }
-        } else if (line.includes('display:')) {
-          const match = line.match(/display:\s*(\d+x\d+)/);
-          if (match) {
-            result.display = match[1];
-          }
-        } else if (line.includes('disk:')) {
-          const match = line.match(/disk:\s*(.+)/);
-          if (match) {
-            result.disk = match[1].trim();
-          }
-        } else if (line.includes('disk-size:')) {
-          const match = line.match(/disk-size:\s*(\d+)/);
-          if (match) {
-            result.diskSize = Number.parseInt(match[1], 10);
-          }
-        }
+      if (getStatus === SpawnStatus.SUCCESS) {
+        // Parse the output to extract configuration
+
+        const vmInfo = JSON.parse(getData);
+        result.memory = vmInfo.Memory;
+        result.cpu = vmInfo.CPU;
+        result.display = vmInfo.Display;
+        result.diskSize = vmInfo.Disk;
       }
+    } catch {
+      // If JSON parsing fails, return null
+      return result;
     }
 
     return result;
@@ -120,7 +120,7 @@ export class TartVmResource extends Resource<TartVmConfig> {
     const $ = getPty();
 
     // Determine the VM name
-    const vmName = plan.desiredConfig.localName || this.extractNameFromSource(plan.desiredConfig.sourceName);
+    const vmName = plan.desiredConfig.localName;
 
     if (!vmName) {
       throw new Error('Unable to determine VM name. Please provide either "name" or a valid "sourceName"');
@@ -144,10 +144,6 @@ export class TartVmResource extends Resource<TartVmConfig> {
       setCommands.push(`--display ${plan.desiredConfig.display}`);
     }
 
-    if (plan.desiredConfig.disk) {
-      setCommands.push(`--disk ${plan.desiredConfig.disk}`);
-    }
-
     if (plan.desiredConfig.diskSize) {
       setCommands.push(`--disk-size ${plan.desiredConfig.diskSize}`);
     }
@@ -157,29 +153,44 @@ export class TartVmResource extends Resource<TartVmConfig> {
     }
   }
 
+  async modify(pc: ParameterChange<TartVmConfig>, plan: ModifyPlan<TartVmConfig>): Promise<void> {
+    const $ = getPty();
+
+    // Set VM parameters if specified
+    const setCommands: string[] = [];
+
+    if (plan.desiredConfig.memory) {
+      setCommands.push(`--memory ${plan.desiredConfig.memory}`);
+    }
+
+    if (plan.desiredConfig.cpu) {
+      setCommands.push(`--cpu ${plan.desiredConfig.cpu}`);
+    }
+
+    if (plan.desiredConfig.display) {
+      setCommands.push(`--display ${plan.desiredConfig.display}`);
+    }
+
+    if (plan.desiredConfig.diskSize) {
+      setCommands.push(`--disk-size ${plan.desiredConfig.diskSize}`);
+    }
+
+    if (setCommands.length > 0) {
+      await $.spawn(`tart set ${plan.desiredConfig.localName} ${setCommands.join(' ')}`, { interactive: true });
+    }
+  }
+
   async destroy(plan: DestroyPlan<TartVmConfig>): Promise<void> {
     const $ = getPty();
 
     // Determine the VM name
-    const vmName = plan.currentConfig.localName || this.extractNameFromSource(plan.currentConfig.sourceName);
+    const vmName = plan.currentConfig.localName;
 
     if (!vmName) {
       throw new Error('Unable to determine VM name');
     }
 
     // Delete the VM
-    await $.spawn(`tart delete ${vmName}`, { interactive: true });
-  }
-
-  private extractNameFromSource(sourceName: string): string {
-    // Extract the name from the source
-    // For example: ghcr.io/user/image:tag -> image:tag or just image
-    const parts = sourceName.split('/');
-    const lastPart = parts.at(-1)!;
-
-    // Remove the tag if present
-    const nameWithoutTag = lastPart.split(':')[0];
-
-    return nameWithoutTag;
+    await $.spawnSafe(`tart delete ${vmName}`, { interactive: true });
   }
 }

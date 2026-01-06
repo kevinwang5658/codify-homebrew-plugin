@@ -16,12 +16,15 @@ integration_test_dev_macos_task:
   timeout_in: 120m
   macos_instance:
     image: codify-test-vm
+    cpu: 4
+    memory: 6124
+    storage: 100
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
   test_script:
-    - npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism
+    - zsh -i -c "npm run test:integration -- --disable-console-intercept $DEBUG --no-file-parallelism"
 
 integration_test_dev_linux_task:
 # trick cirrus CI to use tart here to run a linux instance
@@ -46,7 +49,7 @@ integration_individual_test_macos_task:
     populate_script: npm ci
   test_script:
     - echo $FILE_NAME
-    - npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism
+    - zsh -i -c "npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism"
 
 integration_individual_test_linux_task:
   arm_container:
