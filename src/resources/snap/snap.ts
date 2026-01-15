@@ -1,4 +1,4 @@
-import { CreatePlan, Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
+import { CreatePlan, Resource, ResourceSettings, SpawnStatus, getPty, Utils } from 'codify-plugin-lib';
 import { OS, ResourceConfig } from 'codify-schemas';
 
 import { SnapInstallParameter, SnapPackage } from './install-parameter.js';
@@ -14,6 +14,7 @@ export class SnapResource extends Resource<SnapConfig> {
     return {
       id: 'snap',
       operatingSystems: [OS.Linux],
+      removeStatefulParametersBeforeDestroy: true,
       schema,
       parameterSettings: {
         install: { type: 'stateful', definition: new SnapInstallParameter() }
@@ -33,14 +34,11 @@ export class SnapResource extends Resource<SnapConfig> {
   }
 
   override async create(_plan: CreatePlan<SnapConfig>): Promise<void> {
-    const $ = getPty();
-    await $.spawn('apt update', { requiresRoot: true })
-    await $.spawn('apt install -y snapd', { requiresRoot: true })
+    await Utils.installViaPkgMgr('snapd');
   }
 
   override async destroy(): Promise<void> {
     // snap is a core system component and should not be removed
-    const $ = getPty();
-    await $.spawn('apt uninstall snapd', { requiresRoot: true })
+    await Utils.uninstallViaPkgMgr('snapd');
   }
 }
