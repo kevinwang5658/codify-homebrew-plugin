@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings, SpawnStatus, getPty } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus, getPty, Utils } from 'codify-plugin-lib';
 import { OS, ResourceConfig } from 'codify-schemas';
 
 import Schema from './pgcli-schema.json';
@@ -9,9 +9,9 @@ export class PgcliResource extends Resource<PgcliConfig> {
   getSettings(): ResourceSettings<PgcliConfig> {
     return {
       id: 'pgcli',
-      operatingSystems: [OS.Darwin],
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
-      dependencies: ['homebrew'],
+      dependencies: [...Utils.isMacOS() ? ['homebrew'] : []],
     }
   }
 
@@ -27,41 +27,11 @@ export class PgcliResource extends Resource<PgcliConfig> {
   }
 
   override async create(): Promise<void> {
-    const $ = getPty();
-    const isBrewInstalled = await this.isBrewInstalled();
-    if (isBrewInstalled) {
-      await $.spawn('brew install pgcli', { interactive: true });
-      return;
-    }
-
-    // Although the instructions for installing pgcli allow it to be installed using pip, it
-    // will still require homebrew on the system since postgresql needs to be installed
-    // as a dependency.
-    // TODO: Add the ability to choose a pip install in the future.
-
-    throw new Error(`Unable to install pgcli because homebrew is not installed on the system.
-
-Brew can be installed using Codify:
-{
-  "type": "homebrew",
-}
-    `)
+    await Utils.installViaPkgMgr('pgcli');
   }
 
   override async destroy(): Promise<void> {
-    const $ = getPty();
-    const isBrewInstalled = await this.isBrewInstalled();
-    if (!isBrewInstalled) {
-      console.log('Unable to uninstall pgcli because homebrew is not installed');
-      return;
-    }
-
-    await $.spawn('brew uninstall pgcli', { interactive: true });
+    await Utils.uninstallViaPkgMgr('pgcli');
   }
 
-  private async isBrewInstalled(): Promise<boolean> {
-    const $ = getPty();
-    const brewCheck = await $.spawnSafe('which brew', { interactive: true });
-    return brewCheck.status === SpawnStatus.SUCCESS;
-  }
 }

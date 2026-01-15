@@ -1,13 +1,25 @@
-import { CreatePlan, DestroyPlan, Resource, ResourceSettings, getPty, Utils, FileUtils } from 'codify-plugin-lib';
+import {
+  CreatePlan,
+  DestroyPlan,
+  FileUtils,
+  getPty,
+  LinuxDistro,
+  Resource,
+  ResourceSettings,
+  Utils
+} from 'codify-plugin-lib';
 import { OS, ResourceConfig } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { SpawnStatus } from '../../utils/codify-spawn.js';
 import Schema from './vscode-schema.json';
 
 const VSCODE_APPLICATION_NAME = 'Visual Studio Code.app';
-const DOWNLOAD_LINK = 'https://code.visualstudio.com/sha/download?build=stable&os=darwin-universal';
+
+const DOWNLOAD_URL_BASE = 'https://code.visualstudio.com/sha/download';
+const DOWNLOAD_LINK_MACOS = 'https://code.visualstudio.com/sha/download?build=stable&os=darwin-universal';
 
 export interface VscodeConfig extends ResourceConfig {
   directory: string;
@@ -38,38 +50,134 @@ export class VscodeResource extends Resource<VscodeConfig> {
 
   override async create(plan: CreatePlan<VscodeConfig>): Promise<void> {
     const $ = getPty();
-    
-    // Create a temporary tmp dir
-    const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
 
-    // Download vscode
-    await $.spawn(`curl -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36" -SL "${DOWNLOAD_LINK}" -o vscode.zip`, { cwd: temporaryDir });
-    await $.spawn('unzip -q vscode.zip', { cwd: temporaryDir });
-
-    if (Utils.isLinux()) {
-      await FileUtils.createDirIfNotExists(path.join(os.homedir(), '.local', 'bin'));
+    if (Utils.isMacOS()) {
+      await this.installMacOS($, plan);
+    } else if (Utils.isLinux()) {
+      await this.installLinux($, plan);
+    } else {
+      throw new Error('Unsupported operating system');
     }
-
-    // Move VSCode to the applications folder
-    const { directory } = plan.desiredConfig;
-    await $.spawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir })
-    await $.spawn(`rm -rf ${temporaryDir}`)
   }
 
   override async destroy(plan: DestroyPlan<VscodeConfig>): Promise<void> {
-    const { directory } = plan.currentConfig;
-    const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
     const $ = getPty();
-    await $.spawn(`rm -rf ${location}`);
+    const { directory } = plan.currentConfig;
+
+    if (Utils.isMacOS()) {
+      const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
+      await $.spawn(`rm -rf ${location}`);
+    } else if (Utils.isLinux()) {
+      const distro = await Utils.getLinuxDistro();
+
+      switch(distro) {
+        case LinuxDistro.DEBIAN:
+        case LinuxDistro.MANJARO:
+        case LinuxDistro.UBUNTU:
+        case LinuxDistro.MINT: {
+          await $.spawnSafe('apt-get remove code -y', { requiresRoot: true });
+          return;
+        }
+
+        case LinuxDistro.RHEL:
+        case LinuxDistro.CENTOS:
+        case LinuxDistro.FEDORA: {
+          await $.spawnSafe('dnf remove code -y', { requiresRoot: true });
+          return;
+        }
+
+        default: {
+          throw new Error('Unsupported Linux distribution. Only Debian-based (Ubuntu, Debian, Mint) and RedHat-based (RHEL, CentOS) systems are supported.');
+        }
+      }
+
+      // Remove user data and config
+      await $.spawnSafe(`rm -rf ${path.join(os.homedir(), '.config/Code')}`);
+      await $.spawnSafe(`rm -rf ${path.join(os.homedir(), '.vscode')}`);
+    } else {
+      throw new Error('Unsupported operating system');
+    }
   }
 
   private async isVscodeInstalled(directory: string): Promise<boolean> {
+    if (Utils.isMacOS()) {
+      try {
+        const files = await fs.readdir(directory);
+        return files.includes(VSCODE_APPLICATION_NAME);
+      } catch {
+        return false;
+      }
+    }
+
+    if (Utils.isLinux()) {
+      // Check if code command exists in PATH
+      const $ = getPty();
+      const result = await $.spawnSafe('which code');
+      return result.status === SpawnStatus.SUCCESS;
+    }
+
+    return false;
+  }
+
+  private async installMacOS($: ReturnType<typeof getPty>, plan: CreatePlan<VscodeConfig>): Promise<void> {
+    // Create a temporary tmp dir
+    const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
+
     try {
-      const files = await fs.readdir(directory);
-      return files
-        .includes(VSCODE_APPLICATION_NAME);
-    } catch {
-      return false;
+      // Download vscode
+      await $.spawn(`curl -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36" -SL "${DOWNLOAD_LINK_MACOS}" -o vscode.zip`, { cwd: temporaryDir });
+      await $.spawn('unzip -q vscode.zip', { cwd: temporaryDir });
+
+      // Move VSCode to the applications folder
+      const { directory } = plan.desiredConfig;
+      await $.spawn(`mv "${VSCODE_APPLICATION_NAME}" ${directory}`, { cwd: temporaryDir });
+    } finally {
+      await $.spawn(`rm -rf ${temporaryDir}`);
+    }
+  }
+
+  private async installLinux(_plan: CreatePlan<VscodeConfig>): Promise<void> {
+    console.log('Installing VSCode on Linux...');
+
+    const $ = getPty();
+
+    // Detect distribution and architecture
+    const isArm = await Utils.isArmArch();
+    const distro = await Utils.getLinuxDistro();
+
+    switch(distro) {
+      case LinuxDistro.DEBIAN:
+      case LinuxDistro.MANJARO:
+      case LinuxDistro.UBUNTU:
+      case LinuxDistro.MINT: {
+        const downloadLink = DOWNLOAD_URL_BASE + (isArm ? '?build=stable&os=linux-deb-arm64' : '?build=stable&os=linux-deb-x64');
+        const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
+        const vscodeDebPath = path.join(tmpDir, 'vscode.deb');
+
+        try {
+          await FileUtils.downloadFile(downloadLink, vscodeDebPath);
+
+          await $.spawn('debconf-set-selections <<< "code code/add-microsoft-repo boolean true"', { requiresRoot: true });
+          await $.spawn('apt-get install ./vscode.deb -y', { cwd: tmpDir, requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' } });
+        } finally {
+          // await fs.rm(tmpDir, { recursive: true, force: true });
+        }
+
+        return;
+      }
+
+      case LinuxDistro.RHEL:
+      case LinuxDistro.CENTOS:
+      case LinuxDistro.FEDORA: {
+        await $.spawn('rpm --import https://packages.microsoft.com/keys/microsoft.asc &&\n' +
+          'echo -e "[code]\\nname=Visual Studio Code\\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\\nenabled=1\\nautorefresh=1\\ntype=rpm-md\\ngpgcheck=1\\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | tee /etc/yum.repos.d/vscode.repo > /dev/null', { requiresRoot: true });
+        await $.spawn('dnf check-update && dnf install code -y', { requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' } });
+        return;
+      }
+
+      default: {
+        throw new Error('Unsupported Linux distribution. Only Debian-based (Ubuntu, Debian, Mint) and RedHat-based (RHEL, CentOS) systems are supported.');
+      }
     }
   }
 }

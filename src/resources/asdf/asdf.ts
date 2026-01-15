@@ -55,7 +55,7 @@ export class AsdfResource extends Resource<AsdfConfig> {
       const asdfDir = path.join(os.homedir(), '.local', 'bin');
       await fs.mkdir(asdfDir, { recursive: true });
       const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codify-asdf'));
-      const arch = Utils.isLinux() ? 'amd64' : 'arm64';
+      const arch = (await Utils.isArmArch()) ? 'arm64' : 'amd64';
 
       // Download and extract asdf
       await $.spawn(`curl -Lo ${tmpDir}/asdf.tar.gz "https://github.com/asdf-vm/asdf/releases/download/${latestVersion}/asdf-${latestVersion}-linux-${arch}.tar.gz"`, { cwd: tmpDir });

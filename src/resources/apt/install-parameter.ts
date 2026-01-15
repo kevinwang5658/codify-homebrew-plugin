@@ -104,7 +104,7 @@ export class AptInstallParameter extends StatefulParameter<AptConfig, Array<AptP
       return p.name;
     }).join(' ');
 
-    await $.spawn(`apt-get install -y ${toInstall}`, { requiresRoot: true, interactive: true });
+    await $.spawn(`apt-get install -y ${toInstall}`, { requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' }});
   }
 
   private async uninstall(packages: Array<AptPackage | string>): Promise<void> {
@@ -121,7 +121,7 @@ export class AptInstallParameter extends StatefulParameter<AptConfig, Array<AptP
       return p.name;
     }).join(' ');
 
-    await $.spawn(`apt-get remove -y ${toUninstall}`, { requiresRoot: true, interactive: true });
+    await $.spawn(`apt-get auto-remove -y  ${toUninstall}`, { requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' }});
   }
 
   isSamePackage(a: AptPackage | string, b: AptPackage | string): boolean {

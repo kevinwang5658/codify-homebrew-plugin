@@ -52,14 +52,16 @@ integration_individual_test_macos_task:
     - zsh -i -c "npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism"
 
 integration_individual_test_linux_task:
-  arm_container:
-    image: kevinwang5658/codify-test-linux:latest
+  # trick cirrus CI to use tart here to run a linux instance
+  macos_instance:
+    image: codify-test-vm-linux
 #  node_modules_cache:
 #    folder: node_modules
 #    fingerprint_script: cat package-lock.json
 #    populate_script: npm ci
   test_script:
-    - chown -R node /tmp/cirrus-ci/working-dir
-    - su node -c "npm install"
+#    - chown -R node /tmp/cirrus-ci/working-dir
+#    - su node -c "npm install"
     - echo $FILE_NAME
-    - su node -c "npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism"
+    - npm ci
+    - npm run test -- $FILE_NAME --disable-console-intercept $DEBUG --no-file-parallelism

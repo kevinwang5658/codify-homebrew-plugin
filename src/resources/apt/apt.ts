@@ -16,6 +16,7 @@ export class AptResource extends Resource<AptConfig> {
       id: 'apt',
       operatingSystems: [OS.Linux],
       schema,
+      removeStatefulParametersBeforeDestroy: true,
       parameterSettings: {
         install: { type: 'stateful', definition: new AptInstallParameter() },
         update: { type: 'boolean', default: true, setting: true }
@@ -45,6 +46,6 @@ export class AptResource extends Resource<AptConfig> {
 
   override async destroy(): Promise<void> {
     // apt is a core system component and should not be removed
-    throw new Error('apt cannot be destroyed as it is a core system package manager');
+    console.warn('apt cannot be destroyed as it is a core system package manager');
   }
 }

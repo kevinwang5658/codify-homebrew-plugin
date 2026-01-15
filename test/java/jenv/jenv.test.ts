@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
-import { SpawnStatus } from 'codify-plugin-lib';
+import { SpawnStatus, Utils } from 'codify-plugin-lib';
 
-describe('Jenv resource integration tests', () => {
+describe('Jenv resource integration tests', { skip: !Utils.isMacOS() }, () => {
   const pluginPath = path.resolve('./src/index.ts');
 
   it('Installs jenv and java with homebrew', { timeout: 500000 }, async () => {

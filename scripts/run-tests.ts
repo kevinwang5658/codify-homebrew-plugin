@@ -20,7 +20,11 @@ program
   .action(main)
   .parse()
 
-async function main(argument: string, args: { operatingSystem: string; persistent: boolean; launchPersistent: boolean }): Promise<void> {
+async function main(argument: string, args: {
+  operatingSystem: string;
+  persistent: boolean;
+  launchPersistent: boolean
+}): Promise<void> {
   const debug = isInDebugMode();
   if (debug) {
     console.log('Running in debug mode!')
@@ -72,31 +76,29 @@ async function launchPersistentTest(test: string, debug: boolean, operatingSyste
   const shell = operatingSystem === 'darwin' ? 'zsh' : 'bash';
 
   // if (operatingSystem === 'darwin') {
-    const { data: vmList } = await codifySpawn('tart list --format json');
-    console.log(vmList);
+  const { data: vmList } = await codifySpawn('tart list --format json');
+  console.log(vmList);
 
-    const parsedVmList = JSON.parse(vmList);
-    const runningVm = parsedVmList.find(vm => vm.Name.startsWith('codify-test-vm') && vm.Running === true);
-    if (!runningVm) {
-      throw new Error('No persistent VM found');
-    }
+  const parsedVmList = JSON.parse(vmList);
+  const runningVm = parsedVmList.find(vm => vm.Name.startsWith('codify-test-vm') && vm.Running === true);
+  if (!runningVm) {
+    throw new Error('No persistent VM found');
+  }
 
-    const vmName = runningVm.Name;
-    const dir = '~/codify-homebrew-plugin';
-    // const dir = '/Volumes/My\\ Shared\\ Files/plugin'
+  const vmName = runningVm.Name;
+  const dir = '~/codify-homebrew-plugin';
+  // const dir = '/Volumes/My\\ Shared\\ Files/plugin'
 
-    const debugFlag = debug ? ' -e DEBUG="--inspect-brk=9229"' : ''
+  const debugFlag = debug ? ' -e DEBUG="--inspect-brk=9229"' : ''
 
-    console.log('Refreshing files on VM...');
-    const { data: ipAddr } = await testSpawn(`tart ip ${vmName}`);
-    await testSpawn(`tart exec ${vmName} rm -rf ${dir}/src`);
-    await testSpawn(`tart exec ${vmName} rm -rf ${dir}/test`);
-    await testSpawn(`sshpass -p "admin" scp -r -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${path.join(process.cwd(), 'test')} admin@${ipAddr}:${dir}/test`);
-    await testSpawn(`sshpass -p "admin" scp -r -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${path.join(process.cwd(), 'src')} admin@${ipAddr}:${dir}/src`);
+  console.log('Refreshing files on VM...');
+  const { data: ipAddr } = await testSpawn(`tart ip ${vmName}`);
+  await testSpawn(`tart exec ${vmName} rm -rf ${dir}/src ${dir}/test`, { throws: true });
+  await testSpawn(`sshpass -p "admin" scp -r -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${path.join(process.cwd(), 'test')} ${path.join(process.cwd(), 'src')} ${path.join(process.cwd(), 'package.json')} ${path.join(process.cwd(), 'package-lock.json')} admin@${ipAddr}:${dir}`, { throws: true });
 
-    console.log('Done refreshing files on VM. Starting tests...');
-    VerbosityLevel.set(3);
-    await codifySpawn(`tart exec ${vmName} ${shell} -c ${operatingSystem === 'darwin' ? '-i' : ''} "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`, { throws: false });
+  console.log('Done refreshing files on VM. Starting tests...');
+  VerbosityLevel.set(3);
+  await codifySpawn(`tart exec ${vmName} ${shell} -c ${operatingSystem === 'darwin' ? '-i' : ''} "cd ${dir} && FORCE_COLOR=true npm run test -- ${test} --disable-console-intercept ${debugFlag} --no-file-parallelism"`, { throws: false });
   // }
 }
 
@@ -125,6 +127,7 @@ async function launchPersistentVm(operatingSystem: string) {
   console.log('Finished installing dependencies. Start tests in a new terminal window.');
 
   await sleep(1_000_000_000);
+
   // This is effective the end just without a return
 
   async function cleanupVm() {

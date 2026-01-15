@@ -1,4 +1,4 @@
-import { Resource, ResourceSettings, getPty, SpawnStatus, Utils } from 'codify-plugin-lib';
+import { Resource, ResourceSettings, SpawnStatus, Utils, getPty, FileUtils } from 'codify-plugin-lib';
 import { OS, StringIndexedObject } from 'codify-schemas';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -75,7 +75,13 @@ softwareupdate --install-rosetta
     } else if (Utils.isLinux()) {
       const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codify-aws-cli'));
 
-      await $.spawn('curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"', { cwd: tmpDir });
+      // Detect architecture and use appropriate download link
+      const downloadUrl = isArmArch
+        ? 'https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip'
+        : 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip';
+
+      console.log(`Installing AWS CLI for Linux (${isArmArch ? 'ARM64' : 'x86_64'})...`);
+      await FileUtils.downloadFile(downloadUrl, path.join(tmpDir, 'awscliv2.zip'));
       await $.spawn('unzip -q awscliv2.zip', { cwd: tmpDir });
       await $.spawn('./aws/install', { cwd: tmpDir, requiresRoot: true });
       await fs.rm(tmpDir, { recursive: true, force: true });
@@ -95,9 +101,9 @@ softwareupdate --install-rosetta
       return;
     }
 
-    await $.spawn(`rm ${installLocation}`, { requiresRoot: true });
-    await $.spawn(`rm ${installLocation}_completer`, { requiresRoot: true });
-    await $.spawn('rm -rf $HOME/.aws/');
+    await $.spawnSafe(`rm ${installLocation}`, { requiresRoot: true });
+    await $.spawnSafe(`rm ${installLocation}_completer`, { requiresRoot: true });
+    await $.spawnSafe('rm -rf $HOME/.aws/');
   }
 
   private async findInstallLocation(): Promise<null | string> {
