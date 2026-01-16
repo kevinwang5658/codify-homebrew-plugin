@@ -13,7 +13,7 @@ import { FileResource } from './resources/file/file.js';
 import { RemoteFileResource } from './resources/file/remote-file.js';
 import { GitResource } from './resources/git/git/git-resource.js';
 import { GitLfsResource } from './resources/git/lfs/git-lfs.js';
-import { GitCloneResource } from './resources/git/repository/git-repository.js';
+import { GitRepositoryResource } from './resources/git/repository/git-repository.js';
 import { WaitGithubSshKey } from './resources/git/wait-github-ssh-key/wait-github-ssh-key.js';
 import { HomebrewResource } from './resources/homebrew/homebrew.js';
 import { JenvResource } from './resources/java/jenv/jenv.js';
@@ -60,7 +60,7 @@ runPlugin(Plugin.create(
     new JenvResource(),
     new PgcliResource(),
     new VscodeResource(),
-    new GitCloneResource(),
+    new GitRepositoryResource(),
     new AndroidStudioResource(),
     new AsdfResource(),
     new AsdfPluginResource(),

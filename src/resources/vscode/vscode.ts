@@ -3,7 +3,6 @@ import {
   DestroyPlan,
   FileUtils,
   getPty,
-  LinuxDistro,
   Resource,
   ResourceSettings,
   Utils
@@ -49,12 +48,10 @@ export class VscodeResource extends Resource<VscodeConfig> {
   }
 
   override async create(plan: CreatePlan<VscodeConfig>): Promise<void> {
-    const $ = getPty();
-
     if (Utils.isMacOS()) {
-      await this.installMacOS($, plan);
+      await this.installMacOS(plan);
     } else if (Utils.isLinux()) {
-      await this.installLinux($, plan);
+      await this.installLinux(plan);
     } else {
       throw new Error('Unsupported operating system');
     }
@@ -68,27 +65,13 @@ export class VscodeResource extends Resource<VscodeConfig> {
       const location = path.join(directory, `"${VSCODE_APPLICATION_NAME}"`);
       await $.spawn(`rm -rf ${location}`);
     } else if (Utils.isLinux()) {
-      const distro = await Utils.getLinuxDistro();
 
-      switch(distro) {
-        case LinuxDistro.DEBIAN:
-        case LinuxDistro.MANJARO:
-        case LinuxDistro.UBUNTU:
-        case LinuxDistro.MINT: {
-          await $.spawnSafe('apt-get remove code -y', { requiresRoot: true });
-          return;
-        }
-
-        case LinuxDistro.RHEL:
-        case LinuxDistro.CENTOS:
-        case LinuxDistro.FEDORA: {
-          await $.spawnSafe('dnf remove code -y', { requiresRoot: true });
-          return;
-        }
-
-        default: {
-          throw new Error('Unsupported Linux distribution. Only Debian-based (Ubuntu, Debian, Mint) and RedHat-based (RHEL, CentOS) systems are supported.');
-        }
+      if (Utils.isDebianBased()) {
+        await $.spawnSafe('apt-get remove code -y', { requiresRoot: true });
+      } else if (Utils.isRedhatBased()) {
+        await $.spawnSafe('dnf remove code -y', { requiresRoot: true });
+      } else {
+        throw new Error('Unsupported Linux distribution. Only Debian-based (Ubuntu, Debian, Mint) and RedHat-based (RHEL, CentOS) systems are supported.');
       }
 
       // Remove user data and config
@@ -119,7 +102,8 @@ export class VscodeResource extends Resource<VscodeConfig> {
     return false;
   }
 
-  private async installMacOS($: ReturnType<typeof getPty>, plan: CreatePlan<VscodeConfig>): Promise<void> {
+  private async installMacOS(plan: CreatePlan<VscodeConfig>): Promise<void> {
+    const $ = getPty();
     // Create a temporary tmp dir
     const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
 
@@ -143,41 +127,31 @@ export class VscodeResource extends Resource<VscodeConfig> {
 
     // Detect distribution and architecture
     const isArm = await Utils.isArmArch();
-    const distro = await Utils.getLinuxDistro();
 
-    switch(distro) {
-      case LinuxDistro.DEBIAN:
-      case LinuxDistro.MANJARO:
-      case LinuxDistro.UBUNTU:
-      case LinuxDistro.MINT: {
-        const downloadLink = DOWNLOAD_URL_BASE + (isArm ? '?build=stable&os=linux-deb-arm64' : '?build=stable&os=linux-deb-x64');
-        const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
-        const vscodeDebPath = path.join(tmpDir, 'vscode.deb');
+    if (Utils.isDebianBased()) {
+      const downloadLink = DOWNLOAD_URL_BASE + (isArm ? '?build=stable&os=linux-deb-arm64' : '?build=stable&os=linux-deb-x64');
+      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-'));
+      const vscodeDebPath = path.join(tmpDir, 'vscode.deb');
 
-        try {
-          await FileUtils.downloadFile(downloadLink, vscodeDebPath);
+      try {
+        await FileUtils.downloadFile(downloadLink, vscodeDebPath);
 
-          await $.spawn('debconf-set-selections <<< "code code/add-microsoft-repo boolean true"', { requiresRoot: true });
-          await $.spawn('apt-get install ./vscode.deb -y', { cwd: tmpDir, requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' } });
-        } finally {
-          // await fs.rm(tmpDir, { recursive: true, force: true });
-        }
-
-        return;
+        await $.spawn('debconf-set-selections <<< "code code/add-microsoft-repo boolean true"', { requiresRoot: true });
+        await $.spawn('apt-get install ./vscode.deb -y', { cwd: tmpDir, requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' } });
+      } finally {
+        await fs.rm(tmpDir, { recursive: true, force: true });
       }
 
-      case LinuxDistro.RHEL:
-      case LinuxDistro.CENTOS:
-      case LinuxDistro.FEDORA: {
-        await $.spawn('rpm --import https://packages.microsoft.com/keys/microsoft.asc &&\n' +
-          'echo -e "[code]\\nname=Visual Studio Code\\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\\nenabled=1\\nautorefresh=1\\ntype=rpm-md\\ngpgcheck=1\\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | tee /etc/yum.repos.d/vscode.repo > /dev/null', { requiresRoot: true });
-        await $.spawn('dnf check-update && dnf install code -y', { requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' } });
-        return;
-      }
-
-      default: {
-        throw new Error('Unsupported Linux distribution. Only Debian-based (Ubuntu, Debian, Mint) and RedHat-based (RHEL, CentOS) systems are supported.');
-      }
+      return;
     }
+
+    if (Utils.isRedhatBased()) {
+      await $.spawn('rpm --import https://packages.microsoft.com/keys/microsoft.asc &&\n' +
+        'echo -e "[code]\\nname=Visual Studio Code\\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\\nenabled=1\\nautorefresh=1\\ntype=rpm-md\\ngpgcheck=1\\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | tee /etc/yum.repos.d/vscode.repo > /dev/null', { requiresRoot: true });
+      await $.spawn('dnf check-update && dnf install code -y', { requiresRoot: true, env: { DEBIAN_FRONTEND: 'noninteractive' } });
+      return;
+    }
+
+    throw new Error('Unsupported Linux distribution. Only Debian-based (Ubuntu, Debian, Mint) and RedHat-based (RHEL, CentOS) systems are supported.');
   }
 }
