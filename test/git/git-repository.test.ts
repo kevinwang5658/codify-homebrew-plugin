@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { PluginTester, testSpawn } from 'codify-plugin-test';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
@@ -12,7 +12,7 @@ describe('Git repository integration tests', async () => {
       {
         type: 'git-repository',
         parentDirectory: '~/projects/test',
-        repository: 'https://github.com/kevinwang5658/untitled.git'
+        repositories: ['https://github.com/kevinwang5658/untitled.git', 'https://github.com/octocat/Hello-World.git']
       }
     ], {
       skipUninstall: true, // Can't directly delete repos via codify currently.
@@ -39,6 +39,9 @@ describe('Git repository integration tests', async () => {
       }
     ], {
       skipUninstall: true,
+      validatePlan: async (plans) => {
+        console.log('plans', plans);
+      },
       validateApply: async () => {
         const location = path.join(os.homedir(), 'projects', 'nested', 'codify-plugin');
         const lstat = await fs.lstat(location);
@@ -49,5 +52,10 @@ describe('Git repository integration tests', async () => {
         expect(repoInfo.trim()).to.eq('https://github.com/kevinwang5658/untitled.git')
       }
     });
+  })
+
+  afterAll(async () => {
+    await fs.rm(path.join(os.homedir(), 'projects', 'test'), { recursive: true, force: true });
+    await fs.rm(path.join(os.homedir(), 'projects', 'nested'), { recursive: true, force: true });
   })
 })
