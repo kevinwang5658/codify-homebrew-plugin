@@ -29,6 +29,9 @@ export class AliasResource extends Resource<AliasConfig> {
       parameterSettings: {
         value: { canModify: true }
       },
+      importAndDestroy: {
+        preventImport: true,
+      },
       allowMultiple: {
         identifyingParameters: ['alias'],
       },

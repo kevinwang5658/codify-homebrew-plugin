@@ -31,6 +31,7 @@ import { Virtualenv } from './resources/python/virtualenv/virtualenv.js';
 import { VirtualenvProject } from './resources/python/virtualenv/virtualenv-project.js';
 import { ActionResource } from './resources/scripting/action.js';
 import { AliasResource } from './resources/shell/alias/alias-resource.js';
+import { AliasesResource } from './resources/shell/aliases/aliases-resource.js';
 import { PathResource } from './resources/shell/path/path-resource.js';
 import { SnapResource } from './resources/snap/snap.js';
 import { SshAddResource } from './resources/ssh/ssh-add.js';
@@ -50,6 +51,7 @@ runPlugin(Plugin.create(
     new XcodeToolsResource(),
     new PathResource(),
     new AliasResource(),
+    new AliasesResource(),
     new HomebrewResource(),
     new PyenvResource(),
     new GitLfsResource(),
