@@ -1,6 +1,6 @@
 {
   "name": "default",
-  "version": "0.16.1",
+  "version": "0.17.0-beta4",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -9,12 +9,14 @@
     "start:dev": "tsc && cirrus run run_dev -o simple",
     "test:unit": "vitest src/**/*.test.ts",
     "test:integration:dev": "tsx scripts/run-tests.ts",
+    "test:integration:dev:linux": "tsx scripts/run-tests.ts",
     "test:integration": "vitest test/**/*.test.ts",
     "test": "vitest",
     "rollup": "rollup -c",
     "build": "tsx ./scripts/build.ts",
     "deploy": "tsx ./scripts/deploy.ts",
-    "deploy:beta": "BETA=true tsx ./scripts/deploy.ts"
+    "deploy:beta": "BETA=true tsx ./scripts/deploy.ts",
+    "testing": "codify-deploy"
   },
   "keywords": [],
   "author": "",
@@ -24,8 +26,8 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "chalk": "^5.3.0",
-    "codify-plugin-lib": "^1.0.180",
-    "codify-schemas": "1.0.63",
+    "codify-plugin-lib": "1.0.182-beta77",
+    "codify-schemas": "1.0.86-beta11",
     "debug": "^4.3.4",
     "lodash.isequal": "^4.5.0",
     "nanoid": "^5.0.9",
@@ -50,10 +52,11 @@
     "@types/debug": "4.1.12",
     "@types/lodash.isequal": "^4.5.8",
     "@types/mock-fs": "^4.13.4",
+    "@types/uuid": "10.0.0",
     "@types/node": "^18",
     "@types/plist": "^3.0.5",
     "@types/semver": "^7.5.4",
-    "codify-plugin-test": "0.0.53",
+    "codify-plugin-test": "0.0.53-beta24",
     "commander": "^12.1.0",
     "eslint": "^8.51.0",
     "eslint-config-oclif": "^5",
@@ -67,8 +70,11 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
     "tsx": "^4.7.2",
-    "typescript": "^5",
+    "typescript": "5.9.3",
     "vitest": "^1.4.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-musl": "4.9.5"
   },
   "engines": {
     "node": ">=18.0.0"

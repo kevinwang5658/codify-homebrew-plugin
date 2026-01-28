@@ -1,7 +1,6 @@
-import { getPty, Resource, ResourceSettings } from 'codify-plugin-lib';
-import { StringIndexedObject } from 'codify-schemas';
+import { getPty, Resource, ResourceSettings, SpawnStatus } from 'codify-plugin-lib';
+import { OS, StringIndexedObject } from 'codify-schemas';
 
-import { SpawnStatus, codifySpawn } from '../../../utils/codify-spawn.js';
 import { GitEmailParameter } from './git-email-paramater.js';
 import { GitNameParameter } from './git-name-parameter.js';
 import Schema from './git-schema.json';
@@ -16,6 +15,7 @@ export class GitResource extends Resource<GitConfig> {
   getSettings(): ResourceSettings<GitConfig> {
     return {
       id: 'git',
+      operatingSystems: [OS.Darwin, OS.Linux],
       schema: Schema,
       removeStatefulParametersBeforeDestroy: true,
       parameterSettings: {
