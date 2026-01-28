@@ -72,13 +72,7 @@ export class TartVmResource extends Resource<TartVmConfig> {
     // Parse the JSON output to get the list of VMs
     try {
       const vmList = JSON.parse(data);
-      console.log('VM list:', vmList);
-      console.log('Local name:', parameters.localName);
-      console.log('Includes VM:', vmList.some((vm: { Name: string }) => vm.Name === parameters.localName));
-
       if (!vmList.some((vm: { Name: string }) => vm.Name === parameters.localName)) {
-        console.log('Not found! returning null')
-
         return null;
       }
     } catch(e) {
@@ -96,8 +90,6 @@ export class TartVmResource extends Resource<TartVmConfig> {
     try {
       // Get VM configuration using tart get
       const { status: getStatus, data: getData } = await $.spawnSafe(`tart get ${parameters.localName} --format json`);
-      console.log('Get data:', getData);
-      console.log('Status:', getStatus);
 
       if (getStatus === SpawnStatus.SUCCESS) {
         // Parse the output to extract configuration

@@ -51,13 +51,18 @@ export class PathResource extends Resource<PathConfig> {
         }
       },
       allowMultiple: {
-        matcher: (desired, current) => {
+        matcher(desired, current) {
           if (desired.path) {
             return desired.path === current.path;
           }
 
           const currentPaths = new Set(current.paths)
           return desired.paths?.some((p) => currentPaths.has(p)) ?? false;
+        },
+        async findAllParameters() {
+          return [{
+            paths: []
+          }]
         }
       }
     }
@@ -248,6 +253,12 @@ export class PathResource extends Resource<PathConfig> {
     }
 
     return results;
+  }
+
+  private async resolvePathWithVariables(pathWithVariables: string): Promise<string> {
+    const $ = getPty();
+    const { data } = await $.spawnSafe(`echo ${pathWithVariables}`);
+    return data.trim();
   }
 }
 

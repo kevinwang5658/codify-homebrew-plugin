@@ -116,12 +116,6 @@ export class GitRepositoryResource extends Resource<GitRepositoryConfig> {
         return null;
       }
 
-      console.log('Refresh', {
-        parentDirectory: parameters.parentDirectory,
-        repositories,
-        autoVerifySSH: parameters.autoVerifySSH,
-      })
-
       return {
         parentDirectory: parameters.parentDirectory,
         repositories,
@@ -209,7 +203,7 @@ Please delete ${plan.currentConfig.directory ?? (plan.currentConfig.repositories
 
     const baseUrl = groups!.url!
     const { data: existingKey } = await $.spawnSafe(`ssh-keygen -F ${baseUrl}`)
-    console.log(`Is key blank: ${this.isBlank(existingKey)}`)
+
     if (!this.isBlank(existingKey)) {
       // An existing key is already in the file. Skipping..
       return;

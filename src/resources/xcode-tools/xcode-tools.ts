@@ -67,8 +67,6 @@ export class XcodeToolsResource extends Resource<XCodeToolsConfig> {
           return compare(coerce(currentVer)!, coerce(prevVer)!) > 0 ? current : prev;
         }) : xcodeToolsVersion.at(0)!;
 
-      console.log('Latest version', latestVersion);
-
       await $.spawn(`softwareupdate -i "${latestVersion}" --verbose`, { requiresRoot: true, interactive: true });
 
     } finally {
